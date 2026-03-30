@@ -61,7 +61,7 @@ export default function BookingTools() {
   const [bookingTime, setBookingTime] = useState('');
   const [duration, setDuration] = useState('');
   const [toolId, setToolId] = useState('');
-  const [bookingItems, setBookingItems] = useState<BookingItem[]>([]); 
+  const [bookingItems, setBookingItems] = useState<BookingItem[]>([]);
   // Mock bookings data
   const [bookings, setBookings] = useState<Booking[]>([]);
 
@@ -81,7 +81,7 @@ export default function BookingTools() {
       if (nrp) {
         const selected = users.find(j => j.Kode === nrp) || null;
         if (selected) {
-          setEmployeeName(selected.Nama); 
+          setEmployeeName(selected.Nama);
           dateInputRef.current?.focus();
           dateInputRef.current?.click?.();
         } else {
@@ -106,7 +106,7 @@ export default function BookingTools() {
         return;
       }
 
-      const selected = regtools.find(j => j.Kode === id) || null; 
+      const selected = regtools.find(j => j.Kode === id) || null;
       //const tool = mockTools.find((t) => t.id === id);
       if (selected) {
         console.log(selected.Status);
@@ -114,7 +114,7 @@ export default function BookingTools() {
           toast.error(`${selected.Nama} is new, Please info Section Head`);
         } else if (selected.Status === "Booked") {
           toast.error(`${selected.Nama} is booked by Other`);
-        } else { 
+        } else {
           const newItem: BookingItem = {
             toolId: selected.Kode,
             toolName: selected.Nama,
@@ -138,7 +138,7 @@ export default function BookingTools() {
     toast.success('Item removed from booking');
   };
 
-  const handleSubmitBooking = async  () => {
+  const handleSubmitBooking = async () => {
     if (!employeeNRP || !employeeName) {
       toast.error('Please scan employee NRP first');
       return;
@@ -148,9 +148,9 @@ export default function BookingTools() {
       toast.error('Please add at least one tool to the booking');
       return;
     }
-     
+
     try {
-      var datetimeBooking = bookingDate + " " + bookingTime;  
+      var datetimeBooking = bookingDate + " " + bookingTime;
       const toolIds = bookingItems.map(b => b.toolId).join(',');
       const response = await fetch(API.BOOKING(), {
         method: "POST",
@@ -158,12 +158,12 @@ export default function BookingTools() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          action:  "INSERT",
+          action: "INSERT",
           Jobsite: currentUser.Jobsite,
-          nrp: employeeNRP, 
+          nrp: employeeNRP,
           ToolsId: toolIds,
-          DateBooking: datetimeBooking, 
-          Duration:duration,
+          DateBooking: datetimeBooking,
+          Duration: duration,
           NrpUser: currentUser.Nrp
         })
       });
@@ -174,7 +174,7 @@ export default function BookingTools() {
       const data = await response.json();
       if (data.length > 0) {
         const resData = data[0];
-        if (resData?.Status == 1) { 
+        if (resData?.Status == 1) {
           GetToolsList();
           ReloadMaster();
 
@@ -186,7 +186,7 @@ export default function BookingTools() {
           setDuration('');
           setToolId('');
           setBookingItems([]);
-           
+
           toast.success(resData?.Message ?? 'successfully');
         } else {
           toast.error(resData?.Message ?? "Failed");
@@ -196,7 +196,7 @@ export default function BookingTools() {
       }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
-    }  
+    }
   };
   const GetUserList = () => {
     const params = new URLSearchParams({
@@ -250,7 +250,7 @@ export default function BookingTools() {
     for (const r of rows) {
       const groupId = normalize(r.GroupId);
       if (!groupId) continue; // or handle missing GroupId differently
-       
+
       if (!map.has(groupId)) {
         map.set(groupId, {
           id: groupId,                              // <= json.GroupId -> bookings[].id
@@ -281,7 +281,7 @@ export default function BookingTools() {
     for (const b of map.values()) {
       b.items.sort((a, b2) => a.toolName.localeCompare(b2.toolName));
     }
-     
+
     return Array.from(map.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
@@ -309,7 +309,7 @@ export default function BookingTools() {
             <CalendarDays className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl mb-1">Booking Tools</h2>
+            <h2 className="text-2xl text-white mb-1">Booking Tools</h2>
             <p className="text-white/80">Reserve tools in advance for scheduled maintenance</p>
           </div>
         </div>
@@ -427,7 +427,7 @@ export default function BookingTools() {
               <div className="space-y-2">
                 <Label>Tool ID</Label>
                 <InputRef
-                  ref={toolInputRef }
+                  ref={toolInputRef}
                   placeholder="Scan Tool ID and press Enter..."
                   value={toolId}
                   onChange={(e) => setToolId(e.target.value)}
@@ -573,13 +573,12 @@ export default function BookingTools() {
                     </td>
                     <td className="p-3">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          booking.status === 'Approved'
+                        className={`px-2 py-1 rounded text-xs ${booking.status === 'Approved'
                             ? 'bg-green-100 text-green-700'
                             : booking.status === 'Pending'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
                       >
                         {booking.status}
                       </span>

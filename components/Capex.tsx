@@ -10,17 +10,17 @@ export default function Capex() {
 
   // Calculate dynamic data from budgeting items
   const budgetCategories = useMemo(() => getBudgetCategories(initialBudgetCapexData), []);
-  
-  const totalBudget = useMemo(() => 
+
+  const totalBudget = useMemo(() =>
     initialBudgetCapexData.reduce((sum, item) => sum + (item.cost * item.requirement), 0),
     []
   );
-  
-  const allocated = useMemo(() => 
+
+  const allocated = useMemo(() =>
     initialBudgetCapexData.reduce((sum, item) => sum + item.totalCost, 0),
     []
   );
-  
+
   const remaining = totalBudget - allocated;
   const utilization = totalBudget > 0 ? Math.round((allocated / totalBudget) * 100) : 0;
 
@@ -62,7 +62,7 @@ export default function Capex() {
               <DollarSign className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl mb-1">Capital Expenditure (Capex)</h2>
+              <h2 className="text-2xl text-white mb-1">Capital Expenditure (Capex)</h2>
               <p className="text-white/80">Long-term investment and asset acquisition budget</p>
             </div>
           </div>

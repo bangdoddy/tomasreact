@@ -82,8 +82,9 @@ interface ActivationToolData {
 
 interface ToolDataDetail {
   Idx: number;
-  idTools: string;
+  IdTools: string;
   NamaTools: string;
+  NamaPenerima: string;
   Size: string;
   Qty: number;
   Remarks: string
@@ -635,6 +636,7 @@ export default function ActivationToolApproval() {
                 <Table>
                   <TableHeader className="sticky top-0 bg-gray-50 z-10 shadow-sm">
                     <TableRow>
+                      <TableHead className="bg-gray-50">Tools ID</TableHead>
                       <TableHead className="bg-gray-50">Description</TableHead>
                       <TableHead className="bg-gray-50 text-center">Size</TableHead>
                       <TableHead className="bg-gray-50 text-center">Qty</TableHead>
@@ -644,7 +646,9 @@ export default function ActivationToolApproval() {
                   <TableBody>
                     {toolDetail.length > 0 ? (
                       toolDetail.map((item, idx) => (
+                        console.log(item),
                         <TableRow key={idx}>
+                          <TableCell>{item.IdTools}</TableCell>
                           <TableCell>{item.NamaTools}</TableCell>
                           <TableCell className="text-center">{item.Size}</TableCell>
                           <TableCell className="text-center">{item.Qty}</TableCell>

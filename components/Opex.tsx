@@ -10,17 +10,17 @@ export default function Opex() {
 
   // Calculate dynamic data from budgeting items (only COMMON TOOL)
   const budgetCategories = useMemo(() => getBudgetCategories(initialBudgetOpexData), []);
-  
-  const totalBudget = useMemo(() => 
+
+  const totalBudget = useMemo(() =>
     initialBudgetOpexData.reduce((sum, item) => sum + (item.cost * item.requirement), 0),
     []
   );
-  
-  const allocated = useMemo(() => 
+
+  const allocated = useMemo(() =>
     initialBudgetOpexData.reduce((sum, item) => sum + item.totalCost, 0),
     []
   );
-  
+
   const remaining = totalBudget - allocated;
   const utilization = totalBudget > 0 ? Math.round((allocated / totalBudget) * 100) : 0;
 
@@ -62,7 +62,7 @@ export default function Opex() {
               <DollarSign className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl mb-1">Operational Expenditure (Opex)</h2>
+              <h2 className="text-2xl text-white mb-1">Operational Expenditure (Opex)</h2>
               <p className="text-white/80">Day-to-day operational costs for common tools</p>
             </div>
           </div>

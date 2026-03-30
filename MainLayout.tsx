@@ -1,12 +1,21 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Footer from './Footer';
 import UserManagement from './UserManagement';
 import ToolsManagement from './ToolsManagement';
 import Dashboard from './Dashboard';
+import DashboardFacility from './DashboardFacility';
 import RolesManagement from './RolesManagement';
 import PermissionsManagement from './PermissionsManagement';
+import CategoryTool from './CategoryTool';
+import ConditionTool from './ConditionTool';
+import GroupTools from './GroupTools';
+import Jobsite from './Jobsite';
+import Location from './Location';
+import BinLocation from './BinLocation';
+import WorkGroup from './WorkGroup';
+import UOM from './UOM';
 import StandardQuantity from './StandardQuantity';
 import ToolActivation from './ToolActivation';
 import BookingTools from './BookingTools';
@@ -35,18 +44,22 @@ import ToolRoomInspectionReport from './reports/ToolRoomInspectionReport';
 import ToolBoxInspectionReport from './reports/ToolBoxInspectionReport';
 import CertificationCalibrationReport from './reports/CertificationCalibrationReport';
 import ToolOrderMonitoringReport from './reports/ToolOrderMonitoringReport';
+import FacilityPopulationReport from './reports/FacilityPopulationReport';
+import FacilityInspectionReport from './reports/FacilityInspectionReport';
+import FacilityInspection from './inspection/FacilityInspection';
+import FacilityPopulation from './dashboards/FacilityPopulation';
+import AcvInspectionWorkshop from './dashboards/AcvInspectionWorkshop';
+import AcvInspectionPitStop from './dashboards/AcvInspectionPitStop';
+import AcvInspectionWashingBays from './dashboards/AcvInspectionWashingBays';
+import AcvCertificationCalibration from './dashboards/AcvCertificationCalibration';
 import UserGuide from './help/UserGuide';
 import FAQ from './help/FAQ';
 import VideoTutorial from './help/VideoTutorial';
 import ContactUs from './help/ContactUs';
 import TipsTricks from './help/TipsTricks';
 import About from './About';
-import GeneralSetting from './GeneralSetting';
-import ToolsType from './ToolsType';
 import { Toaster } from './ui/sonner';
-// import type { AuthUser } from '../App';
 import { AuthUsers } from '../service/AuthContext';
-import React from 'react';
 
 interface MainLayoutProps {
   currentUser: AuthUsers;
@@ -56,11 +69,21 @@ interface MainLayoutProps {
 export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const mainContentRef = useRef<HTMLElement>(null);
+
+  // Scroll to top whenever page changes
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [currentPage]);
 
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard />;
+      case 'dashboard-facility':
+        return <DashboardFacility />;
       case 'user-management':
         return <UserManagement />;
       case 'roles':
@@ -69,6 +92,22 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
         return <PermissionsManagement />;
       case 'tools-management':
         return <ToolsManagement />;
+      case 'category-tool':
+        return <CategoryTool />;
+      case 'condition-tool':
+        return <ConditionTool />;
+      case 'group-tools':
+        return <GroupTools />;
+      case 'jobsite':
+        return <Jobsite />;
+      case 'location':
+        return <Location />;
+      case 'bin-location':
+        return <BinLocation />;
+      case 'work-group':
+        return <WorkGroup />;
+      case 'uom':
+        return <UOM />;
       case 'standard-quantity':
         return <StandardQuantity />;
       case 'tool-activation':
@@ -87,10 +126,10 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
         return <FormOrderBudget />;
       case 'outstanding-bakt':
         return <OutstandingBAKT />;
-      case 'reactivation-disposed':
-        return <ReactivationDisposedTools />;
       case 'follow-up':
         return <FollowUp />;
+      case 'reactivation-disposed':
+        return <ReactivationDisposedTools />;
       case 'activation-tool-approval':
         return <ActivationToolApproval />;
       case 'bakt-approval':
@@ -125,6 +164,22 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
         return <CertificationCalibrationReport />;
       case 'tool-order-monitoring-report':
         return <ToolOrderMonitoringReport />;
+      case 'facility-population-report':
+        return <FacilityPopulationReport />;
+      case 'facility-inspection-report':
+        return <FacilityInspectionReport />;
+      case 'facility-inspection':
+        return <FacilityInspection />;
+      case 'facility-population':
+        return <FacilityPopulation />;
+      case 'acv-inspection-workshop':
+        return <AcvInspectionWorkshop />;
+      case 'acv-inspection-pit-stop':
+        return <AcvInspectionPitStop />;
+      case 'acv-inspection-washing-bays':
+        return <AcvInspectionWashingBays />;
+      case 'acv-certification-calibration':
+        return <AcvCertificationCalibration />;
       case 'user-guide':
         return <UserGuide />;
       case 'faq':
@@ -137,12 +192,6 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
         return <TipsTricks />;
       case 'about':
         return <About />;
-      case 'setting':
-        return <GeneralSetting />
-      case 'jobsite':
-        return <GeneralSetting kategori="Jobsite" />
-      case 'toolstype':
-        return <ToolsType />
       default:
         return <Dashboard />;
     }
@@ -151,9 +200,9 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Toaster position="top-right" richColors />
-
+      
       <Header currentUser={currentUser} onLogout={onLogout} />
-
+      
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           currentPage={currentPage}
@@ -161,14 +210,14 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
-
-        <main className="flex-1 overflow-y-auto">
-          <div className="container mx-auto p-6 max-w-7xl">
+        
+        <main className="flex-1 overflow-y-auto" ref={mainContentRef}>
+          <div className="container mx-auto p-4 max-w-7xl">
             {renderPage()}
           </div>
         </main>
       </div>
-
+      
       <Footer />
     </div>
   );

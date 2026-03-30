@@ -26,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import { Scan, Plus, Trash2, ShoppingCart, User, Check, X, Calendar, Clock } from 'lucide-react';
+import { Scan, Plus, Trash2, ShoppingCart, Eye, Edit, User, Check, X, Calendar, Clock, ChevronRight, ChevronLeft, Search } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../service/AuthContext";
 import { GlobalModel } from "../model/Models";
@@ -40,7 +40,7 @@ interface RentedTool {
   toolsType: string;
   quantity: number;
   condition: string;
-  rentnote: string; //MO OR rent Condition
+  // rentnote: string; //MO OR rent Condition
   addedTime: string;
 }
 
@@ -52,18 +52,28 @@ interface Employee {
   workgroup: string;
 }
 
-interface CompletedTransaction {
-  id: string;
-  employeeNrp: string;
-  employeeName: string;
-  toolId: string;
-  toolName: string;
-  quantity: number;
-  rentDate: string;
-  rentTime: string;
-  estimatedReturnDate: string;
-}
+// interface CompletedTransaction {
+//   id: string;
+//   employeeNrp: string;
+//   employeeName: string;
+//   toolId: string;
+//   toolName: string;
+//   quantity: number;
+//   rentDate: string;
+//   rentTime: string;
+//   estimatedReturnDate: string;
+// }
 
+interface CompletedTransaction {
+  TransIdTools: string;
+  ToolsDesc: string;
+  NRP: string;
+  NAMA: string;
+  TransDateRental: string;
+  TransEstReturnDate: string;
+  MONumber: string;
+  Tools: RentedTool[];
+}
 export default function RentTools() {
   const { currentUser } = useAuth();
   const nrpInputRef = useRef<HTMLInputElement>(null);
@@ -73,7 +83,7 @@ export default function RentTools() {
   const [users, setUsers] = useState<GlobalModel[]>([]);
   const [regtools, setRegTools] = useState<GlobalModel[]>([]);
   const [toolCondition, setToolCondition] = useState<GlobalModel[]>([]);
-  
+
   const [employeeCode, setEmployeeCode] = useState('');
   const [employeeData, setEmployeeData] = useState<Employee | null>(null);
   const [rentedTools, setRentedTools] = useState<RentedTool[]>([]);
@@ -81,12 +91,19 @@ export default function RentTools() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [adaRentTrans, setAdaRentTrans] = useState(false);
   const [estimatedReturnDays, setEstimatedReturnDays] = useState('7');
-  const [titlePage, setTitlePage] =useState<string>("MO");
+  const [titlePage, setTitlePage] = useState<string>("MO");
+  const [searchQuery, setSearchQuery] = useState('');
+
+  /*Pagination Items */
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(-1);
 
   // Quick entry form state
   const [toolIdScan, setToolIdScan] = useState('');
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [isSettingMO, setIsSettingMO] = useState(false);
+  const [isAddScreenOpen, setAddScreenOpen] = useState(false);
   const [selectedToolData, setSelectedToolData] = useState<{
     id: string;
     name: string;
@@ -100,8 +117,37 @@ export default function RentTools() {
     condition: '',
     rentnote: '',
   });
-   
-   
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    nrp: '',
+    name: '',
+    toolsId: '',
+    toolsName: '',
+    quantity: 0,
+    transIdTools: ''
+  });
+
+  const handleEditClick = (transaction: CompletedTransaction) => {
+    setEditFormData({
+      nrp: transaction.NRP,
+      name: transaction.NAMA,
+      toolsId: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].toolsId : '',
+      toolsName: transaction.ToolsDesc,
+      quantity: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].quantity : 1,
+      transIdTools: transaction.TransIdTools
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateTransaction = () => {
+    // Placeholder for update logic
+    console.log('Updating transaction:', editFormData);
+    toast.success('Transaction updated successfully');
+    setIsEditDialogOpen(false);
+  };
+
+
   // Handle employee code scan/input
   const handleEmployeeScan = () => {
     const nrp = employeeCode;
@@ -116,8 +162,8 @@ export default function RentTools() {
           workgroup: selected.Keterangan
         };
         setEmployeeData(employee);
-         
-        const timer = setTimeout(() => {  
+
+        const timer = setTimeout(() => {
           if (toolInputRef.current == null) {
             console.log("ref is null")
           } else {
@@ -132,43 +178,104 @@ export default function RentTools() {
         toast.success('Employee not found!');
       }
     } else {
-      setEmployeeData(null); 
+      setEmployeeData(null);
       toast.success('nrp is empty!');
-    } 
+    }
+  };
+
+  // Handle adding tool to transaction immediately (on Enter/Scan)
+  // const handleAddToolImmediate = (toolId: string, toolName: string, toolType: string, toolStatus: string, rentNote: string) => {
+  //   if (!employeeData) {
+  //     toast.error('Please scan employee code first');
+  //     return;
+  //   }
+  //   let toolCond = toolStatus;
+  //   if (toolCond === null || toolCond === "") toolCond = "Good";
+  //   else if (toolCond === "Open") toolCond = "Good";
+
+  //   if (toolCond !== "Rented") setAdaRentTrans(true);
+
+  //   const now = new Date();
+  //   const newTool: RentedTool = {
+  //     id: Date.now().toString() + Math.random(),
+  //     toolsId: toolId,
+  //     toolsName: toolName,
+  //     toolsType: toolType,
+  //     quantity: 1,
+  //     condition: toolCond,
+  //     addedTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+  //     rentnote: rentNote,
+  //   };
+
+  //   setRentedTools([...rentedTools, newTool]);
+
+  //   // Reset for next item (like a cashier scanner)
+  //   setToolIdScan('');
+  //   setSelectedToolData(null);
+
+  //   // Auto-focus back to tool ID input for continuous scanning
+  //   setTimeout(() => {
+  //     document.getElementById('tool-id-input')?.focus();
+  //   }, 100);
+  // };
+
+  const handleAddToolImmediate = (toolId: string, toolName: string, toolType: string) => {
+    if (!employeeData) {
+      toast.error('Please scan employee code first');
+      return;
+    }
+
+    const now = new Date();
+    const newTool: RentedTool = {
+      id: Date.now().toString() + Math.random(),
+      toolsId: toolId,
+      toolsName: toolName,
+      toolsType: toolType,
+      quantity: 1,
+      condition: 'BAIK',
+      addedTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    };
+
+    setRentedTools([...rentedTools, newTool]);
+
+    // Reset for next item (like a cashier scanner)
+    setToolIdScan('');
+    // setSelectedToolData(null);
+
+
+    // Auto-focus back to tool ID input for continuous scanning
+    setTimeout(() => {
+      document.getElementById('tool-id-input')?.focus();
+    }, 100);
+  };
+
+  // Remove tool from transaction
+  const handleRemoveTool = (id: string) => {
+    setRentedTools(rentedTools.filter((tool) => tool.id !== id));
+    toast.success('Tool removed from transaction');
   };
 
   // Handle tool ID scan/lookup
   const handleToolIdScan = () => {
-    //const tool = mockTools[toolIdScan.trim().toUpperCase()]; 
-
     const tool = regtools.find(j => j.Kode.toUpperCase() === toolIdScan.trim().toUpperCase()) || null;
     if (tool) {
-      console.log(tool.Status);
-      if (tool.Status === "New") {
-        toast.error(`${tool.Nama} is new, Please info Section Head`);
-      //} else if (tool.Status === "Rented") {
-      //  toast.error(`${tool.Nama} is Rented`);
-      } else if (tool.Status === "Missing") {
-        toast.error(`${tool.Nama} is Missing or Broken`);
-      } else {
-        setSelectedToolData({
-          id: toolIdScan.trim(),
-          name: tool.Nama,
-          type: tool.ToolsType,
-          status: tool.Status,
-        });
-        //toast.success(`Tool found: ${tool.Nama}`); 
-        setTitlePage((tool.Status !== "Rented")?"MO":"Condition")
-        setIsSettingMO(tool.Status!=="Rented")
-        setFormData({
-          toolsId: toolIdScan.trim(),
-          toolsName: tool.Nama,
-          toolsType: tool.ToolsType,
-          condition: tool.Status,
-          rentnote: '',
-        });
-        setIsActionDialogOpen(true);
-      }
+      // if (tool.Status === "New") {
+      //   toast.error(`${tool.Nama} is new, Please info Section Head`);
+      // } else if (tool.Status === "Missing") {
+      //   toast.error(`${tool.Nama} is Missing or Broken`);
+      // } else {
+      //   handleAddToolImmediate(toolIdScan.trim(), tool.Nama, tool.ToolsType, tool.Status, '');
+      // }
+      setSelectedToolData({
+        id: toolIdScan.trim().toUpperCase(),
+        name: tool.Nama,
+        type: tool.ToolsType,
+        status: tool.Status,
+      });
+
+      handleAddToolImmediate(toolIdScan.trim().toUpperCase(), tool.Nama, tool.ToolsType, tool.Status, '');
+
+      toast.success('Tool added !');
     } else {
       toast.error('Tool not found. Please check the Tool ID.');
       setSelectedToolData(null);
@@ -181,52 +288,10 @@ export default function RentTools() {
       toast.error('Please fill in all required fields');
       return;
     }
-    setIsActionDialogOpen(false); 
+    setIsActionDialogOpen(false);
     handleAddToolImmediate(formData.toolsId, formData.toolsName, formData.toolsType, formData.condition, formData.rentnote);
   }
 
-  // Handle adding tool to transaction immediately (on Enter/Scan)
-  const handleAddToolImmediate = (toolId: string, toolName: string, toolType: string, toolCond: string, rentNote: string) => {
-    if (!employeeData) {
-      toast.error('Please scan employee code first');
-      return;
-    }
-    if (toolCond === null || toolCond === "") toolCond = "Good";
-    else if (toolCond === "Open") toolCond = "Good";
-
-    if (toolCond !== "Rented") setAdaRentTrans(true);
-
-    const now = new Date();
-    const newTool: RentedTool = {
-      id: Date.now().toString() + Math.random(),
-      toolsId: toolId,
-      toolsName: toolName,
-      toolsType: toolType,
-      quantity: 1,
-      condition: toolCond,
-      addedTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      rentnote: rentNote,
-    };
-
-    setRentedTools([...rentedTools, newTool]);
-    
-    // Reset for next item (like a cashier scanner)
-    setToolIdScan('');
-    setSelectedToolData(null);
-    
-    toast.success('Tool added to transaction');
-    
-    // Auto-focus back to tool ID input for continuous scanning
-    setTimeout(() => {
-      document.getElementById('tool-id-input')?.focus();
-    }, 100);
-  };
-
-  // Remove tool from transaction
-  const handleRemoveTool = (id: string) => {
-    setRentedTools(rentedTools.filter((tool) => tool.id !== id));
-    toast.success('Tool removed from transaction');
-  };
 
   // Complete transaction
   const handleCompleteTransaction = () => {
@@ -262,16 +327,16 @@ export default function RentTools() {
       estimatedReturnDate: returnDate.toLocaleDateString('en-US'),
     }));
 
-    const rentedToolList = rentedTools.map((tool) => ({  
+    const rentedToolList = rentedTools.map((tool) => ({
       toolsId: tool.toolsId,
       toolsName: tool.toolsName,
-      quantity: String(tool.quantity), 
+      quantity: String(tool.quantity),
       toolsType: tool.toolsType,
       condition: tool.condition,
-      rentnote: tool.rentnote, 
+      rentnote: tool.rentnote,
     }));
-     
-    try { 
+
+    try {
       const response = await fetch(API.RENTTOOLS(), {
         method: "POST",
         headers: {
@@ -279,7 +344,7 @@ export default function RentTools() {
         },
         body: JSON.stringify({
           action: "INSERT",
-          Jobsite: currentUser.Jobsite, 
+          Jobsite: currentUser.Jobsite,
           NrpUser: currentUser.Nrp,
           Nrp: employeeData.nrp,
           EstReturndays: estimatedReturnDays,
@@ -318,13 +383,14 @@ export default function RentTools() {
           setSelectedToolData(null);
           setIsConfirmDialogOpen(false);
           toast.success('Transaction successfully');
+          handleBackToList();
         } else {
-          toast.error(message ?? "Failed"); 
+          toast.error(message ?? "Failed");
         }
 
         //const resData = data[0];
         //if (resData?.Status == 1) {
-         
+
         //} else {
         //  toast.error(resData?.Message ?? "Failed");
         //}
@@ -333,7 +399,7 @@ export default function RentTools() {
       }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
-    }  
+    }
 
 
   };
@@ -349,8 +415,23 @@ export default function RentTools() {
     setRentedTools([]);
     setToolIdScan('');
     setSelectedToolData(null);
-    toast.info('Transaction reset');
   };
+
+  // Toggle state for New Rent vs List
+  const handleNewRent = () => {
+    setAddScreenOpen(true);
+  };
+
+  const handleBackToList = () => {
+    setAddScreenOpen(false);
+    setEmployeeCode('');
+    setEmployeeData(null);
+    setRentedTools([]);
+    setToolIdScan('');
+    setSelectedToolData(null);
+  };
+
+
   const GetUserList = () => {
     const params = new URLSearchParams({
       showdata: "USERS",
@@ -389,10 +470,34 @@ export default function RentTools() {
       .catch((error) => console.error("Error:", error));
   }
 
-  useEffect(() => { 
+  const GetTransactionList = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite
+    });
+    fetch(API.RENTTOOLS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: CompletedTransaction[]) => {
+        setCompletedTransactions(json);
+      })
+      .catch((error) => console.error("Error:", error));
+  }
+
+  const filteredTransactions = completedTransactions.filter((transaction) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      transaction.NAMA?.toLowerCase().includes(query) ||
+      transaction.ToolsDesc?.toLowerCase().includes(query) ||
+      transaction.NRP?.toLowerCase().includes(query)
+    );
+  });
+
+  useEffect(() => {
     GetUserList();
     GetToolsList();
     GetToolCondition();
+    GetTransactionList();
     if (nrpInputRef.current == null) {
       console.log("ref is null")
     } else {
@@ -400,7 +505,7 @@ export default function RentTools() {
       console.log("ref is focus")
     }
   }, []);
-   
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -410,13 +515,20 @@ export default function RentTools() {
             <ShoppingCart className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl mb-1">Rent Tools Transaction</h2>
+            <h2 className="text-2xl text-white mb-1">Rent Tools Transaction</h2>
             <p className="text-white/80">Process tool rentals for employees</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* Add new rent Screen */}
+      <div className={isAddScreenOpen ? "block" : "hidden"}>
+        <div className="flex justify-end mb-4 p-2">
+          <Button variant="outline" onClick={handleBackToList} className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10">
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+        </div>
         {/* Left Side - Main Transaction Area */}
         <div className="xl:col-span-2 space-y-6">
           {/* Employee Scanner */}
@@ -514,9 +626,9 @@ export default function RentTools() {
                   />
                   <Button
                     onClick={handleToolIdScan}
-                    disabled={!employeeData || !toolIdScan.trim()}
+                    disabled={!employeeData}
                     variant="outline"
-                    className="h-11 px-4"
+                    className="text-white h-12 px-6 bg-gradient-to-r from-[#003366] to-[#009999]"
                   >
                     <Scan className="h-4 w-4 mr-2" />
                     Scan
@@ -526,7 +638,7 @@ export default function RentTools() {
               </div>
 
               {/* Tool Details (shown after scanning) */}
-              {selectedToolData && (
+              {/* {selectedToolData && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Check className="h-4 w-4 text-green-600" />
@@ -537,80 +649,51 @@ export default function RentTools() {
                   </p>
                   <p className="text-xs text-gray-600">{selectedToolData.type}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Current Transaction Items */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Transaction Items</CardTitle>
-                  <CardDescription>
-                    {rentedTools.length} item{rentedTools.length !== 1 ? 's' : ''} in current transaction
-                  </CardDescription>
-                </div>
+              )} */}
+              <Table>
+                <TableHeader className="sticky top-0 bg-gray-50 z-10 shadow-sm">
+                  <TableRow>
+                    <TableHead className="bg-gray-100">Tool ID</TableHead>
+                    <TableHead className="bg-gray-100">Tool Name</TableHead>
+                    <TableHead className="bg-gray-100 text-center">Type</TableHead>
+                    <TableHead className="bg-gray-100 text-center">Qty</TableHead>
+                    <TableHead className="bg-gray-100 text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rentedTools.length > 0 ? rentedTools.map((tool) => (
+                    <TableRow key={tool.id}>
+                      <TableCell className="font-medium">{tool.toolsId}</TableCell>
+                      <TableCell>{tool.toolsName}</TableCell>
+                      <TableCell className="text-center text-sm text-gray-600">{tool.toolsType}</TableCell>
+                      <TableCell className="text-center">{tool.quantity}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveTool(tool.id)}
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                        <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                        <p>No tools added to current transaction</p>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+              <div className="flex justify-end">
+                <Button variant="outline"
+                  disabled={!selectedToolData}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                  onClick={handleCompleteTransaction}>SUBMIT RENT</Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              {rentedTools.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p className="text-gray-600">No tools added yet</p>
-                  <p className="text-sm text-gray-500">Scan employee NRP and tool ID to start</p>
-                </div>
-              ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        {/*<TableHead>Time Added</TableHead>*/}
-                        <TableHead>Tool ID</TableHead>
-                        <TableHead>Tool Name</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead className="text-center">Qty</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Condition/MO</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rentedTools.map((tool) => (
-                        <TableRow key={tool.id}>
-                          {/*<TableCell className="text-gray-600">{tool.addedTime}</TableCell>*/}
-                          <TableCell>{tool.toolsId}</TableCell>
-                          <TableCell>{tool.toolsName}</TableCell>
-                          <TableCell className="text-sm text-gray-600">{tool.toolsType}</TableCell>
-                          <TableCell className="text-center">{tool.quantity}</TableCell>
-                          <TableCell>
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${
-                                (tool.condition === 'BAIK' || tool.condition === 'Good' )
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-red-100 text-red-700'
-                              }`}
-                            >
-                              {tool.condition}
-                            </span>
-                          </TableCell>
-                          <TableCell>{tool.rentnote}</TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveTool(tool.id)}
-                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -619,7 +702,7 @@ export default function RentTools() {
         <div className="space-y-6">
 
           {/* Transaction Summary - Moved Below Add Tool */}
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-gray-50 to-white">
+          <Card className="hidden border-0 shadow-lg bg-gradient-to-br from-gray-50 to-white">
             <CardHeader className="border-b border-gray-100">
               <CardTitle className="text-[#003366]">Transaction Summary</CardTitle>
             </CardHeader>
@@ -681,57 +764,161 @@ export default function RentTools() {
       </div>
 
       {/* Completed Transactions List - At Bottom */}
-      {completedTransactions.length > 0 && (
+      {!isAddScreenOpen && (
         <Card className="border-0 shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-[#009999]" />
-              Recent Rental Transactions
-            </CardTitle>
-            <CardDescription>List of tools that have been borrowed</CardDescription>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-[#009999]" />
+                  Recent Rental Transactions
+                </CardTitle>
+                <CardDescription>List of rent transactions</CardDescription>
+              </div>
+
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleNewRent}
+                  className="gap-2 bg-gradient-to-r from-[#003366] to-[#009999] hover:from-[#004080] hover:to-[#00b3b3]"
+                >
+                  <Plus className="h-4 w-4" />
+                  New Rent
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 px-1">
+              <div className="relative">
+                <Input
+                  placeholder="Search by employee name or tool..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-10 border-[#009999]/30 focus:border-[#009999] focus:ring-[#009999]/20"
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <Search className="h-4 w-4 text-[#009999]/50" />
+                </div>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
-                    <TableHead>Time Entered</TableHead>
-                    <TableHead>Who Borrowed</TableHead>
+                    <TableHead>Rent Date</TableHead>
+                    <TableHead>Rented to</TableHead>
                     <TableHead>NRP</TableHead>
-                    <TableHead>Tool ID</TableHead>
-                    <TableHead>Tool Name</TableHead>
-                    <TableHead className="text-center">Qty</TableHead>
-                    <TableHead>Estimated Return Date</TableHead>
+                    <TableHead>Tools Name</TableHead>
+                    <TableHead className="text-center">MO No.</TableHead>
+                    <TableHead>Est. Return Date</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {completedTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="text-gray-900">{transaction.rentDate}</div>
-                          <div className="text-gray-500 text-xs">{transaction.rentTime}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{transaction.employeeName}</TableCell>
-                      <TableCell className="text-gray-600">{transaction.employeeNrp}</TableCell>
-                      <TableCell>{transaction.toolId}</TableCell>
-                      <TableCell>{transaction.toolName}</TableCell>
-                      <TableCell className="text-center">{transaction.quantity}</TableCell>
-                      <TableCell>
+                  {filteredTransactions.length > 0 ? filteredTransactions.map((transaction) => (
+                    console.log(transaction),
+                    <TableRow key={transaction.TransIdTools}>
+                      <TableCell className="text-gray-600">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-500" />
-                          <span>{transaction.estimatedReturnDate}</span>
+                          <span>{transaction.TransDateRental}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-500" />
+                          <span>{transaction.NAMA}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-600">{transaction.NRP}</TableCell>
+                      <TableCell className="text-gray-600">{transaction.ToolsDesc}</TableCell>
+                      <TableCell className="text-center text-gray-600">{transaction.MONumber}</TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-500" />
+                          <span>{transaction.TransEstReturnDate}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
+                            title="Edit Transaction"
+                            onClick={() => handleEditClick(transaction)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        No details found
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
+              {/* Footer */}
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center p-2">
+                  <Label htmlFor="itemsPerPage" className="mr-2">
+                    Items per page:
+                  </Label>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(value) => setItemsPerPage(Number(value))}
+                  >
+                    <SelectTrigger id="itemsPerPage">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="mx-2">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
       )}
+
 
       {/* Confirm Transaction Dialog */}
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
@@ -783,8 +970,8 @@ export default function RentTools() {
               <p className="text-xs text-gray-500">
                 Expected return date: {new Date(Date.now() + parseInt(estimatedReturnDays) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')}
               </p>
-            </div>) }
-            
+            </div>)}
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
@@ -800,7 +987,7 @@ export default function RentTools() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-       
+
       <Dialog open={isActionDialogOpen} onOpenChange={setIsActionDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -808,7 +995,7 @@ export default function RentTools() {
               {(selectedToolData ? 'SET ' : 'Add ') + titlePage}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4"> 
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="toolsName">Nama/Keterangan *</Label>
               <Input
@@ -852,7 +1039,7 @@ export default function RentTools() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="note">Note (MO / Condition)*</Label> 
+              <Label htmlFor="note">Note (MO / Condition)*</Label>
               {isSettingMO && (
                 <Input
                   id="note"
@@ -860,7 +1047,7 @@ export default function RentTools() {
                   onChange={(e) => setFormData({ ...formData, rentnote: e.target.value })}
                   placeholder="e.g., MO123"
                 />
-              )} 
+              )}
               {!isSettingMO && (
                 <Select
                   value={formData.rentnote}
@@ -876,7 +1063,7 @@ export default function RentTools() {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>) }
+                </Select>)}
             </div>
           </div>
           <DialogFooter>
@@ -888,6 +1075,76 @@ export default function RentTools() {
               className="bg-[#009999] hover:bg-[#007777] text-white"
             >
               {selectedToolData ? 'Update' : 'Add'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Transaction Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#003366]">Edit Rental Transaction</DialogTitle>
+            <DialogDescription>
+              Update the rental details for this transaction
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-nrp">NRP</Label>
+              <Input
+                id="edit-nrp"
+                value={editFormData.nrp}
+                // onChange={(e) => setEditFormData({ ...editFormData, nrp: e.target.value })}
+                disabled={true}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Employee Name</Label>
+              <Input
+                id="edit-name"
+                value={editFormData.name}
+                // onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                disabled={true}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-toolsId">Tools ID</Label>
+              <Input
+                id="edit-toolsId"
+                value={editFormData.toolsId}
+                // onChange={(e) => setEditFormData({ ...editFormData, toolsId: e.target.value })}
+                disabled={true}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-toolsName">Tools Name</Label>
+              <Input
+                id="edit-toolsName"
+                value={editFormData.toolsName}
+                // onChange={(e) => setEditFormData({ ...editFormData, toolsName: e.target.value })}
+                disabled={true}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-qty">Qty</Label>
+              <Input
+                id="edit-qty"
+                type="number"
+                value={editFormData.quantity}
+                onChange={(e) => setEditFormData({ ...editFormData, quantity: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateTransaction}
+              className="bg-[#009999] hover:bg-[#007777] text-white"
+            >
+              Update
             </Button>
           </DialogFooter>
         </DialogContent>
