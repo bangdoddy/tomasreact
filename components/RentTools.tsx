@@ -129,8 +129,10 @@ export default function RentTools() {
     toolsId: '',
     toolsName: '',
     woNo: '',
+    rentDate: '',
     quantity: 0,
-    transIdTools: ''
+    transIdTools: '',
+    condition: ''
   });
 
   // Pagination Items
@@ -145,8 +147,10 @@ export default function RentTools() {
       toolsId: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].toolsId : '',
       toolsName: transaction.ToolsDesc,
       woNo: transaction.MONumber,
+      rentDate: transaction.TransDateRental,
       quantity: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].quantity : 1,
-      transIdTools: transaction.TransIdTools
+      transIdTools: transaction.TransIdTools,
+      condition: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].condition : '',
     });
     setIsEditDialogOpen(true);
   };
@@ -230,7 +234,7 @@ export default function RentTools() {
   //   }, 100);
   // };
 
-  const handleAddToolImmediate = (toolId: string, toolName: string, toolType: string) => {
+  const handleAddToolImmediate = (toolId: string, toolName: string, toolType: string, toolStatus: string) => {
     if (!employeeData) {
       toast.error('Please scan employee code first');
       return;
@@ -284,7 +288,7 @@ export default function RentTools() {
         status: tool.Status,
       });
 
-      handleAddToolImmediate(toolIdScan.trim().toUpperCase(), tool.Nama, tool.ToolsType, tool.Status, '');
+      handleAddToolImmediate(toolIdScan.trim().toUpperCase(), tool.Nama, tool.ToolsType, tool.Status);
 
       toast.success('Tool added !');
     } else {
@@ -389,6 +393,7 @@ export default function RentTools() {
           toast.success('Transaction completed successfully!');
 
           // Reset transaction states
+          GetTransactionList();
           setRentedTools([]);
           setToolIdScan('');
           setSelectedToolData(null);
@@ -418,6 +423,42 @@ export default function RentTools() {
   function deleteByToolsId(id) {
     setRentedTools(prev => prev.filter(tool => tool.toolsId !== id));
   }
+
+  const handleDeleteTransaction = async (id: string, nrp: string) => {
+    try {
+      const response = await fetch(API.RENTTOOLS(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "DELETE",
+          Jobsite: currentUser?.Jobsite,
+          Nrp: nrp,
+          Tools: [{ toolsId: id }] // Fixed structure
+        })
+      });
+
+      console.log(nrp);
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      } else {
+        const data = await response.json();
+        // Check if backend returned success
+        if (data && data[0]?.Status === 1) {
+          toast.success('Transaction deleted successfully');
+          // Update local state
+          setCompletedTransactions(prev => prev.filter(t => t.TransIdTools !== id));
+          // Refresh from server to be sure
+          GetTransactionList();
+        } else {
+          toast.error(data[0]?.Message || 'Failed to delete transaction');
+        }
+      }
+    } catch (ex: any) {
+      toast.error("Failed. Message: " + ex.message);
+    }
+  };
 
   // Reset transaction
   const handleResetTransaction = () => {
@@ -489,7 +530,7 @@ export default function RentTools() {
   const GetTransactionList = () => {
     const params = new URLSearchParams({
       // action: "WITHTOTAL",
-      // jobsite: currentUser.Jobsite,
+      jobsite: currentUser.Jobsite,
       // current: `${currentPage}`,
       // perpage: `${itemsPerPage}`,
       // filter: searchQuery
@@ -896,14 +937,7 @@ export default function RentTools() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+
                           <Button
                             variant="ghost"
                             size="icon"
@@ -912,6 +946,15 @@ export default function RentTools() {
                             onClick={() => handleEditClick(transaction)}
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
+                            title="Delete Transaction"
+                            onClick={() => handleDeleteTransaction(transaction.TransIdTools, transaction.NRP)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -1136,65 +1179,86 @@ export default function RentTools() {
 
       {/* Edit Transaction Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-[650px]">
           <DialogHeader>
             <DialogTitle className="text-[#003366]">Edit Rental Transaction</DialogTitle>
             <DialogDescription>
               Update the rental details for this transaction
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-nrp">NRP</Label>
+          <div className="grid grid-cols-2 gap-x-20 gap-y-[5px] py-4">
+            <div className="space-y-3 mb-4">
+              <Label htmlFor="edit-nrp" className="text-xs">NRP</Label>
               <Input
                 id="edit-nrp"
                 value={editFormData.nrp}
-                // onChange={(e) => setEditFormData({ ...editFormData, nrp: e.target.value })}
                 disabled={true}
+                className="h-9 bg-gray-50"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Employee Name</Label>
+            <div className="space-y-3 mb-4">
+              <Label htmlFor="edit-name" className="text-xs">Employee Name</Label>
               <Input
                 id="edit-name"
                 value={editFormData.name}
-                // onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                 disabled={true}
+                className="h-9 bg-gray-50"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-toolsId">Tools ID</Label>
+            <div className="space-y-3 mb-4">
+              <Label htmlFor="edit-toolsId" className="text-xs">Tools ID</Label>
               <Input
                 id="edit-toolsId"
                 value={editFormData.toolsId}
-                // onChange={(e) => setEditFormData({ ...editFormData, toolsId: e.target.value })}
                 disabled={true}
+                className="h-9 bg-gray-50"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-toolsName">Tools Name</Label>
+            <div className="space-y-3 mb-4">
+              <Label htmlFor="edit-toolsName" className="text-xs">Tools Name</Label>
               <Input
                 id="edit-toolsName"
                 value={editFormData.toolsName}
-                // onChange={(e) => setEditFormData({ ...editFormData, toolsName: e.target.value })}
+                disabled={true}
+                className="h-9 bg-gray-50"
+              />
+            </div>
+            <div className="space-y-1 mb-4">
+              <Label htmlFor="edit-toolsRentDate" className="text-xs">Rent Date</Label>
+              <Input
+                id="edit-toolsRentDate"
+                value={editFormData.rentDate}
+                disabled={true}
+                className="h-9 bg-gray-50"
+              />
+            </div>
+            <div className="space-y-1 mb-4">
+              <Label htmlFor="edit-condition" className="text-xs">Condition</Label>
+              <Input
+                id="edit-condition"
+                value={editFormData.condition}
+                className="h-9"
                 disabled={true}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-woNo">WO Number</Label>
-              <Input
-                id="edit-woNo"
-                value={editFormData.woNo}
-                onChange={(e) => setEditFormData({ ...editFormData, woNo: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-qty">Qty</Label>
+            <div className="w-20 space-y-1 mb-4">
+              <Label htmlFor="edit-qty" className="text-xs">Qty</Label>
               <Input
                 id="edit-qty"
                 type="number"
                 value={editFormData.quantity}
-                onChange={(e) => setEditFormData({ ...editFormData, quantity: parseInt(e.target.value) || 0 })}
+                // onChange={(e) => setEditFormData({ ...editFormData, quantity: parseInt(e.target.value) || 0 })}
+                className="h-9"
+                disabled={true}
+              />
+            </div>
+            <div className="space-y-1 mb-4">
+              <Label htmlFor="edit-woNo" className="text-xs">WO Number</Label>
+              <Input
+                id="edit-woNo"
+                value={editFormData.woNo}
+                onChange={(e) => setEditFormData({ ...editFormData, woNo: e.target.value })}
+                className="h-9"
               />
             </div>
           </div>
