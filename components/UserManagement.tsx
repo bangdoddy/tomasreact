@@ -43,13 +43,13 @@ import type { User } from '../App';
 import { useAuth, GlobalModel } from "../service/AuthContext";
 import { API } from '../config';
 
-export default function UserManagement() { 
-  const { currentUser } = useAuth(); 
+export default function UserManagement() {
+  const { currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [jobsites, setJobsites] = useState<GlobalModel[]>([]);
   const [jabatans, setJabatans] = useState<GlobalModel[]>([]);
   const [superiors, setSuperiors] = useState<GlobalModel[]>([]);
-  const [workgroups, setWorkgroups] = useState<GlobalModel[]>([]); 
+  const [workgroups, setWorkgroups] = useState<GlobalModel[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,7 +59,7 @@ export default function UserManagement() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-    
+
   const [formData, setFormData] = useState({
     nrp: '',
     name: '',
@@ -116,45 +116,45 @@ export default function UserManagement() {
       return;
     }
 
-      try {
-          const response = await fetch(API.DETAILUSER(), {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                  action: "INSERT",
-                  nrp: formData.nrp,
-                  nama: formData.name,
-                  NrpSuperior: formData.supervisorNrp, 
-                  Jabatan: formData.positionId,
-                  JabatanStructural:formData.jabatanStructuralId,
-                  Jobsite: formData.jobsiteId,
-                  Workgroup: formData.workgroupId
-              })
-          });
+    try {
+      const response = await fetch(API.DETAILUSER(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "INSERT",
+          nrp: formData.nrp,
+          nama: formData.name,
+          NrpSuperior: formData.supervisorNrp,
+          Jabatan: formData.positionId,
+          JabatanStructural: formData.jabatanStructuralId,
+          Jobsite: formData.jobsiteId,
+          Workgroup: formData.workgroupId
+        })
+      });
 
-          if (!response.ok) {
-              toast.error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          if (data.length > 0) {
-              const resData = data[0];
-              if (resData?.Status == 1) {
-                  ReloadMaster();
-                  setIsAddDialogOpen(false);
-                  resetForm();
-                  toast.success(resData?.Message ?? 'User Insert successfully ');
-              } else {
-                  toast.error(resData?.Message ?? "Failed");
-              }
-          } else {
-              toast.error("Failed, No Respont");
-          }
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadMaster();
+          setIsAddDialogOpen(false);
+          resetForm();
+          toast.success(resData?.Message ?? 'User Insert successfully ');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Respont");
+      }
 
-      } catch (ex) {
-          toast.error("Failed. Message: " + ex.Message);
-      }  
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
   };
 
   const handleEditUser = async () => {
@@ -177,132 +177,132 @@ export default function UserManagement() {
       const response = await fetch(API.DETAILUSER(), {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          action:"UPDATE",
+          action: "UPDATE",
           nrp: formData.nrp,
           nama: formData.name,
-          NrpSuperior: formData.supervisorNrp, 
+          NrpSuperior: formData.supervisorNrp,
           Jabatan: formData.positionId,
           JabatanStructural: formData.jabatanStructuralId,
-          Jobsite: formData.jobsiteId, 
+          Jobsite: formData.jobsiteId,
           Workgroup: formData.workgroupId
         })
-      }); 
+      });
 
       if (!response.ok) {
-          toast.error(`HTTP error! status: ${response.status}`); 
-      } 
-      const data = await response.json(); 
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
       if (data.length > 0) {
-          const resData = data[0];
-          if (resData?.Status == 1) {
-              ReloadMaster();
-              setIsEditDialogOpen(false);
-              setSelectedUser(null);
-              resetForm();
-              toast.success(resData?.Message ?? 'User updated successfully ');
-          } else {
-              toast.error(resData?.Message ?? "Failed");
-          }
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadMaster();
+          setIsEditDialogOpen(false);
+          setSelectedUser(null);
+          resetForm();
+          toast.success(resData?.Message ?? 'User updated successfully ');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
       } else {
-          toast.error("Failed, No Respont");
+        toast.error("Failed, No Respont");
       }
 
     } catch (ex) {
-        toast.error("Failed. Message: "+ex.Message); 
-    } 
-       
+      toast.error("Failed. Message: " + ex.Message);
+    }
+
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
 
-      try {
-          const response = await fetch(API.DETAILUSER(), {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                  action: "DELETE",
-                  nrp: selectedUser.nrp, 
-              })
-          });
+    try {
+      const response = await fetch(API.DETAILUSER(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "DELETE",
+          nrp: selectedUser.nrp,
+        })
+      });
 
-          if (!response.ok) {
-              toast.error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          if (data.length > 0) {
-              const resData = data[0];
-              if (resData?.Status == 1) {
-                  ReloadMaster();
-                  setIsDeleteDialogOpen(false);
-                  setSelectedUser(null);
-                  toast.success(resData?.Message ?? 'User deleted successfully ');
-              } else {
-                  toast.error(resData?.Message ?? "Failed");
-              }
-          } else {
-              toast.error("Failed, No Respont");
-          }
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadMaster();
+          setIsDeleteDialogOpen(false);
+          setSelectedUser(null);
+          toast.success(resData?.Message ?? 'User deleted successfully ');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Respont");
+      }
 
-      } catch (ex) {
-          toast.error("Failed. Message: " + ex.Message);
-      }   
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
   };
 
-    const handleResetUser = async () => {
-        if (!selectedUser) return;
-        if (
-            !resetFormData.nrp ||
-            !resetFormData.password || 
-            !resetFormData.repassword  
-        ) {
-            toast.error('Please fill in all required fields');
-            return;
-        }
-
-        if (resetFormData.password != resetFormData.repassword) {
-            toast.error('Confirm password not valid');
-            return;
-        }
-
-        try {
-            const response = await fetch(API.DETAILUSER(), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    action: "RESET",
-                    nrp: resetFormData.nrp,
-                    password: resetFormData.password 
-                })
-            });
-
-            if (!response.ok) {
-                toast.error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            if (data.length > 0) {
-                const resData = data[0];
-                if (resData?.Status == 1) { 
-                    setIsResetDialogOpen(false);
-                    setSelectedUser(null); 
-                    toast.success(resData?.Message ?? 'User Reset successfully ');
-                } else {
-                    toast.error(resData?.Message ?? "Failed");
-                }
-            } else {
-                toast.error("Failed, No Respont");
-            } 
-        } catch (ex) {
-            toast.error("Failed. Message: " + ex.Message);
-        }  
+  const handleResetUser = async () => {
+    if (!selectedUser) return;
+    if (
+      !resetFormData.nrp ||
+      !resetFormData.password ||
+      !resetFormData.repassword
+    ) {
+      toast.error('Please fill in all required fields');
+      return;
     }
+
+    if (resetFormData.password != resetFormData.repassword) {
+      toast.error('Confirm password not valid');
+      return;
+    }
+
+    try {
+      const response = await fetch(API.DETAILUSER(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "RESET",
+          nrp: resetFormData.nrp,
+          password: resetFormData.password
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          setIsResetDialogOpen(false);
+          setSelectedUser(null);
+          toast.success(resData?.Message ?? 'User Reset successfully ');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Respont");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
+  }
 
   const openEditDialog = (user: User) => {
     setSelectedUser(user);
@@ -311,15 +311,15 @@ export default function UserManagement() {
       nrp: user.nrp,
       name: user.name,
       supervisorNrp: user.supervisorNrp,
-      supervisorName: selected?.Keterangan??user.supervisorName,
+      supervisorName: selected?.Keterangan ?? user.supervisorName,
       position: user.Jabatan,
       jobsite: user.Jobsite,
-        workgroup: user.Workgroup,
-        positionId: user.JabatanId,
-        jobsiteId: user.JobsiteId,
-        workgroupId: user.WorkgroupId,
-        jabatanStructural: user.JabatanStructural,
-        jabatanStructuralId:user.JabatanStructuralId
+      workgroup: user.Workgroup,
+      positionId: user.JabatanId,
+      jobsiteId: user.JobsiteId,
+      workgroupId: user.WorkgroupId,
+      jabatanStructural: user.JabatanStructural,
+      jabatanStructuralId: user.JabatanStructuralId
     });
     setIsEditDialogOpen(true);
   };
@@ -329,31 +329,31 @@ export default function UserManagement() {
     setIsDeleteDialogOpen(true);
   };
 
-    const openResetDialog = (user: User) => {
-        setSelectedUser(user);
-        const selected = superiors.find(j => j.Kode === user.supervisorNrp);
-        setResetFormData({
-            nrp: user.nrp,
-            password: "",
-            repassword: "" 
-        });
-        setIsResetDialogOpen(true);
-    };
+  const openResetDialog = (user: User) => {
+    setSelectedUser(user);
+    const selected = superiors.find(j => j.Kode === user.supervisorNrp);
+    setResetFormData({
+      nrp: user.nrp,
+      password: "",
+      repassword: ""
+    });
+    setIsResetDialogOpen(true);
+  };
 
   const resetForm = () => {
     setFormData({
       nrp: '',
       name: '',
       supervisorNrp: '',
-        supervisorName: '',
-        position: '',
-        positionId: '',
-        jobsite: '',
-        jobsiteId: '',
-        workgroup: '',
-        workgroupId: '',
-        jabatanStructural: '',
-        jabatanStructuralId: ''
+      supervisorName: '',
+      position: '',
+      positionId: '',
+      jobsite: '',
+      jobsiteId: '',
+      workgroup: '',
+      workgroupId: '',
+      jabatanStructural: '',
+      jabatanStructuralId: ''
     });
   };
 
@@ -377,74 +377,74 @@ export default function UserManagement() {
     toast.success('Data exported successfully');
   };
 
-  const ReloadMaster = ()=>{
+  const ReloadMaster = () => {
     const params = new URLSearchParams({
-      jobsite: currentUser.Jobsite, 
-    }); 
-    fetch(API.DETAILUSER()+`?${params.toString()}`, {
+      jobsite: currentUser.Jobsite,
+    });
+    fetch(API.DETAILUSER() + `?${params.toString()}`, {
       method: "GET"
     })
-      .then((response) => response.json()) 
-      .then((json : User[]) => setUsers(json))
-      .catch((error) => console.error("Error:", error)); 
+      .then((response) => response.json())
+      .then((json: User[]) => setUsers(json))
+      .catch((error) => console.error("Error:", error));
   };
 
-  const ReloadJobsites = ()=>{
+  const ReloadJobsites = () => {
     const params = new URLSearchParams({
       kategori: "Jobsite"
-    }); 
-    fetch(API.FILTERS()+`?${params.toString()}`, {
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
       method: "GET"
     })
-    .then((response) => response.json()) 
-    .then((json : GlobalModel[]) => setJobsites(json))
-    .catch((error) => console.error("Error:", error));
+      .then((response) => response.json())
+      .then((json: GlobalModel[]) => setJobsites(json))
+      .catch((error) => console.error("Error:", error));
   }
-  const ReloadJabatans = ()=>{
+  const ReloadJabatans = () => {
     const params = new URLSearchParams({
       kategori: "Jabatan"
-    }); 
-    fetch(API.FILTERS()+`?${params.toString()}`, {
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
       method: "GET"
     })
-    .then((response) => response.json()) 
-    .then((json : GlobalModel[]) => setJabatans(json))
-    .catch((error) => console.error("Error:", error));
-  } 
+      .then((response) => response.json())
+      .then((json: GlobalModel[]) => setJabatans(json))
+      .catch((error) => console.error("Error:", error));
+  }
 
-    const ReloadSuperior = () => {
-        const params = new URLSearchParams({
-            showdata:"SUPERIOR",
-            jobsite: currentUser.Jobsite,
-        });
-        fetch(API.FILTERS() + `?${params.toString()}`, {
-            method: "GET"
-        })
-        .then((response) => response.json())
-        .then((json: GlobalModel[]) => setSuperiors(json))
-        .catch((error) => console.error("Error:", error));
-    };
+  const ReloadSuperior = () => {
+    const params = new URLSearchParams({
+      showdata: "SUPERIOR",
+      jobsite: currentUser.Jobsite,
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: GlobalModel[]) => setSuperiors(json))
+      .catch((error) => console.error("Error:", error));
+  };
 
 
-    const ReloadWorkgroup = () => {
-        const params = new URLSearchParams({
-            showdata: "WORKGROUP",
-            jobsite: currentUser.Jobsite,
-        });
-        fetch(API.FILTERS() + `?${params.toString()}`, {
-            method: "GET"
-        })
-        .then((response) => response.json())
-        .then((json: GlobalModel[]) => setWorkgroups(json))
-        .catch((error) => console.error("Error:", error));
-    };
+  const ReloadWorkgroup = () => {
+    const params = new URLSearchParams({
+      showdata: "WORKGROUP",
+      jobsite: currentUser.Jobsite,
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: GlobalModel[]) => setWorkgroups(json))
+      .catch((error) => console.error("Error:", error));
+  };
 
-  useEffect(() => {  
-      ReloadMaster(); 
-      ReloadJobsites(); 
-      ReloadJabatans(); 
-      ReloadWorkgroup(); 
-      ReloadSuperior(); 
+  useEffect(() => {
+    ReloadMaster();
+    ReloadJobsites();
+    ReloadJabatans();
+    ReloadWorkgroup();
+    ReloadSuperior();
     //if(users.length === 0) { 
     //  ReloadMaster(); 
     //  console.log("Reload Users")
@@ -465,7 +465,7 @@ export default function UserManagement() {
     //    ReloadSuperior();
     //    console.log("Reload superiors")
     //}
-  },[]);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -518,7 +518,7 @@ export default function UserManagement() {
                       Jabatan
                     </TableHead>
                     <TableHead rowSpan={2} className="border-r border-gray-400 text-gray-900">
-                       Jabatan<br />Structural
+                      Jabatan<br />Structural
                     </TableHead>
                     <TableHead rowSpan={2} className="border-r border-gray-400 text-gray-900">
                       Jobsite
@@ -574,12 +574,12 @@ export default function UserManagement() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                             <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openResetDialog(user)}
-                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openResetDialog(user)}
+                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                             >
-                                <KeyRound className="h-4 w-4" />
+                              <KeyRound className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -665,39 +665,39 @@ export default function UserManagement() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4"> 
-                <div className="grid gap-2">
-                    <Label htmlFor="add-supervisor-name">Supervisor Name *</Label>
-                    {/*<Input*/}
-                    {/*    id="add-supervisor-name"*/}
-                    {/*    value={formData.supervisorName}*/}
-                    {/*    onChange={(e) => setFormData({ ...formData, supervisorName: e.target.value })}*/}
-                    {/*    placeholder="Supervisor name"*/}
-                    {/*/>*/}
-                    <Select
-                        value={formData.supervisorName}
-                        onValueChange={(value) => {
-                            const selected = superiors.find(j => j.Keterangan === value); 
-                            setFormData({ ...formData, supervisorName: value, supervisorNrp: selected?.Kode ?? "" })
-                        }}
-                    >
-                        <SelectTrigger id="add-supervisor-name">
-                            <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {superiors.map((pos) => (
-                                <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                                    {pos.Keterangan}
-                                </SelectItem>
-                            ))} 
-                        </SelectContent>
-                    </Select>
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="add-supervisor-name">Supervisor Name *</Label>
+                {/*<Input*/}
+                {/*    id="add-supervisor-name"*/}
+                {/*    value={formData.supervisorName}*/}
+                {/*    onChange={(e) => setFormData({ ...formData, supervisorName: e.target.value })}*/}
+                {/*    placeholder="Supervisor name"*/}
+                {/*/>*/}
+                <Select
+                  value={formData.supervisorName}
+                  onValueChange={(value) => {
+                    const selected = superiors.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, supervisorName: value, supervisorNrp: selected?.Kode ?? "" })
+                  }}
+                >
+                  <SelectTrigger id="add-supervisor-name">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {superiors.map((pos) => (
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-supervisor-nrp">Supervisor NRP *</Label>
                 <Input
-                    id="add-supervisor-nrp" 
-                    disabled={true}
+                  id="add-supervisor-nrp"
+                  disabled={true}
                   value={formData.supervisorNrp}
                   onChange={(e) => setFormData({ ...formData, supervisorNrp: e.target.value })}
                   placeholder="e.g., 107193"
@@ -709,64 +709,64 @@ export default function UserManagement() {
               <div className="grid gap-2">
                 <Label htmlFor="add-position">Jabatan *</Label>
                 <Select
-                    value={formData.position}
-                    onValueChange={(value) => {
-                        const selected = jabatans.find(j => j.Keterangan === value);
-                        setFormData({ ...formData, position: value, positionId:selected?.Kode??"" })
-                    }}
+                  value={formData.position}
+                  onValueChange={(value) => {
+                    const selected = jabatans.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, position: value, positionId: selected?.Kode ?? "" })
+                  }}
                 >
                   <SelectTrigger id="add-position">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
                     {jabatans.map((pos) => (
-                        <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                          {pos.Keterangan}
-                        </SelectItem>
-                      ))}  
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-position2">Jabatan Struktural *</Label>
                 <Select
-                    value={formData.jabatanStructural}
-                    onValueChange={(value) => {
-                        const selected = jabatans.find(j => j.Keterangan === value);
-                        setFormData({ ...formData, jabatanStructural: value, jabatanStructuralId: selected?.Kode ?? "" })
-                    }}
+                  value={formData.jabatanStructural}
+                  onValueChange={(value) => {
+                    const selected = jabatans.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, jabatanStructural: value, jabatanStructuralId: selected?.Kode ?? "" })
+                  }}
                 >
-                    <SelectTrigger id="add-position2">
-                        <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {jabatans.map((pos) => (
-                            <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                                {pos.Keterangan}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
+                  <SelectTrigger id="add-position2">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jabatans.map((pos) => (
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-jobsite">Jobsite *</Label>
                 <Select
-                    value={formData.jobsite}
-                    onValueChange={(value) => {
-                        const selected = jobsites.find(j => j.Keterangan === value);
-                        setFormData({ ...formData, jobsite: value, jobsiteId:selected?.Kode??"" })
-                    }}
+                  value={formData.jobsite}
+                  onValueChange={(value) => {
+                    const selected = jobsites.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, jobsite: value, jobsiteId: selected?.Kode ?? "" })
+                  }}
                 >
                   <SelectTrigger id="add-jobsite">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
-                  <SelectContent> 
+                  <SelectContent>
                     {jobsites.map((pos) => (
-                        <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                          {pos.Keterangan}
-                        </SelectItem>
-                      ))} 
-                  {/*<SelectItem value="HAJU">HAJU</SelectItem>
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                    {/*<SelectItem value="HAJU">HAJU</SelectItem>
                     <SelectItem value="BUMA">BUMA</SelectItem>
                     <SelectItem value="KPC">KPC</SelectItem> */}
                   </SelectContent>
@@ -775,22 +775,22 @@ export default function UserManagement() {
               <div className="grid gap-2">
                 <Label htmlFor="add-workgroup">Workgroup *</Label>
                 <Select
-                    value={formData.workgroup}
-                    onValueChange={(value) => {
-                        const selected = workgroups.find(j => j.Keterangan === value);
-                        setFormData({ ...formData, workgroup: value, workgroupId: selected?.Kode ?? "" })
-                    }} 
+                  value={formData.workgroup}
+                  onValueChange={(value) => {
+                    const selected = workgroups.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, workgroup: value, workgroupId: selected?.Kode ?? "" })
+                  }}
                 >
-                    <SelectTrigger id="add-workgroup">
-                        <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {workgroups.map((pos) => (
-                            <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                                {pos.Keterangan}
-                            </SelectItem>
-                        ))} 
-                    </SelectContent>
+                  <SelectTrigger id="add-workgroup">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workgroups.map((pos) => (
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
                 {/*<Input*/}
                 {/*  id="add-workgroup"*/}
@@ -816,20 +816,20 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */ }
+      {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-                <DialogTitle>Edit User</DialogTitle>
-                <DialogDescription>Update employee information</DialogDescription>
-            </DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>Update employee information</DialogDescription>
+          </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-nrp">User NRP *</Label>
                 <Input
-                    id="edit-nrp" 
-                    disabled={true}
+                  id="edit-nrp"
+                  disabled={true}
                   value={formData.nrp}
                   onChange={(e) => setFormData({ ...formData, nrp: e.target.value })}
                 />
@@ -844,38 +844,38 @@ export default function UserManagement() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4"> 
-                <div className="grid gap-2">
-                    <Label htmlFor="edit-supervisor-name">Supervisor Name *</Label>
-                    {/*<Input*/}
-                    {/*  id="edit-supervisor-name"*/}
-                    {/*  value={formData.supervisorName}*/}
-                    {/*  onChange={(e) => setFormData({ ...formData, supervisorName: e.target.value })}*/}
-                    {/*/>*/}
-                    <Select
-                        value={formData.supervisorName}
-                        onValueChange={(value) => {
-                            const selected = superiors.find(j => j.Keterangan === value);
-                            setFormData({ ...formData, supervisorName: value, supervisorNrp: selected?.Kode ?? "" })
-                        }}
-                    >
-                        <SelectTrigger id="edit-supervisor-name">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {superiors.map((pos) => (
-                                <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                                    {pos.Keterangan}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-supervisor-name">Supervisor Name *</Label>
+                {/*<Input*/}
+                {/*  id="edit-supervisor-name"*/}
+                {/*  value={formData.supervisorName}*/}
+                {/*  onChange={(e) => setFormData({ ...formData, supervisorName: e.target.value })}*/}
+                {/*/>*/}
+                <Select
+                  value={formData.supervisorName}
+                  onValueChange={(value) => {
+                    const selected = superiors.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, supervisorName: value, supervisorNrp: selected?.Kode ?? "" })
+                  }}
+                >
+                  <SelectTrigger id="edit-supervisor-name">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {superiors.map((pos) => (
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-supervisor-nrp">Supervisor NRP *</Label>
                 <Input
-                    id="edit-supervisor-nrp"
-                    disabled={true}
+                  id="edit-supervisor-nrp"
+                  disabled={true}
                   value={formData.supervisorNrp}
                   onChange={(e) => setFormData({ ...formData, supervisorNrp: e.target.value })}
                 />
@@ -886,64 +886,64 @@ export default function UserManagement() {
               <div className="grid gap-2">
                 <Label htmlFor="edit-position">Jabatan *</Label>
                 <Select
-                  value={formData.position} 
-                    onValueChange={(value) => {
-                        const selected = jabatans.find(j => j.Keterangan === value);
-                        setFormData({ ...formData, position: value, positionId: selected?.Kode ?? "" })
-                    }}
+                  value={formData.position}
+                  onValueChange={(value) => {
+                    const selected = jabatans.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, position: value, positionId: selected?.Kode ?? "" })
+                  }}
                 >
                   <SelectTrigger id="edit-position">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent> 
+                  <SelectContent>
                     {jabatans.map((pos) => (
-                        <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                          {pos.Keterangan}
-                        </SelectItem>
-                      ))} 
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="edit-position2">Jabatan Struktural *</Label>
-                    <Select
-                        value={formData.jabatanStructural}
-                        onValueChange={(value) => {
-                            const selected = jabatans.find(j => j.Keterangan === value);
-                            setFormData({ ...formData, jabatanStructural: value, jabatanStructuralId: selected?.Kode ?? "" })
-                        }}
-                    > 
-                        <SelectTrigger id="edit-position2">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {jabatans.map((pos) => (
-                                <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                                    {pos.Keterangan}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-position2">Jabatan Struktural *</Label>
+                <Select
+                  value={formData.jabatanStructural}
+                  onValueChange={(value) => {
+                    const selected = jabatans.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, jabatanStructural: value, jabatanStructuralId: selected?.Kode ?? "" })
+                  }}
+                >
+                  <SelectTrigger id="edit-position2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jabatans.map((pos) => (
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-jobsite">Jobsite *</Label>
                 <Select
                   value={formData.jobsite}
-                    onValueChange={(value) => {
-                        const selected = jobsites.find(j => j.Keterangan === value);
-                        setFormData({ ...formData, jobsite: value, jobsiteId: selected?.Kode ?? "" })
-                    }}
+                  onValueChange={(value) => {
+                    const selected = jobsites.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, jobsite: value, jobsiteId: selected?.Kode ?? "" })
+                  }}
                 >
                   <SelectTrigger id="edit-jobsite">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {jobsites.map((pos) => (
-                        <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                          {pos.Keterangan}
-                        </SelectItem>
-                      ))} 
-                  {/*<SelectItem value="HAJU">HAJU</SelectItem>
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                    {/*<SelectItem value="HAJU">HAJU</SelectItem>
                     <SelectItem value="BUMA">BUMA</SelectItem>
                     <SelectItem value="KPC">KPC</SelectItem> */}
                   </SelectContent>
@@ -957,21 +957,21 @@ export default function UserManagement() {
                 {/*  onChange={(e) => setFormData({ ...formData, workgroup: e.target.value })}*/}
                 {/*/>*/}
                 <Select
-                    value={formData.workgroup}
-                    onValueChange={(value) => {
-                        const selected = workgroups.find(j => j.Keterangan === value);
-                        setFormData({ ...formData, workgroup: value, workgroupId:selected?.Kode??"" })
-                    }} >
-                    <SelectTrigger id="edit-workgroup">
-                        <SelectValue  />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {workgroups.map((pos) => (
-                            <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                                {pos.Keterangan}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
+                  value={formData.workgroup}
+                  onValueChange={(value) => {
+                    const selected = workgroups.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, workgroup: value, workgroupId: selected?.Kode ?? "" })
+                  }} >
+                  <SelectTrigger id="edit-workgroup">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workgroups.map((pos) => (
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
             </div>
@@ -1009,56 +1009,56 @@ export default function UserManagement() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-        </AlertDialog>
-         
-        {/* Reset Password Dialog */}
-        <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-            <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                    <DialogTitle>Reset Password User</DialogTitle>
-                    <DialogDescription>Reset Password information</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-                    <div className="grid grid-cols-1 gap-4">
-                        <div className="grid gap-4">
-                            <Label htmlFor="add-nrp">Password *</Label>
-                            <Input
-                                  id="reset-password"
-                                  type="password"
-                                  value={resetFormData.password}
-                                  onChange={(e) => setResetFormData({ ...resetFormData, password: e.target.value })}
-                                placeholder="Password"
-                            />
-                          </div>
-                      </div>
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="grid gap-4">
-                            <Label htmlFor="add-name">Confirm Password *</Label>
-                            <Input
-                                  id="reset-repassword"
-                                  type="password"
-                                  value={resetFormData.repassword}
-                                  onChange={(e) => setResetFormData({ ...resetFormData, repassword: e.target.value })}
-                                placeholder="Confirm Password"
-                            />
-                        </div>
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            setIsResetDialogOpen(false);
-                            resetForm();
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button onClick={handleResetUser} className="bg-gradient-to-r from-[#003366] to-[#009999] hover:from-[#004080] hover:to-[#00b3b3]">Reset</Button>
+      </AlertDialog>
 
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Reset Password User</DialogTitle>
+            <DialogDescription>Reset Password information</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="grid gap-4">
+                <Label htmlFor="add-nrp">Password *</Label>
+                <Input
+                  id="reset-password"
+                  type="password"
+                  value={resetFormData.password}
+                  onChange={(e) => setResetFormData({ ...resetFormData, password: e.target.value })}
+                  placeholder="Password"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="grid gap-4">
+                <Label htmlFor="add-name">Confirm Password *</Label>
+                <Input
+                  id="reset-repassword"
+                  type="password"
+                  value={resetFormData.repassword}
+                  onChange={(e) => setResetFormData({ ...resetFormData, repassword: e.target.value })}
+                  placeholder="Confirm Password"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsResetDialogOpen(false);
+                resetForm();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleResetUser} className="bg-gradient-to-r from-[#003366] to-[#009999] hover:from-[#004080] hover:to-[#00b3b3]">Reset</Button>
+
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

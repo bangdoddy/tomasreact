@@ -26,12 +26,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import { Scan, Plus, Trash2, ShoppingCart, Eye, Edit, User, Check, X, Calendar, Clock, ChevronRight, ChevronLeft, Search } from 'lucide-react';
+import {
+  Scan, Plus, Trash2, ShoppingCart, Eye, Edit, User, Check, X, Calendar, Clock,
+  ChevronRight, ChevronLeft, Search, Download
+} from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../service/AuthContext";
 import { GlobalModel } from "../model/Models";
 import { API } from '../config';
 import { InputRef } from './ui/inputref';
+import * as XLSX from 'xlsx';
 
 interface RentedTool {
   id: string;
@@ -65,13 +69,17 @@ interface Employee {
 // }
 
 interface CompletedTransaction {
+  NO: string;
   TransIdTools: string;
   ToolsDesc: string;
+  ToolsType: string;
   NRP: string;
   NAMA: string;
   TransDateRental: string;
   TransEstReturnDate: string;
+  TransReturnDate: string;
   MONumber: string;
+  ToolCondition: string;
   Tools: RentedTool[];
 }
 export default function RentTools() {
@@ -94,10 +102,6 @@ export default function RentTools() {
   const [titlePage, setTitlePage] = useState<string>("MO");
   const [searchQuery, setSearchQuery] = useState('');
 
-  /*Pagination Items */
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(-1);
 
   // Quick entry form state
   const [toolIdScan, setToolIdScan] = useState('');
@@ -124,9 +128,15 @@ export default function RentTools() {
     name: '',
     toolsId: '',
     toolsName: '',
+    woNo: '',
     quantity: 0,
     transIdTools: ''
   });
+
+  // Pagination Items
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
 
   const handleEditClick = (transaction: CompletedTransaction) => {
     setEditFormData({
@@ -134,6 +144,7 @@ export default function RentTools() {
       name: transaction.NAMA,
       toolsId: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].toolsId : '',
       toolsName: transaction.ToolsDesc,
+      woNo: transaction.MONumber,
       quantity: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].quantity : 1,
       transIdTools: transaction.TransIdTools
     });
@@ -431,6 +442,11 @@ export default function RentTools() {
     setSelectedToolData(null);
   };
 
+  // Reset to page 1 when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
 
   const GetUserList = () => {
     const params = new URLSearchParams({
@@ -472,7 +488,11 @@ export default function RentTools() {
 
   const GetTransactionList = () => {
     const params = new URLSearchParams({
-      jobsite: currentUser.Jobsite
+      // action: "WITHTOTAL",
+      // jobsite: currentUser.Jobsite,
+      // current: `${currentPage}`,
+      // perpage: `${itemsPerPage}`,
+      // filter: searchQuery
     });
     fetch(API.RENTTOOLS() + `?${params.toString()}`, {
       method: "GET"
@@ -493,6 +513,13 @@ export default function RentTools() {
     );
   });
 
+  /*Pagination Items (fallback to client-side if total is not set) */
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+
   useEffect(() => {
     GetUserList();
     GetToolsList();
@@ -505,6 +532,30 @@ export default function RentTools() {
       console.log("ref is focus")
     }
   }, []);
+
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      completedTransactions.map((rent) => ({
+        'Jobsite': '',
+        'Tools ID': rent.TransIdTools,
+        'Tools Name': rent.ToolsDesc,
+        'Tools Type': rent.ToolsType,
+        'MO Number': rent.MONumber,
+        'Rent Date': rent.TransDateRental,
+        'Rented To': rent.NAMA,
+        'NRP': rent.NRP,
+        'Est. Return Date': rent.TransEstReturnDate,
+        'Return Date': rent.TransReturnDate,
+        'Condition': rent.ToolCondition,
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Rent Transaction');
+
+    XLSX.writeFile(workbook, `SmartTomas_Rent_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Data exported successfully');
+  };
 
   return (
     <div className="space-y-6">
@@ -776,8 +827,12 @@ export default function RentTools() {
                 <CardDescription>List of rent transactions</CardDescription>
               </div>
 
-
               <div className="flex gap-2">
+                <Button onClick={exportToExcel} variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10">
+                  <Download className="h-4 w-4" />
+                  Export to Excel
+                </Button>
+
                 <Button
                   onClick={handleNewRent}
                   className="gap-2 bg-gradient-to-r from-[#003366] to-[#009999] hover:from-[#004080] hover:to-[#00b3b3]"
@@ -792,7 +847,7 @@ export default function RentTools() {
                 <Input
                   placeholder="Search by employee name or tool..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10 h-10 border-[#009999]/30 focus:border-[#009999] focus:ring-[#009999]/20"
                 />
                 <div className="absolute left-3 top-1/2 -translate-y-1/2">
@@ -816,9 +871,8 @@ export default function RentTools() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTransactions.length > 0 ? filteredTransactions.map((transaction) => (
-                    console.log(transaction),
-                    <TableRow key={transaction.TransIdTools}>
+                  {currentTransactions.length > 0 ? currentTransactions.map((transaction) => (
+                    <TableRow key={transaction.NO}>
                       <TableCell className="text-gray-600">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-500" />
@@ -950,12 +1004,12 @@ export default function RentTools() {
                   <span className="text-gray-600">Total Items:</span>
                   <span className="text-gray-900">{rentedTools.length}</span>
                 </div>
-                <div className="flex justify-between">
+                {/* <div className="flex justify-between">
                   <span className="text-gray-600">Total Quantity:</span>
                   <span className="text-gray-900">
                     {rentedTools.reduce((sum, tool) => sum + tool.quantity, 0)}
                   </span>
-                </div>
+                </div> */}
               </div>
             </div>
             {adaRentTrans && (<div className="grid gap-2">
@@ -982,7 +1036,7 @@ export default function RentTools() {
               className="bg-gradient-to-r from-green-600 to-green-500"
             >
               <Check className="h-4 w-4 mr-2" />
-              Confirm Transaction
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1124,6 +1178,14 @@ export default function RentTools() {
                 value={editFormData.toolsName}
                 // onChange={(e) => setEditFormData({ ...editFormData, toolsName: e.target.value })}
                 disabled={true}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-woNo">WO Number</Label>
+              <Input
+                id="edit-woNo"
+                value={editFormData.woNo}
+                onChange={(e) => setEditFormData({ ...editFormData, woNo: e.target.value })}
               />
             </div>
             <div className="space-y-2">

@@ -43,11 +43,11 @@ import type { Tool } from '../App';
 import { useAuth, AuthUsers } from "../service/AuthContext";
 import { RegisterTools, GlobalModel } from "../model/Models";
 import { API } from '../config';
-import ToolCertification from './inspection/ToolCertification'; 
+import ToolCertification from './inspection/ToolCertification';
 
 export default function ToolsManagement() {
   const { currentUser } = useAuth();
-  const [itemList, setItemList] = useState<RegisterTools[]>([]);  
+  const [itemList, setItemList] = useState<RegisterTools[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /*Pagination Items */
@@ -69,7 +69,7 @@ export default function ToolsManagement() {
   const [toolBoxList, setToolBoxList] = useState<GlobalModel[]>([]);
 
   const [isDownloadRun, setIsDownloadRun] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(''); 
+  const [searchTerm, setSearchTerm] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RegisterTools | null>(null);
@@ -105,13 +105,13 @@ export default function ToolsManagement() {
     ToolsType: '',
     ToolsCategory: '',
     ToolsWorkgroup: '',
-    ToolsWorkgroupId: '', 
+    ToolsWorkgroupId: '',
     ToolIdStdQuantity: '',
     ToolCodeSubType: '',
     ToolCodeVolume: '',
     ToolCodeSatuan: '',
     ToolsNrpMekanik: '',
-    ToolsPicPerson: '', 
+    ToolsPicPerson: '',
     ToolsQty: '',
     ToolsImage: '',
     ToolsDocument: '',
@@ -160,7 +160,7 @@ export default function ToolsManagement() {
       ToolCodeVolume: '',
       ToolCodeSatuan: '',
       ToolsNrpMekanik: '',
-      ToolsPicPerson: '', 
+      ToolsPicPerson: '',
       ToolsQty: '',
       ToolsImage: '',
       ToolsDocument: '',
@@ -181,7 +181,7 @@ export default function ToolsManagement() {
   //};  
 
   const openNewDialog = () => {
-    setEditingItem(null); 
+    setEditingItem(null);
     resetForm();
     setIsDialogOpen(true);
   }
@@ -226,14 +226,14 @@ export default function ToolsManagement() {
       ToolCodeVolume: '',
       ToolCodeSatuan: '',
       ToolsNrpMekanik: tool.ToolsNrpMekanik,
-      ToolsPicPerson: tool.ToolsPicPerson, 
+      ToolsPicPerson: tool.ToolsPicPerson,
       ToolsQty: tool.ToolsQty,
       ToolsImage: '',
       ToolsDocument: '',
       ToolsDocumentKalibrasi: '',
       FileNameImage: '',
       FileNameDocument: '',
-      FileNameDocumentKalibrasi: '', 
+      FileNameDocumentKalibrasi: '',
     });
     setIsDialogOpen(true);
   };
@@ -249,9 +249,9 @@ export default function ToolsManagement() {
       !formData.ToolsId ||
       !formData.ToolsDesc ||
       !formData.ToolsLocation ||
-      !formData.ToolsSerialNo || 
+      !formData.ToolsSerialNo ||
       !formData.ToolsDateIn ||
-      !formData.ToolsBrand || 
+      !formData.ToolsBrand ||
       !formData.ToolsSize
     ) {
       toast.error('Please fill in all required fields');
@@ -265,13 +265,13 @@ export default function ToolsManagement() {
         },
         body: JSON.stringify({
           action: (editingItem ? "UPDATE" : "INSERT"),
-          Jobsite: formData.ToolsJobsite, 
+          Jobsite: formData.ToolsJobsite,
           ToolId: formData.ToolsId,
           ToolsIdEll: formData.ToolsIdEll,
           ToolsDesc: formData.ToolsDesc,
           ToolsLocation: formData.ToolsLocation,
-          ToolsCostDefault: String(formData.ToolsCostDefault), 
-          ToolsDateIn: (formData.ToolsDateIn?.replace("T"," ")+":00"??""),
+          ToolsCostDefault: String(formData.ToolsCostDefault),
+          ToolsDateIn: (formData.ToolsDateIn?.replace("T", " ") + ":00" ?? ""),
           ToolsBrand: formData.ToolsBrand,
           ToolsType: formData.ToolsType,
           ToolsCategory: formData.ToolsCategory,
@@ -281,15 +281,15 @@ export default function ToolsManagement() {
           ToolsNrpMekanik: formData.ToolsNrpMekanik,
           ToolsPicPerson: formData.ToolsPicPerson,
           StatusCapex: formData.StatusCapex,
-          ToolsGroupType: formData.ToolsGroupType, 
+          ToolsGroupType: formData.ToolsGroupType,
           ToolsWeight: String(formData.ToolsWeight),
           ToolsPartNo: formData.ToolsPartNo,
           ToolsPICToolBox: formData.ToolsPICToolBox,
           ToolsIDToolBox: formData.ToolsIDToolBox,
           ToolsExpKalibrasi: formData.ToolsExpKalibrasi,
-          ToolsImage: ((formData.ToolsImage=="")?null:formData.ToolsImage),
+          ToolsImage: ((formData.ToolsImage == "") ? null : formData.ToolsImage),
           ToolsDocument: ((formData.ToolsDocument == "") ? null : formData.ToolsDocument),
-          ToolsDocumentKalibrasi: ((formData.ToolsDocumentKalibrasi == "") ? null : formData.ToolsDocumentKalibrasi), 
+          ToolsDocumentKalibrasi: ((formData.ToolsDocumentKalibrasi == "") ? null : formData.ToolsDocumentKalibrasi),
         })
       });
 
@@ -322,18 +322,18 @@ export default function ToolsManagement() {
     setEditingItem(null);
     toast.success('Tool deleted successfully');
   };
-  const exportToExcel = async () => { 
+  const exportToExcel = async () => {
     setIsDownloadRun(true);
-    try { 
+    try {
       const params = new URLSearchParams({
         jobsite: String(currentUser?.Jobsite ?? ""),
         current: "1",
-        perpage:"0",
+        perpage: "0",
         filter: String(searchTerm ?? "")
-      }); 
-      const url = `${API.REGISTERTOOLS()}?${params.toString()}`; 
+      });
+      const url = `${API.REGISTERTOOLS()}?${params.toString()}`;
       const response = await fetch(url, {
-        method: "GET", 
+        method: "GET",
         headers: {
           Accept: "application/json"
         }
@@ -341,30 +341,30 @@ export default function ToolsManagement() {
 
       if (!response.ok) {
         toast.error(`HTTP error! status: ${response.status}`);
-        return;  
+        return;
       }
-       
+
       let data;
       const text = await response.text();
-      data = text ? JSON.parse(text) : null;  
+      data = text ? JSON.parse(text) : null;
       const itemDownload = (data as RegisterTools[])
       if (Array.isArray(data) && data.length > 0) {
         saveToExcel(data);
-      } else if (data && typeof data === "object" && Array.isArray(data.data)) { 
+      } else if (data && typeof data === "object" && Array.isArray(data.data)) {
         if (data.items.length > 0) {
           saveToExcel(data.data);
         } else {
           toast.error("Failed, No Response");
-          return;  
+          return;
         }
       } else {
         toast.error("Failed, No Response");
-        return;  
+        return;
       }
-    } catch (ex) { 
+    } catch (ex) {
       const message = ex?.message ?? String(ex);
       toast.error("Failed. Message: " + message);
-      return;  
+      return;
     }
     setIsDownloadRun(false);
   };
@@ -376,7 +376,7 @@ export default function ToolsManagement() {
         'Tools Id': tool.ToolsId,
         'Tools Desc': tool.ToolsDesc,
         'Tools Location': tool.ToolsLocation,
-        'Tools Serial No': tool.ToolsSerialNo, 
+        'Tools Serial No': tool.ToolsSerialNo,
         'Tools Category': tool.ToolsType,
         'Tools Date In': tool.ToolsDateIn,
         'Tools Brand': tool.ToolsBrand,
@@ -432,31 +432,31 @@ export default function ToolsManagement() {
       }
     };
     reader.readAsArrayBuffer(file);
-    
+
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
-   /*Load Server */
+  /*Load Server */
   const ReloadMaster = () => {
     const params = new URLSearchParams({
       action: "WITHTOTAL",
       jobsite: currentUser.Jobsite,
       current: `${currentPage}`,
       perpage: `${itemsPerPage}`,
-      filter: searchTerm, 
+      filter: searchTerm,
     });
     fetch(API.REGISTERTOOLS() + `?${params.toString()}`, {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((data) => { 
-        setTotalPages(data.total ?? -1); 
-        setItemList(data.data??data)
+      .then((data) => {
+        setTotalPages(data.total ?? -1);
+        setItemList(data.data ?? data)
       })
       .catch((error) => console.error("Error:", error));
-  }; 
+  };
 
   const ReloadJobsites = () => {
     const params = new URLSearchParams({
@@ -469,7 +469,7 @@ export default function ToolsManagement() {
       .then((json: GlobalModel[]) => setJobsites(json))
       .catch((error) => console.error("Error:", error));
   }
-   
+
   const ReloadStatusCapex = () => {
     const params = new URLSearchParams({
       kategori: "StatusCapex"
@@ -528,7 +528,7 @@ export default function ToolsManagement() {
   const ReloadStdQuantity = () => {
     const params = new URLSearchParams({
       showdata: "STDQUANTITY",
-      jobsite:currentUser.Jobsite
+      jobsite: currentUser.Jobsite
     });
     fetch(API.FILTERS() + `?${params.toString()}`, {
       method: "GET"
@@ -599,7 +599,7 @@ export default function ToolsManagement() {
     return codeId;
   }
 
-  const CekToolId = async (partCode:string) => {
+  const CekToolId = async (partCode: string) => {
     const params = new URLSearchParams({
       action: "NEWIDTOOL",
       jobsite: currentUser.Jobsite,
@@ -617,16 +617,16 @@ export default function ToolsManagement() {
       toast.error(`HTTP error! status: ${response.status}`);
       return;
     }
-     
+
     const text = await response.text();
-    var data = text ? JSON.parse(text) : null; 
+    var data = text ? JSON.parse(text) : null;
     if (Array.isArray(data) && data.length > 0) {
       var item = data[0];
-      return item.Kode??"-";
-    }  
+      return item.Kode ?? "-";
+    }
     return "";
   }
-   
+
   useEffect(() => {
     if (itemList.length > 0) {
       console.log("currentPage Load");
@@ -655,7 +655,7 @@ export default function ToolsManagement() {
       setCurrentPage(1);
     }
   }, [searchTerm]);
-    
+
   useEffect(() => {
     if (itemList.length == 0) {
       console.log("itemList Load");
@@ -680,7 +680,7 @@ export default function ToolsManagement() {
     if (stdQuantities.length === 0) {
       ReloadStdQuantity();
       console.log("Reload stdQuantities")
-    } 
+    }
     if (toolLocations.length === 0) {
       ReloadLocations();
       console.log("Reload toolLocations")
@@ -704,14 +704,14 @@ export default function ToolsManagement() {
     if (toolBoxList.length === 0) {
       ReloadListToolBox()
       console.log("Reload toolBoxList")
-    } 
+    }
   }, []);
 
   const filteredsubType = subcategories.filter(
-    (subtype) => subtype.Kategori.includes(formData.ToolsCategory) 
+    (subtype) => subtype.Kategori.includes(formData.ToolsCategory)
   );
   const MAX_SIZE_BYTES = 1 * 1024 * 1024 // 10 MB (ubah sesuai kebutuhan)
-   
+
   return (
     <div className="space-y-6">
       <Card>
@@ -739,7 +739,7 @@ export default function ToolsManagement() {
                 Import Excel
               </Button>
               <Button onClick={exportToExcel} disabled={isDownloadRun} variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10">
-                <Download className="h-4 w-4" />  
+                <Download className="h-4 w-4" />
                 {isDownloadRun ? "Downloading..." : "Export Excel"}
               </Button>
               <Button onClick={() => openNewDialog()} className="gap-2 bg-gradient-to-r from-[#003366] to-[#009999] hover:from-[#004080] hover:to-[#00b3b3]">
@@ -780,7 +780,7 @@ export default function ToolsManagement() {
                     <TableHead className="border-r border-gray-400 text-gray-900">Brand</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900">Type</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900">Size</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Condition</TableHead> 
+                    <TableHead className="border-r border-gray-400 text-gray-900">Condition</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900">Cost</TableHead>
                     <TableHead className="text-right text-gray-900">Actions</TableHead>
                   </TableRow>
@@ -808,17 +808,16 @@ export default function ToolsManagement() {
                         <TableCell className="border-r border-gray-200">{tool.ToolsSize}</TableCell>
                         <TableCell className="border-r border-gray-200">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs ${
-                              tool.StTools === 'Good'
-                                ? 'bg-green-100 text-green-800'
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs ${tool.StTools === 'Good'
+                              ? 'bg-green-100 text-green-800'
                               : tool.StTools === 'R1'
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-yellow-100 text-yellow-800'
-                            }`}
+                              }`}
                           >
                             {tool.StTools}
                           </span>
-                        </TableCell> 
+                        </TableCell>
                         <TableCell className="border-r border-gray-200">{tool.ToolsCostDefault}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -899,16 +898,16 @@ export default function ToolsManagement() {
             <DialogTitle> {(editingItem ? 'Edit ' : 'Add New ')} Tool</DialogTitle>
             <DialogDescription>{(editingItem ? 'Edit ' : 'Create a new ')} tool record in the system</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto"> 
-            <div className={`grid grid-cols-3 gap-4`} > 
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className={`grid grid-cols-3 gap-4`} >
               <div className="grid gap-2">
                 <Label htmlFor="add-toolsgroup">Filter *</Label>
                 <Select
                   value={formData.ToolsGroupType}
-                  disabled={editingItem!=null}
+                  disabled={editingItem != null}
                   onValueChange={(value) => setFormData({ ...formData, ToolsGroupType: value })}
                 >
-                  <SelectTrigger id="add-toolsgroup"> 
+                  <SelectTrigger id="add-toolsgroup">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
@@ -919,21 +918,21 @@ export default function ToolsManagement() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div> 
-              <div className={`grid gap-2 lg:col-span-2 ${editingItem ? "hidden" : "block"}`}> 
+              </div>
+              <div className={`grid gap-2 lg:col-span-2 ${editingItem ? "hidden" : "block"}`}>
                 <Label htmlFor="add-stdQuantities">Tools Library *</Label>
                 <Select
-                  value={formData.ToolIdStdQuantity} 
+                  value={formData.ToolIdStdQuantity}
                   onValueChange={async (value) => {
                     const selected = stdQuantities.find(j => j.Kode === value);
                     var code = await CekToolId(value);
-                    setFormData({ ...formData, ToolIdStdQuantity: value, ToolsDesc: selected.Nama, StatusCapex: selected.Status, ToolsCategory: selected.KategoriId, ToolsType: selected.Kategori, ToolsId: code })  
+                    setFormData({ ...formData, ToolIdStdQuantity: value, ToolsDesc: selected.Nama, StatusCapex: selected.Status, ToolsCategory: selected.KategoriId, ToolsType: selected.Kategori, ToolsId: code })
                   }}
                 >
                   <SelectTrigger id="add-stdQuantities">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
-                  <SelectContent> 
+                  <SelectContent>
                     {stdQuantities.map((pos) => (
                       <SelectItem key={pos.Kode} value={pos.Kode}>
                         {pos.Keterangan}
@@ -941,11 +940,11 @@ export default function ToolsManagement() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div> 
+              </div>
             </div>
 
             <div className={`grid grid-cols-6 gap-4 ${formData.ToolIdStdQuantity ? "hidden" : "block"}`}>
-              <div className="grid gap-2"> 
+              <div className="grid gap-2">
                 <Select
                   value={formData.ToolsCategory}
                   onValueChange={async (value) => {
@@ -964,7 +963,7 @@ export default function ToolsManagement() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div> 
+              </div>
               <div className="grid gap-2">
                 <Select
                   value={formData.ToolCodeSubType}
@@ -985,15 +984,15 @@ export default function ToolsManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2"> 
+              <div className="grid gap-2">
                 <Input
                   id="add-volume"
-                  value={formData.ToolCodeVolume} 
+                  value={formData.ToolCodeVolume}
                   onChange={async (e) => {
                     //var code = await CheckOptionToolsId(formData.ToolsCategory, formData.ToolCodeSubType, e.target.value, formData.ToolCodeSatuan)
-                    setFormData({ ...formData, ToolCodeVolume: e.target.value  })
+                    setFormData({ ...formData, ToolCodeVolume: e.target.value })
                   }}
-                  onBlur={ async() => {
+                  onBlur={async () => {
                     var code = await CheckOptionToolsId(formData.ToolsCategory, formData.ToolCodeSubType, formData.ToolCodeVolume, formData.ToolCodeSatuan)
                     setFormData({ ...formData, ToolsId: code })
                   }}
@@ -1005,7 +1004,7 @@ export default function ToolsManagement() {
                   value={formData.ToolCodeSatuan}
                   onValueChange={async (value) => {
                     var code = await CheckOptionToolsId(formData.ToolsCategory, formData.ToolCodeSubType, formData.ToolCodeVolume, value)
-                    setFormData({ ...formData, ToolCodeSatuan: value, ToolsId:code })
+                    setFormData({ ...formData, ToolCodeSatuan: value, ToolsId: code })
                   }}
                 >
                   <SelectTrigger id="add-toolssubtype">
@@ -1041,7 +1040,7 @@ export default function ToolsManagement() {
                   placeholder="Tool description"
                 />
               </div>
-            </div>  
+            </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
@@ -1056,11 +1055,11 @@ export default function ToolsManagement() {
                   <SelectContent>
                     {toolLocations.map((pos) => (
                       <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                        {pos.Keterangan} 
+                        {pos.Keterangan}
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select> 
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-statusCapex">Capex/Opex *</Label>
@@ -1089,7 +1088,7 @@ export default function ToolsManagement() {
                   onChange={(e) => setFormData({ ...formData, ToolsDateIn: e.target.value })}
                   placeholder="e.g., 1-Jan-2020"
                 />
-              </div> 
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-cost">Cost</Label>
                 <Input
@@ -1108,7 +1107,7 @@ export default function ToolsManagement() {
                   onChange={(e) => setFormData({ ...formData, ToolsIdEll: e.target.value })}
                   placeholder="SAP No"
                 />
-              </div>   
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-weight">Weight *</Label>
                 <Input
@@ -1117,7 +1116,7 @@ export default function ToolsManagement() {
                   onChange={(e) => setFormData({ ...formData, ToolsWeight: e.target.value })}
                   placeholder="Weight"
                 />
-              </div> 
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-brand">Brand *</Label>
                 <Input
@@ -1126,7 +1125,7 @@ export default function ToolsManagement() {
                   onChange={(e) => setFormData({ ...formData, ToolsBrand: e.target.value })}
                   placeholder="Brand name"
                 />
-              </div> 
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-size">Size *</Label>
                 <Input
@@ -1153,7 +1152,7 @@ export default function ToolsManagement() {
                   onChange={(e) => setFormData({ ...formData, ToolsPartNo: e.target.value })}
                   placeholder="PartNo"
                 />
-              </div>  
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-PurchaseNo">Purchase No *</Label>
                 <Input
@@ -1173,7 +1172,7 @@ export default function ToolsManagement() {
                   placeholder="exp date"
                 />
               </div>
-            </div> 
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="image-file">Image</Label>
@@ -1215,8 +1214,8 @@ export default function ToolsManagement() {
                     const reader = new FileReader()
 
                     reader.onload = () => {
-                      const result = reader.result as string 
-                      setFormData({ ...formData, ToolsImage: result, FileNameImage:file.name })
+                      const result = reader.result as string
+                      setFormData({ ...formData, ToolsImage: result, FileNameImage: file.name })
                     }
 
                     reader.onerror = () => {
@@ -1270,7 +1269,7 @@ export default function ToolsManagement() {
 
                     reader.onload = () => {
                       const result = reader.result as string
-                      setFormData({ ...formData, ToolsDocument: result, FileNameDocument:file.name })
+                      setFormData({ ...formData, ToolsDocument: result, FileNameDocument: file.name })
                     }
 
                     reader.onerror = () => {
@@ -1337,7 +1336,7 @@ export default function ToolsManagement() {
                 />
                 <label className={`filenameSmall ${(formData.FileNameDocumentKalibrasi === "") ? "block" : "block"}`} >{formData.FileNameDocumentKalibrasi}</label>
               </div>
-            </div> 
+            </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className={`grid gap-2 lg:col-span-2 ${(formData.ToolsGroupType !== "TOOL") ? "hidden" : "block"}`}>
@@ -1438,7 +1437,7 @@ export default function ToolsManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-       
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
