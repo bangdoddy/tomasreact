@@ -28,12 +28,13 @@ import {
 } from './ui/dialog';
 import {
   Scan, Plus, Trash2, ShoppingCart, Eye, Edit, User, Check, X, Calendar, Clock,
-  ChevronRight, ChevronLeft, Search, Download
+  ChevronRight, ChevronLeft, Search, Download, RotateCcw
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../service/AuthContext";
 import { GlobalModel } from "../model/Models";
 import { API } from '../config';
+import { Separator } from './ui/separator';
 import { InputRef } from './ui/inputref';
 import * as XLSX from 'xlsx';
 
@@ -44,7 +45,7 @@ interface RentedTool {
   toolsType: string;
   quantity: number;
   condition: string;
-  // rentnote: string; //MO OR rent Condition
+  rentnote: string; //MO OR rent Condition
   addedTime: string;
 }
 
@@ -121,7 +122,7 @@ export default function RentTools() {
     condition: '',
     rentnote: '',
   });
-
+  const [isToolFound, setToolFound] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     nrp: '',
@@ -134,6 +135,9 @@ export default function RentTools() {
     transIdTools: '',
     condition: ''
   });
+  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
+  const [returnToolData, setReturnToolData] = useState<CompletedTransaction | null>(null);
+  const [returnCondition, setReturnCondition] = useState('Good');
 
   // Pagination Items
   const [currentPage, setCurrentPage] = useState(1);
@@ -144,7 +148,7 @@ export default function RentTools() {
     setEditFormData({
       nrp: transaction.NRP,
       name: transaction.NAMA,
-      toolsId: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].toolsId : '',
+      toolsId: transaction.TransIdTools,
       toolsName: transaction.ToolsDesc,
       woNo: transaction.MONumber,
       rentDate: transaction.TransDateRental,
@@ -155,11 +159,63 @@ export default function RentTools() {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateTransaction = () => {
+  const handleReturnClick = (transaction: CompletedTransaction) => {
+    setReturnToolData(transaction);
+    setIsReturnDialogOpen(true);
+  };
+
+  const handleUpdateTransaction = async () => {
     // Placeholder for update logic
-    console.log('Updating transaction:', editFormData);
-    toast.success('Transaction updated successfully');
-    setIsEditDialogOpen(false);
+    if (
+      !editFormData.woNo
+    ) {
+      toast.error('Please fill WO Number fields');
+      return;
+    }
+
+    const selectedTools = [{
+      toolsId: editFormData.toolsId,
+      toolsName: editFormData.toolsName,
+      rentnote: editFormData.woNo
+    }];
+
+    try {
+      const response = await fetch(API.RENTTOOLS(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "UPDATE",
+          ToolsId: editFormData.toolsId,
+          Nrp: editFormData.nrp,
+          Tools: selectedTools
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          GetTransactionList();
+          handleBackToList();
+          console.log('Updating transaction:', editFormData);
+          toast.success('Transaction updated successfully');
+          setIsEditDialogOpen(false);
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
+
   };
 
 
@@ -234,7 +290,7 @@ export default function RentTools() {
   //   }, 100);
   // };
 
-  const handleAddToolImmediate = (toolId: string, toolName: string, toolType: string, toolStatus: string) => {
+  const handleAddToolImmediate = (toolId: string, toolName: string, toolType: string, toolStatus: string, rentnote: string = '') => {
     if (!employeeData) {
       toast.error('Please scan employee code first');
       return;
@@ -248,6 +304,7 @@ export default function RentTools() {
       toolsType: toolType,
       quantity: 1,
       condition: 'BAIK',
+      rentnote: rentnote,
       addedTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
     };
 
@@ -270,30 +327,39 @@ export default function RentTools() {
     toast.success('Tool removed from transaction');
   };
 
+  const handleUpdateRentNote = (id: string, note: string) => {
+    setRentedTools(prev => prev.map(tool =>
+      tool.id === id ? { ...tool, rentnote: note } : tool
+    ));
+  };
+
   // Handle tool ID scan/lookup
   const handleToolIdScan = () => {
-    const tool = regtools.find(j => j.Kode.toUpperCase() === toolIdScan.trim().toUpperCase()) || null;
+    const trimmedId = toolIdScan.trim().toUpperCase();
+    if (!trimmedId) return;
+
+    // Check for duplicate ToolsId in existing rentedTools
+    const isDuplicate = rentedTools.some(t => t.toolsId.toUpperCase() === trimmedId);
+    if (isDuplicate) {
+      setToolIdScan('');
+      return;
+    }
+
+    const tool = regtools.find(j => j.Kode.toUpperCase() === trimmedId) || null;
     if (tool) {
-      // if (tool.Status === "New") {
-      //   toast.error(`${tool.Nama} is new, Please info Section Head`);
-      // } else if (tool.Status === "Missing") {
-      //   toast.error(`${tool.Nama} is Missing or Broken`);
-      // } else {
-      //   handleAddToolImmediate(toolIdScan.trim(), tool.Nama, tool.ToolsType, tool.Status, '');
-      // }
       setSelectedToolData({
-        id: toolIdScan.trim().toUpperCase(),
+        id: trimmedId,
         name: tool.Nama,
         type: tool.ToolsType,
         status: tool.Status,
       });
 
-      handleAddToolImmediate(toolIdScan.trim().toUpperCase(), tool.Nama, tool.ToolsType, tool.Status);
-
+      handleAddToolImmediate(trimmedId, tool.Nama, tool.ToolsType, tool.Status);
+      setToolFound(true);
       toast.success('Tool added !');
     } else {
-      toast.error('Tool not found. Please check the Tool ID.');
       setSelectedToolData(null);
+      setToolFound(false);
     }
   };
 
@@ -706,7 +772,10 @@ export default function RentTools() {
                     id="tool-id-input"
                     placeholder="Scan or enter Tool ID (e.g., T001)..."
                     value={toolIdScan}
-                    onChange={(e) => setToolIdScan(e.target.value.toUpperCase())}
+                    onChange={(e) => {
+                      setToolIdScan(e.target.value.toUpperCase());
+                      if (!isToolFound) setToolFound(true);
+                    }}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleToolIdScan();
@@ -730,25 +799,22 @@ export default function RentTools() {
               </div>
 
               {/* Tool Details (shown after scanning) */}
-              {/* {selectedToolData && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              {!isToolFound && toolIdScan !== '' && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <p className="text-xs text-green-800">Tool Found</p>
+                    <X className="h-4 w-4 text-red-600" />
+                    <p className="text-xs text-red-800 font-medium">Tool Not Found</p>
                   </div>
-                  <p className="text-sm text-gray-900 mb-1">
-                    {selectedToolData.id} - {selectedToolData.name}
-                  </p>
-                  <p className="text-xs text-gray-600">{selectedToolData.type}</p>
                 </div>
-              )} */}
+              )}
+
               <Table>
                 <TableHeader className="sticky top-0 bg-gray-50 z-10 shadow-sm">
                   <TableRow>
                     <TableHead className="bg-gray-100">Tool ID</TableHead>
                     <TableHead className="bg-gray-100">Tool Name</TableHead>
                     <TableHead className="bg-gray-100 text-center">Type</TableHead>
-                    <TableHead className="bg-gray-100 text-center">Qty</TableHead>
+                    <TableHead className="bg-gray-100 text-center">WO No.</TableHead>
                     <TableHead className="bg-gray-100 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -758,7 +824,15 @@ export default function RentTools() {
                       <TableCell className="font-medium">{tool.toolsId}</TableCell>
                       <TableCell>{tool.toolsName}</TableCell>
                       <TableCell className="text-center text-sm text-gray-600">{tool.toolsType}</TableCell>
-                      <TableCell className="text-center">{tool.quantity}</TableCell>
+                      {/* <TableCell className="text-center">{tool.quantity}</TableCell> */}
+                      <TableCell className="font-medium">
+                        <Input
+                          value={tool.rentnote || ''}
+                          onChange={(e) => handleUpdateRentNote(tool.id, e.target.value)}
+                          className="h-8 bg-yellow-50 text-xs border-[#009999]/30 focus:border-[#009999]"
+                          placeholder="Enter WO No."
+                        />
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
@@ -782,7 +856,7 @@ export default function RentTools() {
               </Table>
               <div className="flex justify-end">
                 <Button variant="outline"
-                  disabled={!selectedToolData}
+                  disabled={rentedTools.length === 0}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
                   onClick={handleCompleteTransaction}>SUBMIT RENT</Button>
               </div>
@@ -941,6 +1015,15 @@ export default function RentTools() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                            title="Return Tool"
+                            onClick={() => handleReturnClick(transaction)}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
                             title="Edit Transaction"
                             onClick={() => handleEditClick(transaction)}
@@ -950,7 +1033,7 @@ export default function RentTools() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
+                            className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                             title="Delete Transaction"
                             onClick={() => handleDeleteTransaction(transaction.TransIdTools, transaction.NRP)}
                           >
@@ -1271,6 +1354,104 @@ export default function RentTools() {
               className="bg-[#009999] hover:bg-[#007777] text-white"
             >
               Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Return Tool Details Dialog */}
+      <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
+        <DialogContent className="p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
+          <div className="bg-gradient-to-r from-[#003366] to-[#009999] px-6 py-4 text-white">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <RotateCcw className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl text-white">Return Tool Details</DialogTitle>
+                  <DialogDescription className="text-white/80">
+                    Review and confirm tool return information
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Employee Section */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-[#003366] flex items-center gap-2 mb-2">
+                Employee Information
+              </h4>
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">NRP</Label>
+                  <p className="font-medium text-gray-900">{returnToolData?.NRP || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-600">Employee Name</Label>
+                  <p className="font-medium text-gray-900">{returnToolData?.NAMA || '-'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tool Details Section */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-[#003366] flex items-center gap-2 mb-2">
+                Tool Details
+              </h4>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4 bg-blue-50/30 p-4 rounded-xl border border-blue-100/50">
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">Tools ID</Label>
+                  <p className="font-medium text-[#003366]">{returnToolData?.TransIdTools || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">Rent Date</Label>
+                  <div className="flex items-center gap-2 mb-4 text-gray-700">
+                    <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                    <p className="font-medium">{returnToolData?.TransDateRental || '-'}</p>
+                  </div>
+                </div>
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-xs text-gray-500">Tools Name</Label>
+                  <p className="font-medium text-gray-800">{returnToolData?.ToolsDesc || '-'}</p>
+                </div>
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-xs text-gray-500">Condition</Label>
+                  <Select
+                    value={returnCondition}
+                    onValueChange={(value: string) => setReturnCondition(value)}
+                  >
+                    <SelectTrigger className="h-10 bg-white border-slate-200 focus:ring-green-500 focus:border-green-500">
+                      <SelectValue placeholder="Select condition" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Good" className="focus:bg-green-50 focus:text-green-700">Good</SelectItem>
+                      <SelectItem value="R1" className="focus:bg-red-50 focus:text-red-700">Damaged</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="bg-slate-50/80 px-6 py-4 border-t border-slate-100">
+            <Button
+              variant="outline"
+              onClick={() => setIsReturnDialogOpen(false)}
+              className="px-6 hover:bg-slate-100 transition-colors"
+            >
+              Close
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-green-600 to-green-500"
+              onClick={() => {
+                setIsReturnDialogOpen(false);
+                toast.success("Return reviewed successfully");
+              }}
+            >
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Input } from './ui/input'; 
+import { Input } from './ui/input';
 import { InputRef } from './ui/inputref';
 import { Label } from './ui/label';
 import {
@@ -48,7 +48,7 @@ interface ActivationRecord {
 }
 
 export default function ToolActivation() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const nrpInputRef = useRef<HTMLInputElement>(null);
   const toolInputRef = useRef(null);
 
@@ -72,7 +72,7 @@ export default function ToolActivation() {
     toolsSize: '',
     toolsQty: 1,
     statusActive: true,
-    statusTools:""
+    statusTools: ""
   });
 
 
@@ -81,11 +81,11 @@ export default function ToolActivation() {
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
-    
+
     // Get the last number from current activation number
     const currentNo = parseInt(activationNo.split('/')[0]);
     const newNo = String(currentNo + 1).padStart(4, '0');
-    
+
     return `${newNo}/SERA/${day}/${month}/${year}`;
   };
 
@@ -95,7 +95,7 @@ export default function ToolActivation() {
       return;
     }
 
-    if (newItem.statusTools !== "New") { 
+    if (newItem.statusTools !== "New") {
       toast.error('Tools has been Activated');
       return;
     }
@@ -108,12 +108,12 @@ export default function ToolActivation() {
       toolsSize: newItem.toolsSize || '',
       toolsQty: newItem.toolsQty || 1,
       statusActive: newItem.statusActive ?? true,
-      statusTools:newItem.statusTools
+      statusTools: newItem.statusTools
     };
 
     setItems([...items, item]);
     setNextItemNo(nextItemNo + 1);
-    
+
     // Reset form
     setNewItem({
       toolsId: '',
@@ -155,7 +155,7 @@ export default function ToolActivation() {
           NrpUser: currentUser.Nrp,
           BastNo: activationNo,
           Nrp: nrpReceiver,
-          Nama: nameReceiver, 
+          Nama: nameReceiver,
           Tools: items
         })
       });
@@ -166,7 +166,7 @@ export default function ToolActivation() {
       const data = await response.json();
       if (data.length > 0) {
         const resData = data[0];
-        if (resData?.Status == 1) { 
+        if (resData?.Status == 1) {
           // Reset form
           setItems([]);
           setNextItemNo(1);
@@ -181,7 +181,7 @@ export default function ToolActivation() {
       }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
-    }  
+    }
 
     //const activationRecord: ActivationRecord = {
     //  activationNo,
@@ -196,12 +196,12 @@ export default function ToolActivation() {
 
     //// Here you would save to your tools master data
     //console.log('Activation Record:', activationRecord);
-    
+
     //toast.success(`Tool Activation ${activationNo} submitted successfully!`);
 
     //// Generate new activation number for next transaction
     //setActivationNo(generateActivationNo());
-    
+
     //// Reset form
     //setItems([]);
     //setNextItemNo(1);
@@ -212,14 +212,14 @@ export default function ToolActivation() {
   const GetActivationId = () => {
     const params = new URLSearchParams({
       showdata: "BASTID",
-      jobsite: currentUser.Jobsite 
+      jobsite: currentUser.Jobsite
     });
     fetch(API.FILTERS() + `?${params.toString()}`, {
       method: "GET"
     })
       .then((response) => response.json())
       .then((json: GlobalModel[]) => {
-        json.map((dt) =>setActivationNo(dt.Kode)); 
+        json.map((dt) => setActivationNo(dt.Kode));
       })
       .catch((error) => console.error("Error:", error));
   }
@@ -231,9 +231,9 @@ export default function ToolActivation() {
     fetch(API.FILTERS() + `?${params.toString()}`, {
       method: "GET"
     })
-    .then((response) => response.json())
-    .then((json: GlobalModel[]) => setUsers(json))
-    .catch((error) => console.error("Error:", error));
+      .then((response) => response.json())
+      .then((json: GlobalModel[]) => setUsers(json))
+      .catch((error) => console.error("Error:", error));
   }
 
   const GetToolsList = () => {
@@ -249,7 +249,7 @@ export default function ToolActivation() {
       .catch((error) => console.error("Error:", error));
   }
 
-  useEffect(() => { 
+  useEffect(() => {
     setName(currentUser.Nama);
     setNrp(currentUser.Nrp);
     setPosition(currentUser.Jabatan);
@@ -262,7 +262,7 @@ export default function ToolActivation() {
       nrpInputRef.current?.focus();
       console.log("ref is focus")
     }
-  },[]);
+  }, []);
 
 
   return (
@@ -274,7 +274,7 @@ export default function ToolActivation() {
             <Save className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl mb-1">Tool Activation</h2>
+            <h2 className="text-2xl text-white mb-1">Tool Activation</h2>
             <p className="text-white/80">Activate tools for rental availability</p>
           </div>
         </div>
@@ -289,7 +289,7 @@ export default function ToolActivation() {
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Activation No.</Label>
-              <Input 
+              <Input
                 value={activationNo}
                 disabled
                 className="bg-gray-50 border-gray-200"
@@ -331,7 +331,7 @@ export default function ToolActivation() {
                 placeholder="Enter NRP Receiver"
                 onChange={(e) => {
                   var nrpVal = e.target.value;
-                  setNrpReceiver(nrpVal); 
+                  setNrpReceiver(nrpVal);
                   const selected = users.find(j => j.Kode === nrpVal) || null;;
                   if (selected) {
                     setNameReceiver(selected.Nama);
@@ -373,7 +373,7 @@ export default function ToolActivation() {
                   var tool = e.target.value;
                   const selected = regtools.find(j => j.Kode === tool) || null;
                   if (selected) {
-                    setNewItem({ ...newItem, toolsId: tool, toolsName:selected.Nama, toolsBrand: selected.Kategori, toolsSize:selected.Keterangan, statusTools:selected.Status})
+                    setNewItem({ ...newItem, toolsId: tool, toolsName: selected.Nama, toolsBrand: selected.Kategori, toolsSize: selected.Keterangan, statusTools: selected.Status })
                   } else {
                     setNewItem({ ...newItem, toolsId: tool })
                   }
@@ -486,11 +486,10 @@ export default function ToolActivation() {
                       <TableCell>{item.toolsQty}</TableCell>
                       <TableCell>
                         <span
-                          className={`px-3 py-1 rounded text-xs ${
-                            item.statusActive
+                          className={`px-3 py-1 rounded text-xs ${item.statusActive
                               ? 'bg-green-100 text-green-700'
                               : 'bg-red-100 text-red-700'
-                          }`}
+                            }`}
                         >
                           {item.statusActive ? 'True' : 'False'}
                         </span>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -26,17 +26,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import {
-  Scan, Plus, Trash2, ShoppingCart, Eye, Edit, User, Check, X, Calendar, Clock,
-  ChevronRight, ChevronLeft, Search, Download, RotateCcw
-} from 'lucide-react';
+import { Scan, RotateCcw, Trash2, User, Check, X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import * as XLSX from 'xlsx';
-import { useAuth, AuthUsers } from "../service/AuthContext";
-import { GlobalModel } from "../model/Models";
-import { API } from '../config';
-import { InputRef } from './ui/inputref';
-import * as XLSX from 'xlsx';
 
 interface ReturnedTool {
   id: string;
@@ -64,42 +55,15 @@ interface RentedToolRecord {
   quantity: number;
   rentDate: string;
   condition: string;
-  Tools: ReturnedTool[];
-}
-
-interface CompletedTransaction {
-  NO: string;
-  TransIdTools: string;
-  ToolsDesc: string;
-  ToolsType: string;
-  NRP: string;
-  Mechanic: string;
-  TransDateRental: string;
-  TransEstReturnDate: string;
-  TransReturnDate: string;
-  WONumber: string;
-  ToolsCondition: string;
-  Tools: ReturnedTool[];
 }
 
 export default function ReturnTools() {
-  const { currentUser } = useAuth();
-  const nrpInputRef = useRef<HTMLInputElement>(null);
-  const toolInputRef = useRef(null);
-  const [users, setUsers] = useState<GlobalModel[]>([]);
   const [employeeCode, setEmployeeCode] = useState('');
   const [employeeData, setEmployeeData] = useState<Employee | null>(null);
-  const [completedTransactions, setCompletedTransactions] = useState<CompletedTransaction[]>([]);
   const [rentedToolsRecord, setRentedToolsRecord] = useState<RentedToolRecord[]>([]);
   const [returnedTools, setReturnedTools] = useState<ReturnedTool[]>([]);
   const [isReturnToolDialogOpen, setIsReturnToolDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [isAddScreenOpen, setAddScreenOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Pagination Items
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Form state for returning tools
   const [returnFormData, setReturnFormData] = useState({
@@ -137,59 +101,56 @@ export default function ReturnTools() {
     },
   };
 
-  interface Employee {
-    nrp: string;
-    name: string;
-    position: string;
-    jobsite: string;
-    workgroup: string;
-  }
+  // Mock rented tools records
+  const mockRentedTools: Record<string, RentedToolRecord[]> = {
+    '00018083': [
+      {
+        toolsId: 'T001',
+        toolsName: 'Hammer',
+        toolsType: 'Hand Tool',
+        quantity: 2,
+        rentDate: '2024-01-15',
+        condition: 'BAIK',
+      },
+      {
+        toolsId: 'T003',
+        toolsName: 'Drill Machine',
+        toolsType: 'Power Tool',
+        quantity: 1,
+        rentDate: '2024-01-15',
+        condition: 'BAIK',
+      },
+    ],
+    '00102016': [
+      {
+        toolsId: 'T002',
+        toolsName: 'Wrench Set',
+        toolsType: 'Hand Tool',
+        quantity: 1,
+        rentDate: '2024-01-16',
+        condition: 'BAIK',
+      },
+    ],
+  };
 
   // Handle employee code scan/input
   const handleEmployeeScan = () => {
-    const nrp = employeeCode;
-    if (nrp) {
-      const selected = users.find(j => j.Kode === nrp) || null;
-      if (selected) {
-        const employee: Employee = {
-          nrp: selected.Kode,
-          name: selected.Nama,
-          position: selected.Status,
-          jobsite: "",
-          workgroup: selected.Keterangan
-        };
-        setEmployeeData(employee);
-        GetRentedToolsRecord(employee.nrp);
-
-        const timer = setTimeout(() => {
-          if (toolInputRef.current == null) {
-            console.log("ref is null")
-          } else {
-            toolInputRef.current?.focus();
-            console.log("reftool is focus")
-          }
-        }, 1000);
-
-        //toast.success('Employee ada!');
+    const employee = mockEmployees[employeeCode];
+    if (employee) {
+      setEmployeeData(employee);
+      const rentedTools = mockRentedTools[employeeCode] || [];
+      setRentedToolsRecord(rentedTools);
+      
+      if (rentedTools.length === 0) {
+        toast.warning(`${employee.name} has no tools to return`);
       } else {
-        setEmployeeData(null);
-        setRentedToolsRecord([]);
-        toast.success('Employee not found!');
+        toast.success(`Found ${rentedTools.length} tool(s) rented by ${employee.name}`);
       }
     } else {
+      toast.error('Employee not found. Please check the NRP.');
       setEmployeeData(null);
       setRentedToolsRecord([]);
-      toast.success('nrp is empty!');
     }
-  };
-
-  const handleBackToList = () => {
-    setAddScreenOpen(false);
-    setEmployeeCode('');
-    setEmployeeData(null);
-    // setRentedTools([]);
-    // setToolIdScan('');
-    // setSelectedToolData(null);
   };
 
   // Handle returning tool
@@ -218,7 +179,7 @@ export default function ReturnTools() {
     setReturnedTools([...returnedTools, newReturnedTool]);
     setIsReturnToolDialogOpen(false);
     resetReturnForm();
-
+    
     if (returnFormData.returnCondition !== returnFormData.rentCondition) {
       toast.warning('Tool condition has changed!');
     } else {
@@ -245,11 +206,6 @@ export default function ReturnTools() {
     });
   };
 
-  // Toggle state for New Rent vs List
-  const handleNewReturn = () => {
-    setAddScreenOpen(true);
-  };
-
   // Complete transaction
   const handleCompleteTransaction = () => {
     if (!employeeData) {
@@ -268,7 +224,7 @@ export default function ReturnTools() {
   const confirmTransaction = () => {
     // Here you would save the return transaction to your backend
     toast.success('Return transaction completed successfully!');
-
+    
     // Reset all states
     setEmployeeCode('');
     setEmployeeData(null);
@@ -286,88 +242,9 @@ export default function ReturnTools() {
     toast.info('Transaction reset');
   };
 
-  // Reset to page 1 when search changes
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-  };
-
   const hasConditionChange = returnedTools.some(
     (tool) => tool.returnCondition !== tool.rentCondition
   );
-
-  const GetUserList = () => {
-    const params = new URLSearchParams({
-      showdata: "USERS",
-      jobsite: currentUser.Jobsite
-    });
-    fetch(API.FILTERS() + `?${params.toString()}`, {
-      method: "GET"
-    })
-      .then((response) => response.json())
-      .then((json: GlobalModel[]) => setUsers(json))
-      .catch((error) => console.error("Error:", error));
-  }
-
-  const GetTransactionList = () => {
-    const params = new URLSearchParams({
-      // action: "WITHTOTAL",
-      jobsite: currentUser.Jobsite,
-      // current: `${currentPage}`,
-      // perpage: `${itemsPerPage}`,
-      // filter: searchQuery
-    });
-    fetch(API.RETURNTOOLS() + `?${params.toString()}`, {
-      method: "GET"
-    })
-      .then((response) => response.json())
-      .then((json: CompletedTransaction[]) => {
-        setCompletedTransactions(json);
-        console.log(json);
-      })
-      .catch((error) => console.error("Error:", error));
-  }
-
-  const GetRentedToolsRecord = (nrp: string) => {
-    const params = new URLSearchParams({
-      showdata: "RENTEDTOOLS",
-      jobsite: currentUser.Jobsite,
-      nrp: nrp
-    });
-    fetch(API.FILTERS() + `?${params.toString()}`, {
-      method: "GET"
-    })
-      .then((response) => response.json())
-      .then((json: RentedToolRecord[]) => setRentedToolsRecord(json))
-      .catch((error) => console.error("Error:", error));
-  }
-
-  const filteredTransactions = completedTransactions.filter((transaction) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      transaction.Mechanic?.toLowerCase().includes(query) ||
-      transaction.ToolsDesc?.toLowerCase().includes(query) ||
-      transaction.NRP?.toLowerCase().includes(query)
-    );
-  });
-
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
-
-  useEffect(() => {
-    GetUserList();
-    // GetToolsList();
-    // GetToolCondition();
-    GetTransactionList();
-    if (nrpInputRef.current == null) {
-      console.log("ref is null")
-    } else {
-      nrpInputRef.current?.focus();
-      console.log("ref is focus")
-    }
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -378,20 +255,13 @@ export default function ReturnTools() {
             <RotateCcw className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl text-white mb-1">Return Tools Transaction</h2>
+            <h2 className="text-2xl mb-1">Return Tools Transaction</h2>
             <p className="text-white/80">Process tool returns from employees</p>
           </div>
         </div>
       </div>
 
-      {/* Add new rent Screen */}
-      <div className={isAddScreenOpen ? "block" : "hidden"}>
-        <div className="flex justify-end mb-4 p-2">
-          <Button variant="outline" onClick={handleBackToList} className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10">
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side - Employee and Transaction */}
         <div className="lg:col-span-2 space-y-6">
           {/* Employee Scanner */}
@@ -551,12 +421,13 @@ export default function ReturnTools() {
                           </TableCell>
                           <TableCell>
                             <span
-                              className={`px-2 py-1 rounded text-xs ${tool.returnCondition === 'BAIK'
-                                ? 'bg-green-100 text-green-700'
-                                : tool.returnCondition === 'RUSAK'
+                              className={`px-2 py-1 rounded text-xs ${
+                                tool.returnCondition === 'BAIK'
+                                  ? 'bg-green-100 text-green-700'
+                                  : tool.returnCondition === 'RUSAK'
                                   ? 'bg-red-100 text-red-700'
                                   : 'bg-yellow-100 text-yellow-700'
-                                }`}
+                              }`}
                             >
                               {tool.returnCondition}
                             </span>
@@ -587,7 +458,7 @@ export default function ReturnTools() {
 
         {/* Right Side - Transaction Summary */}
         <div className="space-y-6">
-          <Card className="hidden border-0 shadow-lg bg-gradient-to-br from-gray-50 to-white">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-gray-50 to-white">
             <CardHeader className="border-b border-gray-100">
               <CardTitle className="text-[#003366]">Transaction Summary</CardTitle>
             </CardHeader>
@@ -667,165 +538,6 @@ export default function ReturnTools() {
           </Card>
         </div>
       </div>
-
-      {/* Completed Transactions List - At Bottom */}
-      {!isAddScreenOpen && (
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-[#009999]" />
-                  Recent Return Transactions
-                </CardTitle>
-                <CardDescription>List of rent transactions</CardDescription>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  // onClick={exportToExcel} 
-                  variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10">
-                  <Download className="h-4 w-4" />
-                  Export to Excel
-                </Button>
-
-                <Button
-                  onClick={handleNewReturn}
-                  className="gap-2 bg-gradient-to-r from-[#003366] to-[#009999] hover:from-[#004080] hover:to-[#00b3b3]"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Return
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4 px-1">
-              <div className="relative">
-                <Input
-                  placeholder="Search by employee name or tool..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10 h-10 border-[#009999]/30 focus:border-[#009999] focus:ring-[#009999]/20"
-                />
-                <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <Search className="h-4 w-4 text-[#009999]/50" />
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead>Return Date</TableHead>
-                    <TableHead>Rented to</TableHead>
-                    <TableHead>NRP</TableHead>
-                    <TableHead>Tools Name</TableHead>
-                    <TableHead className="text-center">MO No.</TableHead>
-                    <TableHead>Condition</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentTransactions.length > 0 ? currentTransactions.map((transaction) => (
-                    <TableRow key={transaction.NO}>
-                      <TableCell className="text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-500" />
-                          <span>{transaction.TransReturnDate}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-500" />
-                          <span>{transaction.Mechanic}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600">{transaction.NRP}</TableCell>
-                      <TableCell className="text-gray-600">{transaction.ToolsDesc}</TableCell>
-                      <TableCell className="text-center text-gray-600">{transaction.WONumber}</TableCell>
-                      <TableCell className="text-gray-600">
-                        <span>{transaction.ToolsCondition}</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
-                            title="Edit Transaction"
-                            onClick={() => handleEditClick(transaction)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
-                            title="Delete Transaction"
-                            onClick={() => handleDeleteTransaction(transaction.TransIdTools, transaction.NRP)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        No details found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-              {/* Footer */}
-              {/* Pagination */}
-              {<div className="flex items-center justify-between mt-4">
-                <div className="flex items-center p-2">
-                  <Label htmlFor="itemsPerPage" className="mr-2">
-                    Items per page:
-                  </Label>
-                  <Select
-                    value={itemsPerPage.toString()}
-                    onValueChange={(value) => setItemsPerPage(Number(value))}
-                  >
-                    <SelectTrigger id="itemsPerPage">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="mx-2">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Return Tool Dialog */}
       <Dialog open={isReturnToolDialogOpen} onOpenChange={setIsReturnToolDialogOpen}>
