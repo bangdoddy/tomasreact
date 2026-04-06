@@ -137,7 +137,7 @@ export default function RentTools() {
   });
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [returnToolData, setReturnToolData] = useState<CompletedTransaction | null>(null);
-  const [returnCondition, setReturnCondition] = useState('Good');
+  const [returnCondition, setReturnCondition] = useState('Con1');
 
   // Pagination Items
   const [currentPage, setCurrentPage] = useState(1);
@@ -490,7 +490,7 @@ export default function RentTools() {
     setRentedTools(prev => prev.filter(tool => tool.toolsId !== id));
   }
 
-  const handleDeleteTransaction = async (id: string, nrp: string) => {
+  const handleReturnTransaction = async (id: string, nrp: string) => {
     try {
       const response = await fetch(API.RENTTOOLS(), {
         method: "POST",
@@ -498,10 +498,10 @@ export default function RentTools() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          action: "DELETE",
+          action: "RETURN",
           Jobsite: currentUser?.Jobsite,
           Nrp: nrp,
-          Tools: [{ toolsId: id }] // Fixed structure
+          Tools: [{ toolsId: id, condition: returnCondition }] // Fixed structure
         })
       });
 
@@ -512,7 +512,7 @@ export default function RentTools() {
         const data = await response.json();
         // Check if backend returned success
         if (data && data[0]?.Status === 1) {
-          toast.success('Transaction deleted successfully');
+          toast.success('Tools returned successfully');
           // Update local state
           setCompletedTransactions(prev => prev.filter(t => t.TransIdTools !== id));
           // Refresh from server to be sure
@@ -1030,7 +1030,7 @@ export default function RentTools() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
@@ -1038,7 +1038,7 @@ export default function RentTools() {
                             onClick={() => handleDeleteTransaction(transaction.TransIdTools, transaction.NRP)}
                           >
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1427,7 +1427,7 @@ export default function RentTools() {
                       <SelectValue placeholder="Select condition" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Good" className="focus:bg-green-50 focus:text-green-700">Good</SelectItem>
+                      <SelectItem value="Con1" className="focus:bg-green-50 focus:text-green-700">Good</SelectItem>
                       <SelectItem value="R1" className="focus:bg-red-50 focus:text-red-700">Damaged</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1447,11 +1447,12 @@ export default function RentTools() {
             <Button
               className="bg-gradient-to-r from-green-600 to-green-500"
               onClick={() => {
+                handleReturnTransaction(returnToolData?.TransIdTools || '', returnToolData?.NRP || '');
                 setIsReturnDialogOpen(false);
-                toast.success("Return reviewed successfully");
+                toast.success("Returned successfully");
               }}
             >
-              Done
+              Return
             </Button>
           </DialogFooter>
         </DialogContent>

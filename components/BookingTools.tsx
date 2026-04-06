@@ -327,7 +327,7 @@ export default function BookingTools() {
               </CardTitle>
               <CardDescription>Scan employee NRP to start booking</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Employee NRP</Label>
@@ -362,7 +362,7 @@ export default function BookingTools() {
               </CardTitle>
               <CardDescription>Set booking date, time, and duration</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Booking Date</Label>
@@ -424,7 +424,7 @@ export default function BookingTools() {
               <CardDescription>Scan tool ID to add to booking list</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-2 p-3">
                 <Label>Tool ID</Label>
                 <InputRef
                   ref={toolInputRef}
@@ -443,11 +443,11 @@ export default function BookingTools() {
           {bookingItems.length > 0 && (
             <Card className="border-0 shadow-lg">
               <CardHeader>
-                <CardTitle>Booked Tools ({bookingItems.length})</CardTitle>
+                <CardTitle>Tools List ({bookingItems.length})</CardTitle>
                 <CardDescription>Tools scheduled for booking</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-3 p-3">
                   {bookingItems.map((item, index) => (
                     <div
                       key={index}
@@ -484,7 +484,7 @@ export default function BookingTools() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-6">
+                <div className="mt-6 p-2">
                   <Button
                     onClick={handleSubmitBooking}
                     className="w-full bg-[#009999] hover:bg-[#007777] text-white"
@@ -574,10 +574,10 @@ export default function BookingTools() {
                     <td className="p-3">
                       <span
                         className={`px-2 py-1 rounded text-xs ${booking.status === 'Approved'
-                            ? 'bg-green-100 text-green-700'
-                            : booking.status === 'Pending'
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-red-100 text-red-700'
+                          ? 'bg-green-100 text-green-700'
+                          : booking.status === 'Pending'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-red-100 text-red-700'
                           }`}
                       >
                         {booking.status}

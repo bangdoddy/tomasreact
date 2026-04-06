@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { Button } from './ui/button'; 
+import { Button } from './ui/button';
 import type { AuthUsers } from '../service/AuthContext';
 import logoImage from 'figma:asset/53408374755378de61555740ced8514efca8131d.png';
 
@@ -58,7 +58,7 @@ export default function Header({ currentUser, onLogout }: HeaderProps) {
         <div className="flex items-center gap-4">
           <img src={logoImage} alt="Company Logo" className="h-15 object-contain" />
           <div>
-            <h1 className="text-3xl text-[#003366]">Smart Tomas</h1>
+            <h1 className="text-3xl text-[#003366]">Smart Tool & Facility System</h1>
             <p className="text-sm text-gray-500">Tools Management System</p>
           </div>
         </div>

@@ -16,7 +16,6 @@ import {
   ClipboardCheck,
   CheckSquare,
   Award,
-  Circle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -47,12 +46,7 @@ export default function Sidebar({
   const menuItems: MenuItem[] = [
     {
       id: 'dashboard',
-      label: 'Dashboard Tool',
-      icon: <LayoutDashboard className="h-5 w-5" />,
-    },
-    {
-      id: 'dashboard-facility',
-      label: 'Dashboard Facility',
+      label: 'Dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
@@ -72,9 +66,10 @@ export default function Sidebar({
       icon: <Database className="h-5 w-5" />,
       subItems: [
         { id: 'user-management', label: 'User Register' },
-        { id: 'tools-management', label: 'Tool & Facility Register' },
+        { id: 'tools-management', label: 'Tool Register' },
         { id: 'standard-quantity', label: 'Standard Quantity' },
-        { id: 'tool-activation', label: 'Tool & Facility Activation' },
+        { id: 'toolstype', label: 'Tools Type' },
+        { id: 'tool-activation', label: 'Tool Activation' },
       ],
     },
     {
@@ -82,8 +77,8 @@ export default function Sidebar({
       label: 'Approval',
       icon: <CheckSquare className="h-5 w-5" />,
       subItems: [
-        { id: 'activation-tool-approval', label: 'Activation Approval' },
-        { id: 'bakt-approval', label: 'Damage & Loss Report Approval' },
+        { id: 'activation-tool-approval', label: 'Activation Tool Approval' },
+        { id: 'bakt-approval', label: 'BAKT Approval' },
         { id: 'trf-approval', label: 'TRF Approval' },
       ],
     },
@@ -92,30 +87,30 @@ export default function Sidebar({
       label: 'Transaction',
       icon: <ShoppingCart className="h-5 w-5" />,
       subItems: [
-        { id: 'booking-tools', label: 'Booking' },
-        { id: 'rent-tools', label: 'Rent and Return' },
+        { id: 'booking-tools', label: 'Booking Tools' },
+        { id: 'rent-tools', label: 'Rent & Return Tools' },
+        // { id: 'return-tools', label: 'Return Tools' },
       ],
     },
     {
       id: 'inspection',
-      label: 'Inspection',
+      label: 'Inspection Tool',
       icon: <ClipboardCheck className="h-5 w-5" />,
       subItems: [
         { id: 'inspection-scheduling', label: 'Inspection Scheduling' },
         { id: 'toolbox-inspection', label: 'Tool Box Inspection' },
         { id: 'toolroom-inspection', label: 'Tool Room Inspection' },
         { id: 'tool-certification', label: 'Certification and Calibration' },
-        { id: 'facility-inspection', label: 'Facility Inspection' },
       ],
     },
     {
       id: 'bakt',
-      label: 'Damage & Loss Report',
+      label: 'BAKT',
       icon: <ClipboardList className="h-5 w-5" />,
       subItems: [
-        { id: 'outstanding-bakt', label: 'Outstanding Damage & Loss Report' },
+        { id: 'outstanding-bakt', label: 'Outstanding BAKT' },
         { id: 'follow-up', label: 'Follow Up' },
-        { id: 'reactivation-disposed', label: 'Reactivation / Dispose' },
+        { id: 'reactivation-disposed', label: 'Reactivation / Disposed Tools' },
       ],
     },
     {
@@ -125,16 +120,14 @@ export default function Sidebar({
       subItems: [
         { id: 'user-population', label: 'User Population' },
         { id: 'tool-population', label: 'Tool Population' },
-        { id: 'facility-population-report', label: 'Facility Population' },
         { id: 'rent-return-report', label: 'Rent Return Report' },
         { id: 'activation-report', label: 'Activation Report' },
-        { id: 'bakt-report', label: 'Damage & Loss Report' },
-        { id: 'disposed-tool-report', label: 'Disposed Report' },
+        { id: 'bakt-report', label: 'BAKT Report' },
+        { id: 'disposed-tool-report', label: 'Disposed Tool Report' },
         { id: 'toolroom-inspection-report', label: 'Tool Room Inspection Report' },
         { id: 'toolbox-inspection-report', label: 'Tool Box Inspection Report' },
         { id: 'certification-calibration-report', label: 'Certification and Calibration Report' },
-        { id: 'facility-inspection-report', label: 'Facility Inspection Report' },
-        { id: 'tool-order-monitoring-report', label: 'Order Monitoring Report' },
+        { id: 'tool-order-monitoring-report', label: 'Tool Order Monitoring Report' },
       ],
     },
     {
@@ -142,16 +135,18 @@ export default function Sidebar({
       label: 'General Settings',
       icon: <Settings className="h-5 w-5" />,
       subItems: [
+        { id: 'setting', label: 'General Setting' },
         { id: 'roles', label: 'Roles' },
         { id: 'permissions', label: 'Access Permissions' },
         { id: 'category-tool', label: 'Category Tool' },
         { id: 'condition-tool', label: 'Condition Tool' },
         { id: 'group-tools', label: 'Group Tools' },
+        { id: 'title', label: 'Title' },
         { id: 'jobsite', label: 'Jobsite' },
         { id: 'location', label: 'Location' },
         { id: 'bin-location', label: 'Bin Location' },
         { id: 'uom', label: 'Unit of Measurement (UoM)' },
-        { id: 'work-group', label: 'Work Group' },
+        { id: 'workgroup', label: 'Workgroup' },
       ],
     },
     {
@@ -179,6 +174,28 @@ export default function Sidebar({
     );
   };
 
+
+  //const allIdsAndLabels = menuItems.map(menu => {
+  //    const parent = { id: menu.id, label: menu.label };
+  //    const children = (menu.subItems ?? []).map(sub => ({
+  //      id: sub.id,
+  //      label: sub.label,
+  //    }));
+  //    return [parent, ...children];
+  //  });
+
+  //const allIdsAndLabels = menuItems.reduce((acc, menu) => {
+  //  acc.push({ id: menu.id, label: menu.label, groupid: '' });
+
+  //  if (menu.subItems) {
+  //    for (const sub of menu.subItems) {
+  //      acc.push({ id: sub.id, label: sub.label, groupid: menu.label });
+  //    }
+  //  }
+
+  //  return acc;
+  //}, [] as { id: string; label: string, groupid: string }[]);
+
   return (
     <aside
       className={cn(
@@ -187,44 +204,28 @@ export default function Sidebar({
       )}
     >
       <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="p-4 border-b border-[#004488]/30">
-          {!isCollapsed ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#009999] to-[#007777] flex items-center justify-center shadow-lg">
-                  <Wrench className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-white font-semibold text-sm">Smart Toofast</h2>
-                  <p className="text-[#009999] text-xs">Side Menu</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onToggleCollapse}
-                className="hover:bg-white/10 text-white h-8 w-8"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
+        {/* Toggle Button */}
+        <div className="p-3 border-b border-gray-200 flex items-center justify-between">
+          {!isCollapsed && (
+            <div className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-[#009999]" />
+              <span className="text-sm text-gray-600">Menu</span>
             </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleCollapse}
-              className="hover:bg-white/10 text-white w-full"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="hover:bg-gray-100 text-gray-600"
+          >
+            <ChevronLeft className={cn('h-5 w-5 transition-transform', isCollapsed && 'rotate-180')} />
+          </Button>
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-thin scrollbar-thumb-[#004488] scrollbar-track-transparent">
-          {menuItems.map((item, index) => (
-            <div key={item.id} className="mb-1">
+        <nav className="flex-1 overflow-y-auto py-2">
+          {menuItems.map((item) => (
+            <div key={item.id}>
               <button
                 onClick={() => {
                   if (item.subItems) {
@@ -234,35 +235,25 @@ export default function Sidebar({
                   }
                 }}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative',
-                  currentPage === item.id && !item.subItems 
-                    ? 'bg-gradient-to-r from-[#009999] to-[#007777] text-white shadow-lg shadow-[#009999]/30' 
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                  'w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors group',
+                  currentPage === item.id && !item.subItems && 'bg-[#009999]/10 border-r-4 border-[#009999] text-white'
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
-                {/* Active indicator */}
-                {currentPage === item.id && !item.subItems && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
-                )}
-                
                 <span className={cn(
-                  'flex-shrink-0 transition-all duration-200',
-                  currentPage === item.id && !item.subItems 
-                    ? 'text-white scale-110' 
-                    : 'text-[#009999] group-hover:text-white group-hover:scale-110'
+                  'flex-shrink-0 text-gray-600 group-hover:text-[#009999]',
+                  currentPage === item.id && !item.subItems && 'text-[#009999]'
                 )}>{item.icon}</span>
-                
                 {!isCollapsed && (
                   <>
                     <span className={cn(
-                      'flex-1 text-left text-sm font-medium',
-                      currentPage === item.id && !item.subItems && 'font-semibold'
+                      'flex-1 text-left text-sm text-gray-700',
+                      currentPage === item.id && !item.subItems && 'text-[#009999]'
                     )}>{item.label}</span>
                     {item.subItems && (
                       <ChevronRight
                         className={cn(
-                          'h-4 w-4 transition-all duration-200',
+                          'h-4 w-4 transition-transform text-gray-400',
                           expandedMenus.includes(item.id) && 'rotate-90 text-[#009999]'
                         )}
                       />
@@ -273,30 +264,21 @@ export default function Sidebar({
 
               {/* Submenu */}
               {item.subItems && expandedMenus.includes(item.id) && !isCollapsed && (
-                <div className="mt-1 ml-3 pl-3 border-l-2 border-[#004488]/40 space-y-0.5">
+                <div className="bg-gray-50">
                   {item.subItems.map((subItem) => (
                     <button
                       key={subItem.id}
                       onClick={() => !subItem.disabled && onNavigate(subItem.id)}
                       className={cn(
-                        'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 text-sm text-left group',
-                        subItem.disabled 
-                          ? 'text-gray-500 cursor-not-allowed opacity-40' 
-                          : currentPage === subItem.id
-                          ? 'bg-white/15 text-white font-medium shadow-sm'
-                          : 'text-gray-400 hover:text-white hover:bg-white/10'
+                        'w-full flex items-center gap-3 px-4 py-2.5 pl-8 transition-colors text-sm',
+                        subItem.disabled
+                          ? 'text-gray-400 cursor-not-allowed opacity-50'
+                          : 'text-gray-600 hover:bg-gray-100',
+                        currentPage === subItem.id && !subItem.disabled && 'bg-[#009999]/10 text-[#009999] border-r-4 border-[#009999]'
                       )}
                       disabled={subItem.disabled}
                     >
-                      <Circle 
-                        className={cn(
-                          'h-1.5 w-1.5 flex-shrink-0 transition-all duration-200',
-                          currentPage === subItem.id 
-                            ? 'fill-[#009999] text-[#009999]' 
-                            : 'fill-gray-500 text-gray-500 group-hover:fill-white group-hover:text-white'
-                        )} 
-                      />
-                      <span className="flex-1">{subItem.label}</span>
+                      {subItem.label}
                     </button>
                   ))}
                 </div>
@@ -304,16 +286,6 @@ export default function Sidebar({
             </div>
           ))}
         </nav>
-
-        {/* Footer */}
-        {!isCollapsed && (
-          <div className="p-3 border-t border-[#004488]/30 bg-black/20">
-            <div className="text-xs text-gray-400 text-center">
-              <p className="font-medium text-[#009999]">Version 1.0.0</p>
-              <p className="mt-0.5">© 2026 Smart Toofast</p>
-            </div>
-          </div>
-        )}
       </div>
     </aside>
   );
