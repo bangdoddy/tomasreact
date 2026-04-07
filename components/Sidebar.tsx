@@ -18,9 +18,19 @@ import {
   Award,
   Circle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
+import { useAuth } from '../service/AuthContext';
+import { API } from '../config';
+
+interface MenuAccess {
+  ID: string;
+  NamaSubMenu: string;
+  NamaMenu: string;
+  KodeMenu: string;
+  Jabatan: string;
+}
 
 interface MenuItem {
   id: string;
@@ -42,7 +52,41 @@ export default function Sidebar({
   isCollapsed,
   onToggleCollapse,
 }: SidebarProps) {
+  const { currentUser } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['datamaster', 'transaction']);
+  const [allowedMenuCodes, setAllowedMenuCodes] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchPermissions = async () => {
+      try {
+        setIsLoading(true);
+        const params = new URLSearchParams({
+          act: 'MENUACCESS',
+          jobsite: currentUser.Jobsite
+        });
+        const response = await fetch(`${API.GENERALSETTING()}?${params.toString()}`);
+        if (response.ok) {
+          const data: MenuAccess[] = await response.json();
+          // Filter KodeMenu based on JabatanId
+          const filteredCodes = new Set(
+            data
+              .filter(item => item.Jabatan.toLowerCase() === currentUser.JabatanId.toLowerCase())
+              .map(item => item.KodeMenu.toLowerCase())
+          );
+          setAllowedMenuCodes(filteredCodes);
+        }
+      } catch (error) {
+        console.error("Error fetching menu permissions:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPermissions();
+  }, [currentUser]);
 
   const menuItems: MenuItem[] = [
     {
@@ -75,6 +119,7 @@ export default function Sidebar({
         { id: 'tools-management', label: 'Tool & Facility Register' },
         { id: 'standard-quantity', label: 'Standard Quantity' },
         { id: 'tool-activation', label: 'Tool & Facility Activation' },
+        { id: 'toolstype', label: 'Tools Type' },
       ],
     },
     {
@@ -144,6 +189,7 @@ export default function Sidebar({
       subItems: [
         { id: 'roles', label: 'Roles' },
         { id: 'permissions', label: 'Access Permissions' },
+        { id: 'setting', label: 'General Setting' },
         { id: 'category-tool', label: 'Category Tool' },
         { id: 'condition-tool', label: 'Condition Tool' },
         { id: 'group-tools', label: 'Group Tools' },
@@ -172,6 +218,29 @@ export default function Sidebar({
       icon: <Info className="h-5 w-5" />,
     },
   ];
+
+  const filteredMenuItems = useMemo(() => {
+    const publicItems = ['about'];
+
+    return menuItems
+      .map(item => {
+        if (publicItems.includes(item.id)) return item;
+
+        if (item.subItems) {
+          const visibleSubItems = item.subItems.filter(sub => allowedMenuCodes.has(sub.id.toLowerCase()));
+          if (visibleSubItems.length > 0) {
+            return { ...item, subItems: visibleSubItems };
+          }
+          if (allowedMenuCodes.has(item.id.toLowerCase())) {
+            return { ...item, subItems: [] };
+          }
+          return null;
+        }
+
+        return allowedMenuCodes.has(item.id.toLowerCase()) ? item : null;
+      })
+      .filter((item): item is MenuItem => item !== null);
+  }, [allowedMenuCodes, menuItems]);
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus((prev) =>
@@ -223,8 +292,13 @@ export default function Sidebar({
 
         {/* Menu Items */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-thin scrollbar-thumb-[#004488] scrollbar-track-transparent">
-          {menuItems.map((item, index) => (
-            <div key={item.id} className="mb-1">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#009999]" />
+            </div>
+          ) : (
+            filteredMenuItems.map((item, index) => (
+              <div key={item.id} className="mb-1">
               <button
                 onClick={() => {
                   if (item.subItems) {
@@ -302,7 +376,7 @@ export default function Sidebar({
                 </div>
               )}
             </div>
-          ))}
+          )))}
         </nav>
 
         {/* Footer */}

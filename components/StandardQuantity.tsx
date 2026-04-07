@@ -31,20 +31,20 @@ import {
 import {
   Select,
   SelectContent,
-  SelectItem, 
+  SelectItem,
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-import { Plus, Pencil, Trash2, Package, Download, Upload, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Download, Upload, Search, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx'; 
-import { useAuth, AuthUsers} from "../service/AuthContext";
+import * as XLSX from 'xlsx';
+import { useAuth, AuthUsers } from "../service/AuthContext";
 import { StdQuantity, GlobalModel } from "../model/Models";
 import { API } from '../config';
- 
+
 
 export default function StandardQuantity() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [itemList, setItemList] = useState<StdQuantity[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -55,9 +55,9 @@ export default function StandardQuantity() {
     ToolsCategory: '',
     ToolsDesc: '',
     StatusCapex: '',
-    StdQuantity: "0", 
+    StdQuantity: "0",
     RiskCategory: '',
-    Sertification: '' 
+    Sertification: ''
   });
   /*Model*/
   const [jobsites, setJobsites] = useState<GlobalModel[]>([]);
@@ -65,7 +65,9 @@ export default function StandardQuantity() {
   const [riskCategorys, setRiskCategories] = useState<GlobalModel[]>([]);
   const [sertifications, setSertifications] = useState<GlobalModel[]>([]);
   const [statusCapex, setStatusCapex] = useState<GlobalModel[]>([]);
-  /*Pagination Items */ 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  /*Pagination Items */
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -79,7 +81,7 @@ export default function StandardQuantity() {
       StatusCapex: '',
       StdQuantity: "0",
       RiskCategory: '',
-      Sertification: '' 
+      Sertification: ''
     });
     setIsDialogOpen(true);
   };
@@ -94,7 +96,7 @@ export default function StandardQuantity() {
       StatusCapex: item.StatusCapex,
       StdQuantity: item.StdQuantity,
       RiskCategory: item.RiskCategory,
-      Sertification: item.Sertification 
+      Sertification: item.Sertification
     });
     setIsDialogOpen(true);
   };
@@ -104,7 +106,7 @@ export default function StandardQuantity() {
       || !formData.Jobsite || !formData.StdQuantity || !formData.StatusCapex) {
       toast.error('Please fill in all required fields');
       return;
-    } 
+    }
 
     try {
       const response = await fetch(API.STDQUANTITY(), {
@@ -113,7 +115,7 @@ export default function StandardQuantity() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          action: (editingItem?"UPDATE":"INSERT"),
+          action: (editingItem ? "UPDATE" : "INSERT"),
           nrp: currentUser.Nrp,
           ToolId: formData.ToolsId,
           Kategori: formData.ToolsCategory,
@@ -142,10 +144,10 @@ export default function StandardQuantity() {
         }
       } else {
         toast.error("Failed, No Respont");
-      } 
+      }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
-    } 
+    }
   };
 
   const handleDeleteUser = async () => {
@@ -180,12 +182,18 @@ export default function StandardQuantity() {
         }
       } else {
         toast.error("Failed, No Respont");
-      } 
+      }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
-    }   
+    }
   }
-   
+
+  // Reset to page 1 when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
   const openDeleteDialog = (tools: StdQuantity) => {
     setEditingItem(tools);
     setIsDeleteDialogOpen(true);
@@ -212,7 +220,7 @@ export default function StandardQuantity() {
     toast.success('Data exported successfully');
   };
 
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => { 
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     toast.success(`Feature Import is under maintenance`);
     const file = e.target.files?.[0];
     if (!file) return;
@@ -314,7 +322,7 @@ export default function StandardQuantity() {
       .then((json: GlobalModel[]) => setCategories(json))
       .catch((error) => console.error("Error:", error));
   }
-  
+
   useEffect(() => {
     if (itemList.length == 0) {
       ReloadMaster();
@@ -334,13 +342,21 @@ export default function StandardQuantity() {
       ReloadCategory()
       console.log("Reload categories")
     }
-  });
+  }, []);
 
   // Pagination calculations
   const totalPages = Math.ceil(itemList.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = itemList.slice(startIndex, endIndex);
+
+  const filteredTransactions = currentItems.filter((transaction) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      transaction.ToolsDesc?.toLowerCase().includes(query) ||
+      transaction.ToolsCategory?.toLowerCase().includes(query)
+    );
+  });
 
   //dashboard
   const totalItems = itemList.length;
@@ -391,21 +407,21 @@ export default function StandardQuantity() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-l-4 border-l-[#009999]">
+        <Card className="border-l-4 border-l-[#009999] shadow-lg">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Total Items</CardTitle>
+            <CardTitle className="text-lg text-gray-600">Total Items</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-2">
               <span className="text-[#003366]">{totalItems}</span>
               <Package className="h-8 w-8 text-[#009999]" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-green-500 shadow-lg">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Meeting Standard</CardTitle>
+            <CardTitle className="text-lg text-gray-600">Meeting Standard</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -420,9 +436,9 @@ export default function StandardQuantity() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-red-500">
+        <Card className="border-l-4 border-l-red-500 shadow-lg">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Below Standard</CardTitle>
+            <CardTitle className="text-lg text-gray-600">Below Standard</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -439,52 +455,62 @@ export default function StandardQuantity() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-[#003366]">Standard Quantity List</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle className="text-[#003366] w-full max-w-[50px]">
+            Standard Quantity List
+          </CardTitle>
+          <div className="relative w-full max-w-[100px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#009999]/50" />
+            <Input
+              placeholder="Search by tools desc or category..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10 h-10 border-[#009999]/30 focus:border-[#009999] focus:ring-[#009999]/20"
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ToolsId</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Desc</TableHead>
-                  <TableHead className="text-center">Standard Qty</TableHead>
-                  <TableHead className="text-center">Current Qty</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead>Status Capex</TableHead>
-                  <TableHead>Risk<br />Category</TableHead>
-                  <TableHead>Cert</TableHead>
-                  <TableHead>Jobsite</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="bg-gray-100">ToolsId</TableHead>
+                  <TableHead className="bg-gray-100">Category</TableHead>
+                  <TableHead className="bg-gray-100">Desc</TableHead>
+                  <TableHead className="text-center bg-gray-100">Standard Qty</TableHead>
+                  <TableHead className="text-center bg-gray-100">Current Qty</TableHead>
+                  <TableHead className="text-center bg-gray-100">Status</TableHead>
+                  <TableHead className="bg-gray-100">Status Capex</TableHead>
+                  <TableHead className="bg-gray-100">Risk<br />Category</TableHead>
+                  <TableHead className="bg-gray-100">Cert</TableHead>
+                  <TableHead className="bg-gray-100">Jobsite</TableHead>
+                  <TableHead className="text-right bg-gray-100">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.map((item) => { 
-                  var isBelow = item.Status!="OK"
+                {filteredTransactions.map((item) => {
+                  var isBelow = item.Status != "OK"
                   return (
                     <TableRow key={item.ToolsId}>
-                      <TableCell>{item.ToolsId}</TableCell>
-                      <TableCell>{item.ToolsCategory}</TableCell>
-                      <TableCell>{item.ToolsDesc}</TableCell>
-                      <TableCell className="text-center">{item.StdQuantity}</TableCell>
-                      <TableCell className="text-center">{item.ActualQuantity}</TableCell>
+                      <TableCell className="text-gray-600">{item.ToolsId}</TableCell>
+                      <TableCell className="text-gray-600">{item.ToolsCategory}</TableCell>
+                      <TableCell className="text-gray-600">{item.ToolsDesc}</TableCell>
+                      <TableCell className="text-center text-gray-600">{item.StdQuantity}</TableCell>
+                      <TableCell className="text-center text-gray-600">{item.ActualQuantity}</TableCell>
                       <TableCell className="text-center">
                         <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                            isBelow
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-green-100 text-green-700'
-                          }`}
+                          className={`inline-flex px-2 py-1 rounded-full text-xs ${isBelow
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-green-100 text-green-700'
+                            }`}
                         >
                           {isBelow ? 'Below' : 'OK'}
                         </span>
                       </TableCell>
-                      <TableCell>{item.StatusCapex}</TableCell>
-                      <TableCell>{item.RiskCategory}</TableCell>
-                      <TableCell>{item.Sertification}</TableCell>
-                      <TableCell>{item.Jobsite}</TableCell>
+                      <TableCell className="text-gray-600">{item.StatusCapex}</TableCell>
+                      <TableCell className="text-gray-600">{item.RiskCategory}</TableCell>
+                      <TableCell className="text-gray-600">{item.Sertification}</TableCell>
+                      <TableCell className="text-gray-600">{item.Jobsite}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -568,7 +594,7 @@ export default function StandardQuantity() {
               <Label htmlFor="category">Tools Id *</Label>
               <Input
                 id="category"
-                disabled={editingItem!=null}
+                disabled={editingItem != null}
                 value={formData.ToolsId}
                 onChange={(e) => setFormData({ ...formData, ToolsId: e.target.value })}
                 placeholder="e.g., Welding Equipment"
@@ -583,7 +609,7 @@ export default function StandardQuantity() {
                 placeholder="e.g., Welding Machine"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4"> 
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Tools Category *</Label>
                 <Select
@@ -611,8 +637,8 @@ export default function StandardQuantity() {
                   id="standardQty"
                   type="number"
                   value={formData.StdQuantity}
-                  onChange={(e) => setFormData({ ...formData, StdQuantity: e.target.value })} 
-                /> 
+                  onChange={(e) => setFormData({ ...formData, StdQuantity: e.target.value })}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -622,7 +648,7 @@ export default function StandardQuantity() {
                   value={formData.Jobsite}
                   onValueChange={(value) => {
                     //const selected = jobsites.find(j => j.Keterangan === value);
-                    setFormData({ ...formData, Jobsite: value  })
+                    setFormData({ ...formData, Jobsite: value })
                   }}
                 >
                   <SelectTrigger id="add-jobsite">
@@ -633,7 +659,7 @@ export default function StandardQuantity() {
                       <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
                         {pos.Keterangan}
                       </SelectItem>
-                    ))} 
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -641,7 +667,7 @@ export default function StandardQuantity() {
                 <Label htmlFor="statuscapex">Status Capex *</Label>
                 <Select
                   value={formData.StatusCapex}
-                  onValueChange={(value) => { 
+                  onValueChange={(value) => {
                     setFormData({ ...formData, StatusCapex: value })
                   }}
                 >
@@ -657,13 +683,13 @@ export default function StandardQuantity() {
                   </SelectContent>
                 </Select>
               </div>
-            </div> 
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="riskCategori">Risk Category</Label>
                 <Select
                   value={formData.RiskCategory}
-                  onValueChange={(value) => { 
+                  onValueChange={(value) => {
                     setFormData({ ...formData, RiskCategory: value })
                   }}
                 >

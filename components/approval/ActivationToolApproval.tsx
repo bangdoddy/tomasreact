@@ -266,7 +266,8 @@ export default function ActivationToolApproval() {
   const GetActivationList = () => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
-      nrp: currentUser.Nrp,
+      nrp: currentUser?.Nrp,
+      role: currentUser?.Jabatan,
       showDetail: "SHOW"
     });
     fetch(API.ACTIVATIONTOOLS() + `?${params.toString()}`, {
@@ -274,6 +275,7 @@ export default function ActivationToolApproval() {
     })
       .then((response) => response.json())
       .then((json: ActivationToolData[]) => {
+        console.log(currentUser?.Jabatan);
         const grouped: ActivationToolData[] = groupByNoBAST(json);
         setActivationTools(grouped)
       })

@@ -491,13 +491,13 @@ export default function UserManagement() {
         <CardContent>
           {/* Search */}
           <div className="mb-6">
-            <div className="relative max-w-md">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search by NRP, name, supervisor, or workgroup..."
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-10"
               />
             </div>
           </div>
@@ -514,16 +514,16 @@ export default function UserManagement() {
                     <TableHead colSpan={2} className="text-center border-r border-gray-400 text-gray-900 h-12">
                       Superior
                     </TableHead>
-                    <TableHead rowSpan={2} className="border-r border-gray-400 text-gray-900">
+                    <TableHead rowSpan={2} className="text-center border-r border-gray-400 text-gray-900">
                       Jabatan
                     </TableHead>
-                    <TableHead rowSpan={2} className="border-r border-gray-400 text-gray-900">
+                    <TableHead rowSpan={2} className="text-center border-r border-gray-400 text-gray-900">
                       Jabatan<br />Structural
                     </TableHead>
-                    <TableHead rowSpan={2} className="border-r border-gray-400 text-gray-900">
+                    <TableHead rowSpan={2} className="text-center border-r border-gray-400 text-gray-900">
                       Jobsite
                     </TableHead>
-                    <TableHead rowSpan={2} className="border-r border-gray-400 text-gray-900">
+                    <TableHead rowSpan={2} className="text-center border-r border-gray-400 text-gray-900">
                       Workgroup
                     </TableHead>
                     <TableHead rowSpan={2} className="text-right text-gray-900">
@@ -531,10 +531,10 @@ export default function UserManagement() {
                     </TableHead>
                   </TableRow>
                   <TableRow className="bg-gray-300 hover:bg-gray-300">
-                    <TableHead className="border-r border-gray-400 text-gray-900">NRP</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Name</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">NRP</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Name</TableHead>
+                    <TableHead className="text-center border-r border-gray-400 text-gray-900">NRP</TableHead>
+                    <TableHead className="text-center border-r border-gray-400 text-gray-900">Name</TableHead>
+                    <TableHead className="text-center border-r border-gray-400 text-gray-900">NRP</TableHead>
+                    <TableHead className="text-center border-r border-gray-400 text-gray-900">Name</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -547,14 +547,14 @@ export default function UserManagement() {
                   ) : (
                     currentUsers.map((user) => (
                       <TableRow key={user.id} className="hover:bg-gray-50">
-                        <TableCell className="border-r border-gray-200">{user.nrp}</TableCell>
-                        <TableCell className="border-r border-gray-200">{user.name}</TableCell>
-                        <TableCell className="border-r border-gray-200">{user.supervisorNrp}</TableCell>
-                        <TableCell className="border-r border-gray-200">{user.supervisorName}</TableCell>
-                        <TableCell className="border-r border-gray-200">{user.Jabatan}</TableCell>
-                        <TableCell className="border-r border-gray-200">{user.JabatanStructural}</TableCell>
-                        <TableCell className="border-r border-gray-200">{user.Jobsite}</TableCell>
-                        <TableCell className="border-r border-gray-200">{user.Workgroup}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{user.nrp}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{user.name}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{user.supervisorNrp}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{user.supervisorName}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{user.Jabatan}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{user.JabatanStructural}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{user.Jobsite}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{user.Workgroup}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button

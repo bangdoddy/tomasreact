@@ -698,7 +698,7 @@ export default function RentTools() {
               </CardTitle>
               <CardDescription>Scan or enter employee NRP from ID card</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-2">
               <div className="flex gap-2">
                 <div className="flex-1">
                   <InputRef
@@ -857,7 +857,7 @@ export default function RentTools() {
               <div className="flex justify-end">
                 <Button variant="outline"
                   disabled={rentedTools.length === 0}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                  className="w-full bg-[#009999] hover:bg-[#007777] text-white rounded"
                   onClick={handleCompleteTransaction}>SUBMIT RENT</Button>
               </div>
             </CardContent>

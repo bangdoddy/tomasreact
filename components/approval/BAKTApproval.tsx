@@ -67,7 +67,7 @@ interface BaktResult {
   Perusahaan: number;
   Karyawan: number;
   CauseBrokenBA: string;
-  StApprovedBAKT: string; 
+  StApprovedBAKT: string;
   StReportBAKT: string;
 }
 
@@ -135,10 +135,10 @@ export default function BAKTApproval() {
     }).format(value);
   };
 
-  const handleApprove = async (bakt: BaktResult) => { 
+  const handleApprove = async (bakt: BaktResult) => {
     try {
       const response = await fetch(API.BAKT(), {
-        method: "POST", 
+        method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
@@ -169,10 +169,10 @@ export default function BAKTApproval() {
       }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
-    }  
+    }
   };
 
-  const handleReject = (id: string) => { 
+  const handleReject = (id: string) => {
     toast.error('BAKT request rejected');
   };
 
@@ -184,17 +184,17 @@ export default function BAKTApproval() {
       .filter((r) => r.StApprovedBAKT === 'Pending')
       .reduce((sum, r) => sum + r.TotalPrice, 0),
   };
-   
+
   const saveToExcel = (data: BaktResult[]) => {
     const worksheet = XLSX.utils.json_to_sheet(
       data.map((tool) => ({
-        'BAKT Number':tool.BA_No,
-        'Project Name':tool.ToolsName,
-        'Requested By':tool.Nama,
+        'BAKT Number': tool.BA_No,
+        'Project Name': tool.ToolsName,
+        'Requested By': tool.Nama,
         'Department': tool.NamaSuperior,
-        'Date':tool.CreateDateBA,
-        'Est. Value (IDR)':tool.TotalPrice,
-        'Status':tool.StApprovedBAKT 
+        'Date': tool.CreateDateBA,
+        'Est. Value (IDR)': tool.TotalPrice,
+        'Status': tool.StApprovedBAKT
       }))
     );
 
@@ -204,17 +204,17 @@ export default function BAKTApproval() {
     XLSX.writeFile(workbook, `Bakt_Approval_${new Date().toISOString().split('T')[0]}.xlsx`);
     toast.success('Data exported successfully');
   }
-   
+
   const GetBaktList = () => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
-      nrp: currentUser.Nrp 
+      nrp: currentUser.Nrp
     });
-    fetch(API.BAKT() + `?${params.toString()}`, { 
+    fetch(API.BAKT() + `?${params.toString()}`, {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: BaktResult[]) => { 
+      .then((json: BaktResult[]) => {
         setBaktTools(json)
       })
       .catch((error) => console.error("Error:", error));
@@ -251,7 +251,7 @@ export default function BAKTApproval() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-yellow-200">
+        <Card className="shadow-md p-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Pending</CardTitle>
           </CardHeader>
@@ -265,7 +265,7 @@ export default function BAKTApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="shadow-md p-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Approved</CardTitle>
           </CardHeader>
@@ -279,7 +279,7 @@ export default function BAKTApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="shadow-md p-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Rejected</CardTitle>
           </CardHeader>
@@ -293,7 +293,7 @@ export default function BAKTApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-[#009999]/20">
+        <Card className="shadow-md p-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Pending Value</CardTitle>
           </CardHeader>
@@ -301,12 +301,13 @@ export default function BAKTApproval() {
             <div className="flex items-center justify-between">
               <div className="text-lg text-gray-900">
                 {formatCurrency(stats.totalValue).replace('Rp', '').trim()}
+                <span className="text-xs text-gray-500 mt-1"> IDR Million</span>
               </div>
               <div className="p-2 bg-[#009999]/10 rounded-lg">
                 <FileText className="h-5 w-5 text-[#009999]" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">IDR Million</p>
+            {/* <p className="text-xs text-gray-500 mt-1">IDR Million</p> */}
           </CardContent>
         </Card>
       </div>
@@ -314,7 +315,7 @@ export default function BAKTApproval() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 p-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
