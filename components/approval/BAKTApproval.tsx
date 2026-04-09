@@ -12,6 +12,8 @@ import {
   User,
   ClipboardList,
   FileText,
+  Currency,
+  DollarSign,
 } from 'lucide-react';
 import {
   Table,
@@ -304,7 +306,7 @@ export default function BAKTApproval() {
                 <span className="text-xs text-gray-500 mt-1"> IDR Million</span>
               </div>
               <div className="p-2 bg-[#009999]/10 rounded-lg">
-                <FileText className="h-5 w-5 text-[#009999]" />
+                <DollarSign className="h-5 w-5 text-[#009999]" />
               </div>
             </div>
             {/* <p className="text-xs text-gray-500 mt-1">IDR Million</p> */}
@@ -370,33 +372,33 @@ export default function BAKTApproval() {
                   filteredRequests.map((request) => (
                     <TableRow key={request.BA_No} className="hover:bg-gray-50">
                       <TableCell>
-                        <span className="text-[#009999]">{request.BA_No}</span>
+                        <span className="text-gray-600 text-[#009999]">{request.BA_No}</span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-gray-400" />
+                        <div className="text-gray-600 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-gray-600" />
                           {request.ToolsName}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
+                        <div className="text-gray-600 flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-600" />
                           {request.Nama}
                         </div>
                       </TableCell>
-                      <TableCell>{request.NamaSuperior}</TableCell>
+                      <TableCell className="text-gray-600">{request.NamaSuperior}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
+                        <div className="text-gray-600 flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-600" />
                           {new Date(request.CreateDateBA).toLocaleDateString()}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">
+                        <span className="text-gray-600 text-sm">
                           {formatCurrency(request.TotalPrice)}
                         </span>
                       </TableCell>
-                      <TableCell>{0}</TableCell>
+                      <TableCell className="text-gray-600">{0}</TableCell>
                       <TableCell>
                         <Badge className={`w-fit ${getStatusColor(request.StApprovedBAKT)}`}>
                           {request.StApprovedBAKT}

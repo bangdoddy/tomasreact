@@ -119,7 +119,7 @@ export default function Sidebar({
         { id: 'tools-management', label: 'Tool & Facility Register' },
         { id: 'standard-quantity', label: 'Standard Quantity' },
         { id: 'tool-activation', label: 'Tool & Facility Activation' },
-        { id: 'toolstype', label: 'Tools Type' },
+        // { id: 'toolstype', label: 'Tools Type' },
       ],
     },
     {
@@ -299,84 +299,84 @@ export default function Sidebar({
           ) : (
             filteredMenuItems.map((item, index) => (
               <div key={item.id} className="mb-1">
-              <button
-                onClick={() => {
-                  if (item.subItems) {
-                    toggleMenu(item.id);
-                  } else {
-                    onNavigate(item.id);
-                  }
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative',
-                  currentPage === item.id && !item.subItems 
-                    ? 'bg-gradient-to-r from-[#009999] to-[#007777] text-white shadow-lg shadow-[#009999]/30' 
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                )}
-                title={isCollapsed ? item.label : undefined}
-              >
-                {/* Active indicator */}
-                {currentPage === item.id && !item.subItems && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
-                )}
-                
-                <span className={cn(
-                  'flex-shrink-0 transition-all duration-200',
-                  currentPage === item.id && !item.subItems 
-                    ? 'text-white scale-110' 
-                    : 'text-[#009999] group-hover:text-white group-hover:scale-110'
-                )}>{item.icon}</span>
-                
-                {!isCollapsed && (
-                  <>
-                    <span className={cn(
-                      'flex-1 text-left text-sm font-medium',
-                      currentPage === item.id && !item.subItems && 'font-semibold'
-                    )}>{item.label}</span>
-                    {item.subItems && (
-                      <ChevronRight
-                        className={cn(
-                          'h-4 w-4 transition-all duration-200',
-                          expandedMenus.includes(item.id) && 'rotate-90 text-[#009999]'
-                        )}
-                      />
-                    )}
-                  </>
-                )}
-              </button>
+                <button
+                  onClick={() => {
+                    if (item.subItems) {
+                      toggleMenu(item.id);
+                    } else {
+                      onNavigate(item.id);
+                    }
+                  }}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative',
+                    currentPage === item.id && !item.subItems
+                      ? 'bg-gradient-to-r from-[#009999] to-[#007777] text-white shadow-lg shadow-[#009999]/30'
+                      : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                  )}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  {/* Active indicator */}
+                  {currentPage === item.id && !item.subItems && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                  )}
 
-              {/* Submenu */}
-              {item.subItems && expandedMenus.includes(item.id) && !isCollapsed && (
-                <div className="mt-1 ml-3 pl-3 border-l-2 border-[#004488]/40 space-y-0.5">
-                  {item.subItems.map((subItem) => (
-                    <button
-                      key={subItem.id}
-                      onClick={() => !subItem.disabled && onNavigate(subItem.id)}
-                      className={cn(
-                        'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 text-sm text-left group',
-                        subItem.disabled 
-                          ? 'text-gray-500 cursor-not-allowed opacity-40' 
-                          : currentPage === subItem.id
-                          ? 'bg-white/15 text-white font-medium shadow-sm'
-                          : 'text-gray-400 hover:text-white hover:bg-white/10'
+                  <span className={cn(
+                    'flex-shrink-0 transition-all duration-200',
+                    currentPage === item.id && !item.subItems
+                      ? 'text-white scale-110'
+                      : 'text-[#009999] group-hover:text-white group-hover:scale-110'
+                  )}>{item.icon}</span>
+
+                  {!isCollapsed && (
+                    <>
+                      <span className={cn(
+                        'flex-1 text-left text-sm font-medium',
+                        currentPage === item.id && !item.subItems && 'font-semibold'
+                      )}>{item.label}</span>
+                      {item.subItems && (
+                        <ChevronRight
+                          className={cn(
+                            'h-4 w-4 transition-all duration-200',
+                            expandedMenus.includes(item.id) && 'rotate-90 text-[#009999]'
+                          )}
+                        />
                       )}
-                      disabled={subItem.disabled}
-                    >
-                      <Circle 
+                    </>
+                  )}
+                </button>
+
+                {/* Submenu */}
+                {item.subItems && expandedMenus.includes(item.id) && !isCollapsed && (
+                  <div className="mt-1 ml-3 pl-3 border-l-2 border-[#004488]/40 space-y-0.5">
+                    {item.subItems.map((subItem) => (
+                      <button
+                        key={subItem.id}
+                        onClick={() => !subItem.disabled && onNavigate(subItem.id)}
                         className={cn(
-                          'h-1.5 w-1.5 flex-shrink-0 transition-all duration-200',
-                          currentPage === subItem.id 
-                            ? 'fill-[#009999] text-[#009999]' 
-                            : 'fill-gray-500 text-gray-500 group-hover:fill-white group-hover:text-white'
-                        )} 
-                      />
-                      <span className="flex-1">{subItem.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )))}
+                          'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 text-sm text-left group',
+                          subItem.disabled
+                            ? 'text-gray-500 cursor-not-allowed opacity-40'
+                            : currentPage === subItem.id
+                              ? 'bg-white/15 text-white font-medium shadow-sm'
+                              : 'text-gray-400 hover:text-white hover:bg-white/10'
+                        )}
+                        disabled={subItem.disabled}
+                      >
+                        <Circle
+                          className={cn(
+                            'h-1.5 w-1.5 flex-shrink-0 transition-all duration-200',
+                            currentPage === subItem.id
+                              ? 'fill-[#009999] text-[#009999]'
+                              : 'fill-gray-500 text-gray-500 group-hover:fill-white group-hover:text-white'
+                          )}
+                        />
+                        <span className="flex-1">{subItem.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )))}
         </nav>
 
         {/* Footer */}

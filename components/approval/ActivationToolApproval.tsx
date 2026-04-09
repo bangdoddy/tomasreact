@@ -275,7 +275,7 @@ export default function ActivationToolApproval() {
     })
       .then((response) => response.json())
       .then((json: ActivationToolData[]) => {
-        console.log(currentUser?.Jabatan);
+        console.log(json);
         const grouped: ActivationToolData[] = groupByNoBAST(json);
         setActivationTools(grouped)
       })
@@ -326,7 +326,7 @@ export default function ActivationToolApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-200">
+        <Card className="border-yellow-200 p-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Pending</CardTitle>
           </CardHeader>
@@ -371,7 +371,7 @@ export default function ActivationToolApproval() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 p-2">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

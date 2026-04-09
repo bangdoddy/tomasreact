@@ -50,7 +50,7 @@ interface ActivationRecord {
 export default function ToolActivation() {
   const { currentUser } = useAuth();
   const nrpInputRef = useRef<HTMLInputElement>(null);
-  const toolInputRef = useRef(null);
+  const toolInputRef = useRef<HTMLInputElement>(null);
 
   /*Model*/
   const [users, setUsers] = useState<GlobalModel[]>([]);
@@ -281,7 +281,7 @@ export default function ToolActivation() {
       </div>
 
       {/* Activation Form */}
-      <Card className="border-0 shadow-lg">
+      <Card className="border-0 shadow-lg p-2">
         <CardHeader>
           <CardTitle className="text-[#003366]">Activation Information</CardTitle>
         </CardHeader>
@@ -358,7 +358,7 @@ export default function ToolActivation() {
       </Card>
 
       {/* Add Tool Item Form */}
-      <Card className="border-0 shadow-lg">
+      <Card className="border-0 shadow-lg p-2">
         <CardHeader>
           <CardTitle className="text-[#003366]">Add Tool Item</CardTitle>
         </CardHeader>
@@ -371,7 +371,7 @@ export default function ToolActivation() {
                 value={newItem.toolsId}
                 onChange={(e) => {
                   var tool = e.target.value;
-                  const selected = regtools.find(j => j.Kode === tool) || null;
+                  const selected = regtools.find(j => j.Kode.toLocaleLowerCase() === tool.toLocaleLowerCase()) || null;
                   if (selected) {
                     setNewItem({ ...newItem, toolsId: tool, toolsName: selected.Nama, toolsBrand: selected.Kategori, toolsSize: selected.Keterangan, statusTools: selected.Status })
                   } else {
@@ -487,8 +487,8 @@ export default function ToolActivation() {
                       <TableCell>
                         <span
                           className={`px-3 py-1 rounded text-xs ${item.statusActive
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
                             }`}
                         >
                           {item.statusActive ? 'True' : 'False'}

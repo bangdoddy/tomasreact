@@ -24,7 +24,7 @@ import { GlobalModel } from "../model/Models";
 import { API } from '../config';
 import { toast } from 'sonner@2.0.3';
 
-interface BAKTItem { 
+interface BAKTItem {
   ItemKey: string;
   ToolsId: string;
   ToolsName: string;
@@ -52,7 +52,7 @@ interface BaktUser {
   NRP_Group_Leader: string;
   Group_Leader: string;
   NRP_Section_Head: string;
-  Section_Head: string;  
+  Section_Head: string;
 }
 
 interface BAKTDetail {
@@ -71,7 +71,7 @@ interface BAKTDetail {
   WO_No: string;
   PayrollDeduction: string;
   ToolsCostDefaultShow: string;
-  PayrollDeductionShow: string;  
+  PayrollDeductionShow: string;
 }
 
 interface CreateBAKTFormProps {
@@ -113,12 +113,12 @@ export default function CreateBAKTForm({
           action: "CREATEBAKT",
           Jobsite: currentUser.Jobsite,
           NrpUser: currentUser.Nrp,
-          ItemKey: baktItem.ItemKey, 
-          Nrp: baktItem.NrpMekanik, 
+          ItemKey: baktItem.ItemKey,
+          Nrp: baktItem.NrpMekanik,
           BaktNo: formData.baktNo,
           Reason: formData.brokenReason,
           JobActivity: formData.jobActivity,
-          OutFrom:baktItem.ToolsFrom
+          OutFrom: baktItem.ToolsFrom
         })
       });
 
@@ -131,26 +131,26 @@ export default function CreateBAKTForm({
         var adaSuccess = false;
         var adaFailed = false;
         for (const item of data) {
-          if (item.Status == 1) { 
+          if (item.Status == 1) {
             adaSuccess = true;
-            message += ((message == "") ? "" : "<br />")  + " " + item.Message;
+            message += ((message == "") ? "" : "<br />") + " " + item.Message;
           } else if (item.Status == 0) {
             adaFailed = true;
             message += ((message == "") ? "" : "<br />") + " " + item.Message;
           }
-        } 
-        if (!adaFailed) { 
+        }
+        if (!adaFailed) {
           onClose();
           toast.success('Transaction successfully');
         } else {
           toast.error(message ?? "Failed");
-        } 
+        }
       } else {
         toast.error("Failed, No Respont");
       }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
-    }  
+    }
   };
 
   const handleChange = (
@@ -160,11 +160,11 @@ export default function CreateBAKTForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const ReloadNrpUser = (nrpUser :string) => {
+  const ReloadNrpUser = (nrpUser: string) => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
       act: "DETAILOUTNRP",
-      nrp:nrpUser
+      nrp: nrpUser
     });
     fetch(API.BAKT() + `?${params.toString()}`, {
       method: "GET"
@@ -172,13 +172,13 @@ export default function CreateBAKTForm({
       .then((response) => response.json())
       .then((json: BaktUser[]) => {
         if (json.length > 0) {
-          const user =  json[0]
+          const user = json[0]
           setSelectedUser(user);
           setFormData((prev) => ({
             ...prev,
             baktNo: user.BaktNo,
             name: user.Nama,
-            position: user.Jabatan, 
+            position: user.Jabatan,
             picTools: user.PIC_Tools,
             glSpv: user.Group_Leader,
             sectionHead: user.Section_Head
@@ -207,18 +207,18 @@ export default function CreateBAKTForm({
       .catch((error) => console.error("Error:", error));
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     if (baktItem) {
       ReloadNrpUser(baktItem.NrpMekanik);
       ReloadDetailBakt(baktItem.ItemKey);
     }
   }, [baktItem]);
-   
+
   if (!baktItem) return null;
-   
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-full w-full h-full max-h-full  sm:max-w-[900px] overflow-y-auto p-0 rounded-none">
+      <DialogContent className="max-w-full w-full h-full max-h-full  sm:max-w-[900px] overflow-y-auto p-3 rounded-none">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="text-[#003366] flex items-center justify-between">
             Create BAKT Form
@@ -253,7 +253,7 @@ export default function CreateBAKTForm({
                     {/*<TableHead className="text-white">TOOLS CONDITION</TableHead> */}
                   </TableRow>
                 </TableHeader>
-                <TableBody> 
+                <TableBody>
                   <TableRow key={1} className="hover:bg-gray-50">
                     <TableCell className="text-gray-900">{baktItem.NrpMekanik}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.NamaMekanik}</TableCell>
@@ -262,8 +262,8 @@ export default function CreateBAKTForm({
                     <TableCell className="text-gray-900">{baktItem.ToolsType}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.ToolsSize}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.TransDate}</TableCell>
-                    {/*<TableCell className="text-gray-900">{baktItem.ToolsConditionName}</TableCell>*/} 
-                  </TableRow> 
+                    {/*<TableCell className="text-gray-900">{baktItem.ToolsConditionName}</TableCell>*/}
+                  </TableRow>
                 </TableBody>
               </Table>
             </div>

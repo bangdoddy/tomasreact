@@ -86,7 +86,7 @@ interface CompletedTransaction {
 export default function RentTools() {
   const { currentUser } = useAuth();
   const nrpInputRef = useRef<HTMLInputElement>(null);
-  const toolInputRef = useRef(null);
+  const toolInputRef = useRef<HTMLInputElement>(null);
 
   /*Model*/
   const [users, setUsers] = useState<GlobalModel[]>([]);
@@ -114,6 +114,7 @@ export default function RentTools() {
     name: string;
     type: string;
     status: string;
+    condition: string;
   } | null>(null);
   const [formData, setFormData] = useState({
     toolsId: '',
@@ -154,7 +155,7 @@ export default function RentTools() {
       rentDate: transaction.TransDateRental,
       quantity: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].quantity : 1,
       transIdTools: transaction.TransIdTools,
-      condition: transaction.Tools && transaction.Tools.length > 0 ? transaction.Tools[0].condition : '',
+      condition: transaction.ToolCondition,
     });
     setIsEditDialogOpen(true);
   };
@@ -303,7 +304,7 @@ export default function RentTools() {
       toolsName: toolName,
       toolsType: toolType,
       quantity: 1,
-      condition: 'BAIK',
+      condition: 'Con1',
       rentnote: rentnote,
       addedTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
     };
@@ -352,6 +353,7 @@ export default function RentTools() {
         name: tool.Nama,
         type: tool.ToolsType,
         status: tool.Status,
+        condition: 'Con1'
       });
 
       handleAddToolImmediate(trimmedId, tool.Nama, tool.ToolsType, tool.Status);
@@ -397,15 +399,18 @@ export default function RentTools() {
     returnDate.setDate(returnDate.getDate() + parseInt(estimatedReturnDays));
 
     const newTransactions: CompletedTransaction[] = rentedTools.map((tool) => ({
-      id: Date.now().toString() + Math.random(),
-      employeeNrp: employeeData.nrp,
-      employeeName: employeeData.name,
-      toolId: tool.toolsId,
-      toolName: tool.toolsName,
-      quantity: tool.quantity,
-      rentDate: now.toLocaleDateString('en-US'),
-      rentTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      estimatedReturnDate: returnDate.toLocaleDateString('en-US'),
+      NO: (Date.now() + Math.random()).toString(),
+      TransIdTools: tool.toolsId,
+      ToolsDesc: tool.toolsName,
+      ToolsType: tool.toolsType,
+      NRP: employeeData.nrp,
+      NAMA: employeeData.name,
+      TransDateRental: now.toLocaleDateString('en-US'),
+      TransEstReturnDate: returnDate.toLocaleDateString('en-US'),
+      TransReturnDate: '',
+      MONumber: tool.rentnote,
+      ToolCondition: tool.condition,
+      Tools: [tool],
     }));
 
     const rentedToolList = rentedTools.map((tool) => ({
@@ -479,14 +484,14 @@ export default function RentTools() {
       } else {
         toast.error("Failed, No Respont");
       }
-    } catch (ex) {
-      toast.error("Failed. Message: " + ex.Message);
+    } catch (ex: any) {
+      toast.error("Failed. Message: " + ex.message);
     }
 
 
   };
 
-  function deleteByToolsId(id) {
+  function deleteByToolsId(id: string) {
     setRentedTools(prev => prev.filter(tool => tool.toolsId !== id));
   }
 
@@ -607,6 +612,7 @@ export default function RentTools() {
       .then((response) => response.json())
       .then((json: CompletedTransaction[]) => {
         setCompletedTransactions(json);
+        console.log(json)
       })
       .catch((error) => console.error("Error:", error));
   }
@@ -814,7 +820,7 @@ export default function RentTools() {
                     <TableHead className="bg-gray-100">Tool ID</TableHead>
                     <TableHead className="bg-gray-100">Tool Name</TableHead>
                     <TableHead className="bg-gray-100 text-center">Type</TableHead>
-                    <TableHead className="bg-gray-100 text-center">WO No.</TableHead>
+                    <TableHead className="bg-gray-100 text-center">MO No.</TableHead>
                     <TableHead className="bg-gray-100 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -830,7 +836,7 @@ export default function RentTools() {
                           value={tool.rentnote || ''}
                           onChange={(e) => handleUpdateRentNote(tool.id, e.target.value)}
                           className="h-8 bg-yellow-50 text-xs border-[#009999]/30 focus:border-[#009999]"
-                          placeholder="Enter WO No."
+                          placeholder="Enter MO No."
                         />
                       </TableCell>
                       <TableCell className="text-right">
@@ -1336,7 +1342,7 @@ export default function RentTools() {
               />
             </div>
             <div className="space-y-1 mb-4">
-              <Label htmlFor="edit-woNo" className="text-xs">WO Number</Label>
+              <Label htmlFor="edit-woNo" className="text-xs">MO Number</Label>
               <Input
                 id="edit-woNo"
                 value={editFormData.woNo}
@@ -1428,7 +1434,8 @@ export default function RentTools() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Con1" className="focus:bg-green-50 focus:text-green-700">Good</SelectItem>
-                      <SelectItem value="R1" className="focus:bg-red-50 focus:text-red-700">Damaged</SelectItem>
+                      <SelectItem value="Con2" className="focus:bg-red-50 focus:text-red-700">Damaged</SelectItem>
+                      <SelectItem value="Con3" className="focus:bg-red-50 focus:text-red-700">Missing</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

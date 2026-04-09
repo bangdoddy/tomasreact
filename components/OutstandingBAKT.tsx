@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Search, FileDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, FileDown, File } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import {
@@ -16,7 +16,7 @@ import { useAuth, AuthUsers } from "../service/AuthContext";
 import { GlobalModel } from "../model/Models";
 import { API } from '../config';
 import * as XLSX from 'xlsx';
- 
+
 interface ItemBAKT {
   ItemKey: string;
   ToolsId: string;
@@ -32,7 +32,7 @@ interface ItemBAKT {
   ToolsConditionName: string;
   TransDate: string;
   MoNo: string;
-  ToolsFrom: string; 
+  ToolsFrom: string;
 }
 
 export default function OutstandingBAKT() {
@@ -41,7 +41,7 @@ export default function OutstandingBAKT() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ItemBAKT | null>(null);
   const [listBAKT, setListBAKT] = useState<ItemBAKT[]>([]);
-   
+  const searchBox = useRef<HTMLInputElement>(null);
 
   const filteredItems = listBAKT.filter((item) => {
     const query = searchQuery.toLowerCase();
@@ -62,18 +62,18 @@ export default function OutstandingBAKT() {
     setIsFormOpen(true);
   };
 
-  const handleExport = () => { 
+  const handleExport = () => {
 
     const worksheet = XLSX.utils.json_to_sheet(
       listBAKT.map((tool) => ({
-        'MRP':tool.NrpMekanik,
+        'MRP': tool.NrpMekanik,
         'MEKANIK': tool.NamaMekanik,
         'TOOLS ID': tool.ToolsId,
         'DESCRIPTION': tool.ToolsName,
         'TYPE': tool.ToolsType,
         'SIZE': tool.ToolsSize,
         'TRANSDATE': tool.TransDate,
-        'TOOLS CONDITION': tool.ToolsConditionName 
+        'TOOLS CONDITION': tool.ToolsConditionName
       }))
     );
 
@@ -84,7 +84,7 @@ export default function OutstandingBAKT() {
     toast.success('Data exported successfully');
   };
 
-   
+
   const ReloadOutstanding = () => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
@@ -105,14 +105,23 @@ export default function OutstandingBAKT() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-[#003366] mb-2">Outstanding BAKT</h1>
-          <p className="text-gray-500 text-sm">List of tools with R1 (Rusak) or TA status</p>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#003366] to-[#009999] rounded-xl p-6 text-white shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <File className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl text-white mb-1">Outstanding BAKT</h2>
+            <p className="text-white/80">List of tools with Damaged or Missing status</p>
+          </div>
         </div>
+      </div>
+
+      <div className="flex items-center justify-end p-1">
         <Button
           onClick={handleExport}
-          className="bg-[#009999] hover:bg-[#00b8b8] text-white"
+          className="gap-2 bg-gradient-to-r from-[#003366] to-[#009999] hover:from-[#004080] hover:to-[#00b3b3]"
         >
           <FileDown className="h-4 w-4 mr-2" />
           Export to Excel
@@ -124,6 +133,7 @@ export default function OutstandingBAKT() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
+            ref={searchBox}
             type="text"
             placeholder="Search by MRP, Mekanik, Tools ID, Description..."
             value={searchQuery}
@@ -138,7 +148,7 @@ export default function OutstandingBAKT() {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#009999] hover:bg-[#009999]">
-              <TableHead className="text-white">MRP</TableHead>
+              <TableHead className="text-white">NRP</TableHead>
               <TableHead className="text-white">MEKANIK</TableHead>
               <TableHead className="text-white">TOOLS ID</TableHead>
               <TableHead className="text-white">DESCRIPTION</TableHead>
@@ -146,21 +156,21 @@ export default function OutstandingBAKT() {
               <TableHead className="text-white">SIZE</TableHead>
               <TableHead className="text-white">TRANSDATE</TableHead>
               <TableHead className="text-white">TOOLS CONDITION</TableHead>
-              <TableHead className="text-white bg-gray-600">ACTION</TableHead>
+              <TableHead className="text-white text-center bg-gray-600">ACTION</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredItems.length > 0 ? (
               filteredItems.map((item, index) => (
                 <TableRow key={index} className="hover:bg-gray-50">
-                  <TableCell className="text-gray-900">{item.NrpMekanik}</TableCell>
-                  <TableCell className="text-gray-900">{item.NamaMekanik}</TableCell>
-                  <TableCell className="text-gray-900">{item.ToolsId}</TableCell>
-                  <TableCell className="text-gray-900">{item.ToolsName}</TableCell>
-                  <TableCell className="text-gray-900">{item.ToolsType}</TableCell>
-                  <TableCell className="text-gray-900">{item.ToolsSize}</TableCell>
-                  <TableCell className="text-gray-900">{item.TransDate}</TableCell>
-                  <TableCell className="text-gray-900">{item.ToolsConditionName}</TableCell>
+                  <TableCell className="text-gray-600">{item.NrpMekanik}</TableCell>
+                  <TableCell className="text-gray-600">{item.NamaMekanik}</TableCell>
+                  <TableCell className="text-gray-600">{item.ToolsId}</TableCell>
+                  <TableCell className="text-gray-600">{item.ToolsName}</TableCell>
+                  <TableCell className="text-gray-600">{item.ToolsType}</TableCell>
+                  <TableCell className="text-gray-600">{item.ToolsSize}</TableCell>
+                  <TableCell className="text-gray-600">{item.TransDate}</TableCell>
+                  <TableCell className="text-gray-600">{item.ToolsConditionName}</TableCell>
                   <TableCell>
                     <Button
                       size="sm"
@@ -191,11 +201,15 @@ export default function OutstandingBAKT() {
         <p>Total Outstanding: {listBAKT.length} tools</p>
       </div>
 
-       Create BAKT Form 
       <CreateBAKTForm
         isOpen={isFormOpen}
         baktItem={selectedItem}
-        onClose={() => setIsFormOpen(false)}
+        onClose={() => {
+          setIsFormOpen(false);
+          ReloadOutstanding();
+          searchBox.current?.focus();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
     </div>
   );

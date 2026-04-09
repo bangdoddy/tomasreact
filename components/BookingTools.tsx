@@ -25,6 +25,8 @@ interface Booking {
   employeeName: string;
   bookingDate: string;
   bookingTime: string;
+  DateTo: string;
+  TimeTo: string;
   items: BookingItem[];
   status: string;
   createdAt: string;
@@ -40,17 +42,90 @@ interface BookingMaster {
   StatusBooking: string;
   StartBookDate: string;
   StartBookTime: string;
+  DateTo: string;
+  TimeTo: string;
   Duration: string;
   CREATED_AT: string;
 }
 
+const formatDateStr = (dateStr: string, timeStr: string) => {
+  if (!dateStr) return "-";
+  try {
+    const [year, month, day] = dateStr.split('-');
+    const time = timeStr ? (timeStr.split(':').length === 2 ? `${timeStr}:00` : timeStr) : "00:00:00";
+    return `${day}-${month}-${year} ${time}`;
+  } catch (e) {
+    return dateStr + (timeStr ? " " + timeStr : "");
+  }
+};
+
+const formatDateObj = (dateStr: string, timeStr: string) => {
+  if (!dateStr) return { date: "-", time: "-" };
+  try {
+    const [year, month, day] = dateStr.split('-');
+    const time = timeStr ? (timeStr.split(':').length === 2 ? `${timeStr}:00` : timeStr) : "00:00:00";
+    return {
+      date: `${day}-${month}-${year}`,
+      time: time
+    };
+  } catch (e) {
+    return { date: dateStr, time: timeStr || "00:00:00" };
+  }
+};
+
+const addDays = (dateStr: string, timeStr: string, daysStr: string) => {
+  if (!dateStr || !daysStr) return "-";
+  try {
+    const days = parseInt(daysStr);
+    if (isNaN(days)) return "-";
+    const dt = new Date(`${dateStr}T${timeStr || '00:00'}`);
+    dt.setDate(dt.getDate() + days);
+
+    const year = dt.getFullYear();
+    const month = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    const hours = String(dt.getHours()).padStart(2, '0');
+    const minutes = String(dt.getMinutes()).padStart(2, '0');
+    const seconds = String(dt.getSeconds()).padStart(2, '0');
+
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+  } catch (e) {
+    return "-";
+  }
+};
+
+const addDaysObj = (dateStr: string, timeStr: string, durStr: string) => {
+  if (!dateStr || !durStr) return { date: "-", time: "-" };
+  try {
+    const days = parseInt(durStr);
+    if (isNaN(days)) return { date: "-", time: "-" };
+
+    const dt = new Date(`${dateStr}T${timeStr || '00:00'}`);
+    dt.setDate(dt.getDate() + days);
+
+    const year = dt.getFullYear();
+    const month = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    const hours = String(dt.getHours()).padStart(2, '0');
+    const minutes = String(dt.getMinutes()).padStart(2, '0');
+    const seconds = String(dt.getSeconds()).padStart(2, '0');
+
+    return {
+      date: `${day}-${month}-${year}`,
+      time: `${hours}:${minutes}:${seconds}`
+    };
+  } catch (e) {
+    return { date: "-", time: "-" };
+  }
+};
+
 export default function BookingTools() {
   const { currentUser } = useAuth();
   const nrpInputRef = useRef<HTMLInputElement>(null);
-  const toolInputRef = useRef(null);
-  const dateInputRef = useRef(null);
-  const timeInputRef = useRef(null);
-  const durationInputRef = useRef(null);
+  const toolInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
+  const durationInputRef = useRef<HTMLInputElement>(null);
 
   /*Model*/
   const [users, setUsers] = useState<GlobalModel[]>([]);
@@ -59,12 +134,15 @@ export default function BookingTools() {
   const [employeeName, setEmployeeName] = useState('');
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [toTime, setToTime] = useState('');
   const [duration, setDuration] = useState('');
   const [toolId, setToolId] = useState('');
   const [bookingItems, setBookingItems] = useState<BookingItem[]>([]);
   const [isAddScreenOpen, setAddScreenOpen] = useState(false);
   // Mock bookings data
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Mock data for tools
   const mockTools = [
@@ -107,7 +185,15 @@ export default function BookingTools() {
         return;
       }
 
-      const selected = regtools.find(j => j.Kode === id) || null;
+      // Check for duplicate ToolsId in existing bookingItems
+      const isDuplicate = bookingItems.some(t => t.toolId.toLowerCase() === id.toLowerCase());
+      if (isDuplicate) {
+        // toast.error('Tool is already in the booking list');
+        setToolId('');
+        return;
+      }
+
+      const selected = regtools.find(j => j.Kode.toLowerCase() === id.toLowerCase()) || null;
       //const tool = mockTools.find((t) => t.id === id);
       if (selected) {
         console.log(selected.Status);
@@ -139,10 +225,16 @@ export default function BookingTools() {
     toast.success('Item removed from booking');
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+  };
+
   const handleBackToList = () => {
     setAddScreenOpen(false);
     setBookingDate('');
     setBookingTime('');
+    setToDate('');
+    setToTime('');
     setDuration('');
     setToolId('');
     setBookingItems([]);
@@ -163,6 +255,7 @@ export default function BookingTools() {
 
     try {
       var datetimeBooking = bookingDate + " " + bookingTime;
+      var toDateBooking = toDate + " " + toTime;
       const toolIds = bookingItems.map(b => b.toolId).join(',');
       const response = await fetch(API.BOOKING(), {
         method: "POST",
@@ -175,6 +268,7 @@ export default function BookingTools() {
           nrp: employeeNRP,
           ToolsId: toolIds,
           DateBooking: datetimeBooking,
+          DateTo: toDateBooking,
           Duration: duration,
           NrpUser: currentUser.Nrp
         })
@@ -241,6 +335,7 @@ export default function BookingTools() {
       .then((response) => response.json())
       .then((json: BookingMaster[]) => {
         var bookingList = toBookings(json);
+        console.log(json);
         setBookings(bookingList);
       })
       .catch((error) => console.error("Error:", error));
@@ -264,6 +359,8 @@ export default function BookingTools() {
           employeeName: normalize(r.Nama),
           bookingDate: normalize(r.StartBookDate),
           bookingTime: normalize(r.StartBookTime),
+          DateTo: normalize(r.DateTo),
+          TimeTo: normalize(r.TimeTo),
           items: [],
           status: normalize(r.StatusBooking),
           createdAt: normalize(r.CREATED_AT),
@@ -291,6 +388,28 @@ export default function BookingTools() {
     return Array.from(map.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  const filteredTransactions = bookings.filter((transaction) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      transaction.employeeName?.toLowerCase().includes(query) ||
+      transaction.items.some(item => item.toolName.toLowerCase().includes(query)) ||
+      transaction.employeeNRP?.toLowerCase().includes(query)
+    );
+  });
+
+  useEffect(() => {
+    if (bookingDate && bookingTime && toDate && toTime) {
+      const start = new Date(`${bookingDate}T${bookingTime}`);
+      const end = new Date(`${toDate}T${toTime}`);
+      const diffTime = end.getTime() - start.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0) {
+        setDuration(diffDays.toString());
+      } else {
+        setDuration("0");
+      }
+    }
+  }, [bookingDate, bookingTime, toDate, toTime]);
 
   useEffect(() => {
     GetUserList();
@@ -343,20 +462,33 @@ export default function BookingTools() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="mt-4 px-1 mb-4">
+              <div className="relative">
+                <Input
+                  placeholder="Search by employee name or tool..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="pl-10 h-10 border-[#009999]/30 focus:border-[#009999] focus:ring-[#009999]/20"
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <Search className="h-4 w-4 text-[#009999]/50" />
+                </div>
+              </div>
+            </div>
+            <div className="overflow-x-auto rounded-lg">
               <table className="w-full">
                 <thead className="bg-gray-200 ">
                   <tr className="border-b border-gray-200">
                     <th className="text-left p-3 text-sm text-gray-600">Booking ID</th>
                     <th className="text-left p-3 text-sm text-gray-600">Employee</th>
-                    <th className="text-left p-3 text-sm text-gray-600">Date & Time</th>
+                    <th className="text-left p-3 text-sm text-gray-600">Start Date</th>
+                    <th className="text-left p-3 text-sm text-gray-600">To Date</th>
                     <th className="text-left p-3 text-sm text-gray-600">Tools</th>
                     <th className="text-left p-3 text-sm text-gray-600">Status</th>
-                    <th className="text-left p-3 text-sm text-gray-600">Created</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {bookings.map((booking) => (
+                  {filteredTransactions.map((booking) => (
                     <tr key={booking.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="p-3 text-sm text-[#009999]">{booking.id}</td>
                       <td className="p-3 text-sm">
@@ -366,10 +498,10 @@ export default function BookingTools() {
                         </div>
                       </td>
                       <td className="p-3 text-sm">
-                        <div>
-                          <p>{booking.bookingDate}</p>
-                          <p className="text-xs text-gray-500">{booking.bookingTime}</p>
-                        </div>
+                        {formatDateObj(booking.bookingDate, booking.bookingTime).date}
+                      </td>
+                      <td className="p-3 text-sm">
+                        {formatDateObj(booking.DateTo, '').date}
                       </td>
                       <td className="p-3 text-sm">
                         <div className="flex flex-col gap-1">
@@ -392,7 +524,6 @@ export default function BookingTools() {
                           {booking.status}
                         </span>
                       </td>
-                      <td className="p-3 text-xs text-gray-500">{booking.createdAt}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -456,12 +587,12 @@ export default function BookingTools() {
                   <Calendar className="h-5 w-5 text-[#009999]" />
                   Booking Details
                 </CardTitle>
-                <CardDescription>Set booking date, time, and duration</CardDescription>
+                <CardDescription>Set start and end booking date and time</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 p-3">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="space-y-2">
-                    <Label>Booking Date</Label>
+                    <Label>Start Date</Label>
                     <InputRef
                       ref={dateInputRef}
                       type="date"
@@ -475,35 +606,47 @@ export default function BookingTools() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Booking Time</Label>
+                    <Label>Start Time</Label>
                     <InputRef
                       ref={timeInputRef}
                       type="time"
                       value={bookingTime}
                       onChange={(e) => {
                         setBookingTime(e.target.value)
-                        durationInputRef.current?.focus();
                       }}
                       className="border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Duration</Label>
-                    <InputRef
-                      ref={durationInputRef}
-                      placeholder="e.g., 4 hours, 2 days"
-                      value={duration}
+                    <Label>To Date</Label>
+                    <Input
+                      type="date"
+                      value={toDate}
                       onChange={(e) => {
-                        setDuration(e.target.value)
-                        //toolInputRef.current?.focus();
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          toolInputRef.current?.focus();
-                        }
+                        setToDate(e.target.value)
                       }}
                       className="border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>To Time</Label>
+                    <Input
+                      type="time"
+                      value={toTime}
+                      onChange={(e) => {
+                        setToTime(e.target.value)
+                      }}
+                      className="border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duration (Days)</Label>
+                    <Input
+                      ref={durationInputRef}
+                      placeholder="Auto-calculated"
+                      value={duration}
+                      readOnly
+                      className="bg-gray-50 border-gray-300"
                     />
                   </div>
                 </div>
@@ -560,13 +703,16 @@ export default function BookingTools() {
                           <div className="flex items-center gap-4 text-xs text-gray-600">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {item.bookingDate}
+                              {formatDateStr(item.bookingDate, item.bookingTime).split(' ')[0]}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {item.bookingTime}
+                              {formatDateStr(item.bookingDate, item.bookingTime).split(' ')[1]}
                             </span>
-                            <span>Duration: {item.duration}</span>
+                            <span>Duration: {item.duration} Days</span>
+                            <span className="flex items-center gap-1">
+                              To: {addDaysObj(item.bookingDate, item.bookingTime, item.duration).date}
+                            </span>
                           </div>
                         </div>
                         <Button

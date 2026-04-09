@@ -85,7 +85,7 @@ interface CompletedTransaction {
 export default function ReturnTools() {
   const { currentUser } = useAuth();
   const nrpInputRef = useRef<HTMLInputElement>(null);
-  const toolInputRef = useRef(null);
+  const toolInputRef = useRef<HTMLInputElement>(null);
   const [users, setUsers] = useState<GlobalModel[]>([]);
   const [employeeCode, setEmployeeCode] = useState('');
   const [employeeData, setEmployeeData] = useState<Employee | null>(null);
