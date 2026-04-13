@@ -1016,17 +1016,18 @@ export default function RentTools() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-center gap-1">
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
-                            title="Return Tool"
-                            onClick={() => handleReturnClick(transaction)}
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                          </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          {!transaction.TransReturnDate && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                              title="Return Tool"
+                              onClick={() => handleReturnClick(transaction)}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1419,7 +1420,7 @@ export default function RentTools() {
                     <p className="font-medium">{returnToolData?.TransDateRental || '-'}</p>
                   </div>
                 </div>
-                <div className="col-span-2 space-y-1">
+                <div className="col-span-2 space-y-1 mb-4">
                   <Label className="text-xs text-gray-500">Tools Name</Label>
                   <p className="font-medium text-gray-800">{returnToolData?.ToolsDesc || '-'}</p>
                 </div>
@@ -1434,8 +1435,8 @@ export default function RentTools() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Con1" className="focus:bg-green-50 focus:text-green-700">Good</SelectItem>
-                      <SelectItem value="Con2" className="focus:bg-red-50 focus:text-red-700">Damaged</SelectItem>
-                      <SelectItem value="Con3" className="focus:bg-red-50 focus:text-red-700">Missing</SelectItem>
+                      <SelectItem value="Con2" className="focus:bg-red-50 focus:text-red-700">R1</SelectItem>
+                      <SelectItem value="Con3" className="focus:bg-red-50 focus:text-red-700">TA</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

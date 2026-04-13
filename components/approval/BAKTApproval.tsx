@@ -31,7 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../ui/dialog';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel } from "../../model/Models";
@@ -69,6 +77,7 @@ interface BaktResult {
   Perusahaan: number;
   Karyawan: number;
   CauseBrokenBA: string;
+  ToolsCondition: string;
   StApprovedBAKT: string;
   StReportBAKT: string;
 }
@@ -80,6 +89,8 @@ export default function BAKTApproval() {
   const [baktTools, setBaktTools] = useState<BaktResult[]>([])
 
   const [requests, setRequests] = useState<BAKTRequest[]>([]);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedBakt, setSelectedBakt] = useState<BaktResult | null>(null);
 
   const filteredRequests = baktTools.filter((req) => {
     const matchesSearch =
@@ -137,6 +148,16 @@ export default function BAKTApproval() {
     }).format(value);
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   const handleApprove = async (bakt: BaktResult) => {
     try {
       const response = await fetch(API.BAKT(), {
@@ -178,6 +199,16 @@ export default function BAKTApproval() {
     toast.error('BAKT request rejected');
   };
 
+  const handleViewDetails = (bakt: BaktResult) => {
+    setSelectedBakt(bakt);
+    setIsDetailsOpen(true);
+  };
+
+  const closeDetails = () => {
+    setIsDetailsOpen(false);
+    setSelectedBakt(null);
+  };
+
   const stats = {
     pending: baktTools.filter((r) => r.StApprovedBAKT === 'Pending').length,
     approved: baktTools.filter((r) => r.StApprovedBAKT === 'Approved').length,
@@ -194,7 +225,7 @@ export default function BAKTApproval() {
         'Project Name': tool.ToolsName,
         'Requested By': tool.Nama,
         'Department': tool.NamaSuperior,
-        'Date': tool.CreateDateBA,
+        'Date': formatDate(tool.CreateDateBA),
         'Est. Value (IDR)': tool.TotalPrice,
         'Status': tool.StApprovedBAKT
       }))
@@ -217,7 +248,7 @@ export default function BAKTApproval() {
     })
       .then((response) => response.json())
       .then((json: BaktResult[]) => {
-        setBaktTools(json)
+        setBaktTools(json); console.log(json);
       })
       .catch((error) => console.error("Error:", error));
   }
@@ -317,7 +348,7 @@ export default function BAKTApproval() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4 p-2">
+          <div className="flex flex-col sm:flex-row gap-2 p-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -351,7 +382,7 @@ export default function BAKTApproval() {
               <TableHeader>
                 <TableRow className="bg-gray-50">
                   <TableHead>BAKT Number</TableHead>
-                  <TableHead>Project Name</TableHead>
+                  <TableHead>Tools Desc</TableHead>
                   <TableHead>Requested By</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Date</TableHead>
@@ -390,7 +421,7 @@ export default function BAKTApproval() {
                       <TableCell>
                         <div className="text-gray-600 flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-600" />
-                          {new Date(request.CreateDateBA).toLocaleDateString()}
+                          {formatDate(request.CreateDateBA)}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -411,6 +442,7 @@ export default function BAKTApproval() {
                             size="icon"
                             className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
                             title="View Details"
+                            onClick={() => handleViewDetails(request)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -451,6 +483,91 @@ export default function BAKTApproval() {
       <div className="text-sm text-gray-600">
         Showing {filteredRequests.length} of {requests.length} BAKT requests
       </div>
+
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="bg-[#003366] text-white p-6">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <ClipboardList className="h-6 w-6 text-[#00cccc]" />
+              BAKT Detail Information
+            </DialogTitle>
+            <DialogDescription className="text-blue-100/70">
+              BAKT No. <span className="text-white font-mono">{selectedBakt?.BA_No}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-6 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Tool Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Tool Information</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col mb-4">
+                    <span className="text-xs text-gray-500">Tools ID</span>
+                    <span className="font-medium text-gray-900">{selectedBakt?.ToolsId}</span>
+                  </div>
+                  <div className="flex flex-col mb-4">
+                    <span className="text-xs text-gray-500">Tools Name</span>
+                    <span className="font-medium text-gray-900">{selectedBakt?.ToolsName}</span>
+                  </div>
+                  <div className="flex flex-col mb-4">
+                    <span className="text-xs text-gray-500">MO No.</span>
+                    <span className="font-medium text-gray-900">{selectedBakt?.WO_No}</span>
+                  </div>
+                  <div className="flex flex-col mb-4">
+                    <span className="text-xs text-gray-500">Condition / Reason</span>
+                    <span className="font-medium text-gray-900 italic text-red-600">
+                      "{selectedBakt?.ToolsCondition + ": " + selectedBakt?.CauseBrokenBA || 'No description provided'}"
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Employee & Transaction Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Employee & Transaction</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col mb-4">
+                    <span className="text-xs text-gray-500">NRP</span>
+                    <div className="flex items-center gap-2">
+                      <User className="h-3 w-3 text-[#009999]" />
+                      <span className="font-medium text-gray-900">{selectedBakt?.NRPMechanic}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col mb-4">
+                    <span className="text-xs text-gray-500">Employee Name</span>
+                    <span className="font-medium text-gray-900">{selectedBakt?.Nama}</span>
+                  </div>
+                  <div className="flex flex-col mb-4">
+                    <span className="text-xs text-gray-500">BAKT Date</span>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-3 w-3 text-[#009999]" />
+                      <span className="font-medium text-gray-900">
+                        {formatDate(selectedBakt?.CreateDateBA || '')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t flex items-center justify-between bg-gray-50 -mx-6 -mb-6 p-6">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 font-semibold uppercase">Total Estimated Price</span>
+                <span className="text-2xl font-bold text-[#009999]">
+                  {selectedBakt?.TotalPrice ? formatCurrency(selectedBakt.TotalPrice) : 'Rp 0'}
+                </span>
+              </div>
+              <Button
+                onClick={closeDetails}
+                className="bg-[#009999] hover:bg-[#007777] text-white"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

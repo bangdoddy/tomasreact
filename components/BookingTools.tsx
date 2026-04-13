@@ -1,14 +1,23 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Calendar, Clock, User, Wrench, Search, X, CalendarDays, Plus, Trash2 } from 'lucide-react';
+import { Calendar, Clock, User, Wrench, Search, X, ChevronLeft, ChevronRight, CalendarDays, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../service/AuthContext";
 import { GlobalModel } from "../model/Models";
 import { API } from '../config';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 import { InputRef } from './ui/inputref';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface BookingItem {
   toolId: string;
@@ -119,13 +128,44 @@ const addDaysObj = (dateStr: string, timeStr: string, durStr: string) => {
   }
 };
 
+const CustomDateInput = forwardRef(({ value, onClick, className }: any, ref: any) => (
+  <div className="relative w-full">
+    <InputRef
+      value={value}
+      onClick={onClick}
+      ref={ref}
+      className={className}
+    />
+    <div className="absolute left-3 top-1/2 -translate-y-1/2">
+      <Calendar className="h-4 w-4 text-[#009999]/50" />
+    </div>
+  </div>
+));
+
+const CustomTimeInput = forwardRef(({ value, onClick, className }: any, ref: any) => (
+  <div className="relative w-full">
+    <InputRef
+      value={value}
+      onClick={onClick}
+      ref={ref}
+      className={className}
+    />
+    <div className="absolute left-3 top-1/2 -translate-y-1/2">
+      <Clock className="h-4 w-4 text-[#009999]/50" />
+    </div>
+  </div>
+));
+
 export default function BookingTools() {
   const { currentUser } = useAuth();
   const nrpInputRef = useRef<HTMLInputElement>(null);
   const toolInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
+  const toDateInputRef = useRef<HTMLInputElement>(null);
+  const toTimeInputRef = useRef<HTMLInputElement>(null);
   const durationInputRef = useRef<HTMLInputElement>(null);
+  const buttonSubmitRef = useRef<HTMLButtonElement>(null);
 
   /*Model*/
   const [users, setUsers] = useState<GlobalModel[]>([]);
@@ -140,9 +180,17 @@ export default function BookingTools() {
   const [toolId, setToolId] = useState('');
   const [bookingItems, setBookingItems] = useState<BookingItem[]>([]);
   const [isAddScreenOpen, setAddScreenOpen] = useState(false);
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
   // Mock bookings data
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Pagination Items
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Mock data for tools
   const mockTools = [
@@ -180,8 +228,9 @@ export default function BookingTools() {
       const id = toolId.trim();
       if (!id) return;
 
-      if (!bookingDate || !bookingTime || !duration) {
-        toast.error('Please fill booking date, time, and duration first');
+      // if (!bookingDate || !bookingTime || !duration || !toDate || !toTime) {
+      if (!startDate || !duration || !endDate) {
+        toast.error('Please fill booking date, time and End booking date first');
         return;
       }
 
@@ -213,6 +262,10 @@ export default function BookingTools() {
           setBookingItems([...bookingItems, newItem]);
           setToolId('');
           toast.success(`${selected.Nama} added to booking`);
+
+          setTimeout(() => {
+            buttonSubmitRef?.current?.focus();
+          }, 100);
         }
       } else {
         toast.error('Tool not found');
@@ -235,6 +288,10 @@ export default function BookingTools() {
     setBookingTime('');
     setToDate('');
     setToTime('');
+    setStartDate(new Date());
+    setEndDate(null);
+    setSelectedTime(new Date());
+    setSelectedEndTime(null);
     setDuration('');
     setToolId('');
     setBookingItems([]);
@@ -254,8 +311,8 @@ export default function BookingTools() {
     }
 
     try {
-      var datetimeBooking = bookingDate + " " + bookingTime;
-      var toDateBooking = toDate + " " + toTime;
+      var datetimeBooking = startDate + " " + bookingTime;
+      var toDateBooking = endDate + " " + toTime;
       const toolIds = bookingItems.map(b => b.toolId).join(',');
       const response = await fetch(API.BOOKING(), {
         method: "POST",
@@ -298,6 +355,48 @@ export default function BookingTools() {
       toast.error("Failed. Message: " + ex.Message);
     }
   };
+
+  const handleDeleteBooking = async (id: string) => {
+    // Placeholder for update logic
+
+    try {
+      const response = await fetch(API.BOOKING(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "DELETE",
+          ToolsId: id,
+          jobsite: currentUser?.Jobsite
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadMaster();
+          handleBackToList();
+          GetToolsList();
+
+          toast.success('Tool ' + id + ' deleted');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
+
+  };
+
   const GetUserList = () => {
     const params = new URLSearchParams({
       showdata: "USERS",
@@ -335,7 +434,7 @@ export default function BookingTools() {
       .then((response) => response.json())
       .then((json: BookingMaster[]) => {
         var bookingList = toBookings(json);
-        console.log(json);
+
         setBookings(bookingList);
       })
       .catch((error) => console.error("Error:", error));
@@ -392,24 +491,44 @@ export default function BookingTools() {
     const query = searchQuery.toLowerCase();
     return (
       transaction.employeeName?.toLowerCase().includes(query) ||
-      transaction.items.some(item => item.toolName.toLowerCase().includes(query)) ||
-      transaction.employeeNRP?.toLowerCase().includes(query)
+      transaction.items.some(item => item.toolName.toLowerCase().includes(query))
     );
   });
 
+  /*Pagination Items (fallback to client-side if total is not set) */
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
+
   useEffect(() => {
-    if (bookingDate && bookingTime && toDate && toTime) {
-      const start = new Date(`${bookingDate}T${bookingTime}`);
-      const end = new Date(`${toDate}T${toTime}`);
+    if (startDate && endDate) {
+      // Create a copy of the dates to avoid mutating the state
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      // Set the time from bookingTime and toTime strings if available
+      if (bookingTime) {
+        const [hours, minutes] = bookingTime.split(':');
+        start.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      }
+      if (toTime) {
+        const [hours, minutes] = toTime.split(':');
+        end.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      }
+
       const diffTime = end.getTime() - start.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
       if (diffDays >= 0) {
         setDuration(diffDays.toString());
       } else {
         setDuration("0");
       }
+    } else {
+      setDuration("");
     }
-  }, [bookingDate, bookingTime, toDate, toTime]);
+  }, [startDate, endDate, bookingTime, toTime]);
 
   useEffect(() => {
     GetUserList();
@@ -419,7 +538,7 @@ export default function BookingTools() {
       console.log("ref is null")
     } else {
       nrpInputRef.current?.focus();
-      console.log("ref is focus")
+      console.log("ref is focus");
     }
   }, []);
 
@@ -485,6 +604,7 @@ export default function BookingTools() {
                     <th className="text-left p-3 text-sm text-gray-600">To Date</th>
                     <th className="text-left p-3 text-sm text-gray-600">Tools</th>
                     <th className="text-left p-3 text-sm text-gray-600">Status</th>
+                    <th className="text-left p-3 text-sm text-gray-600">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -524,10 +644,65 @@ export default function BookingTools() {
                           {booking.status}
                         </span>
                       </td>
+                      <td>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                            title="Delete"
+                            onClick={() => handleDeleteBooking(booking.items.map(item => item.toolId).join(','))}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center p-2">
+                  <Label htmlFor="itemsPerPage" className="mr-2">
+                    Items per page:
+                  </Label>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(value) => setItemsPerPage(Number(value))}
+                  >
+                    <SelectTrigger id="itemsPerPage">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="mx-2">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -593,50 +768,112 @@ export default function BookingTools() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="space-y-2">
                     <Label>Start Date</Label>
-                    <InputRef
-                      ref={dateInputRef}
-                      type="date"
-                      value={bookingDate}
-                      onChange={(e) => {
-                        setBookingDate(e.target.value)
-                        timeInputRef.current?.focus();
-                        timeInputRef.current?.click?.();
+                    <DatePicker
+                      dateFormat="dd-MM-yyyy"
+                      selected={startDate}
+                      onChange={(date: any) => {
+                        setStartDate(date);
+                        if (date) {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          setBookingDate(`${year}-${month}-${day}`);
+                        }
+                        const now = new Date();
+                        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                        setBookingTime(timeStr);
+                        toDateInputRef.current?.focus();
+                        toDateInputRef.current?.click?.();
                       }}
-                      className="border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                      customInput={
+                        <CustomDateInput
+                          className="w-full pl-10 h-10 rounded-md bg-gray-100 border border-gray-300 focus:border-[#009999] focus:outline-none"
+                        />
+                      }
+                      wrapperClassName="w-full"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Start Time</Label>
-                    <InputRef
-                      ref={timeInputRef}
-                      type="time"
-                      value={bookingTime}
-                      onChange={(e) => {
-                        setBookingTime(e.target.value)
+                    <DatePicker
+                      selected={selectedTime}
+                      onChange={(date: any) => {
+                        setSelectedTime(date);
+                        if (date) {
+                          const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                          setBookingTime(timeStr);
+                        }
                       }}
-                      className="border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                      showTimeSelect
+                      showTimeSelectOnly
+                      timeCaption="Time"
+                      dateFormat="HH:mm"
+                      timeFormat="HH:mm"
+                      customInput={
+                        <CustomTimeInput
+                          className="w-full pl-10 h-10 rounded-md bg-gray-100 border border-gray-300 focus:border-[#009999] focus:outline-none"
+                        />
+                      }
+                      wrapperClassName="w-full"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>To Date</Label>
-                    <Input
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => {
-                        setToDate(e.target.value)
+                    <DatePicker
+                      dateFormat="dd-MM-yyyy"
+                      selected={endDate}
+                      onChange={(date: any) => {
+                        setEndDate(date);
+                        if (date) {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          setToDate(`${year}-${month}-${day}`);
+                        }
+                        const now = new Date();
+                        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                        setToTime(timeStr);
+                        toTimeInputRef.current?.focus();
+                        toTimeInputRef.current?.click?.();
                       }}
-                      className="border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                      customInput={
+                        <CustomDateInput
+                          className="w-full pl-10 h-10 rounded-md bg-gray-100 border border-gray-300 focus:border-[#009999] focus:outline-none"
+                        />
+                      }
+                      wrapperClassName="w-full"
+                      placeholderText="--:--"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>To Time</Label>
-                    <Input
-                      type="time"
-                      value={toTime}
-                      onChange={(e) => {
-                        setToTime(e.target.value)
+                    <DatePicker
+                      selected={selectedEndTime}
+                      onChange={(date: any) => {
+                        setSelectedEndTime(date);
+                        if (date) {
+                          const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                          setToTime(timeStr);
+
+                          setTimeout(() => {
+                            toolInputRef?.current?.focus();
+                          }, 100);
+
+                        }
                       }}
-                      className="border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                      showTimeSelect
+                      showTimeSelectOnly
+                      timeIntervals={1}
+                      timeCaption="Time"
+                      dateFormat="HH:mm"
+                      timeFormat="HH:mm"
+                      customInput={
+                        <CustomTimeInput
+                          className="w-full pl-10 h-10 rounded-md bg-gray-100 border border-gray-300 focus:border-[#009999] focus:outline-none"
+                        />
+                      }
+                      wrapperClassName="w-full"
+                      placeholderText="--:--"
                     />
                   </div>
                   <div className="space-y-2">
@@ -728,6 +965,7 @@ export default function BookingTools() {
                   </div>
                   <div className="mt-6 p-2">
                     <Button
+                      ref={buttonSubmitRef}
                       onClick={handleSubmitBooking}
                       className="w-full bg-[#009999] hover:bg-[#007777] text-white"
                       size="lg"

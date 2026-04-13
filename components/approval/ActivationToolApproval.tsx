@@ -312,7 +312,7 @@ export default function ActivationToolApproval() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="border-[#009999]/20 p-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Requests</CardTitle>
           </CardHeader>
@@ -340,7 +340,7 @@ export default function ActivationToolApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="border-green-200 p-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Approved</CardTitle>
           </CardHeader>
@@ -354,7 +354,7 @@ export default function ActivationToolApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="border-red-200 p-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Rejected</CardTitle>
           </CardHeader>

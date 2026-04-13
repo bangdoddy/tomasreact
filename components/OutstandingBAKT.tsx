@@ -30,6 +30,7 @@ interface ItemBAKT {
   NamaMekanik: string;
   ToolsCondition: string;
   ToolsConditionName: string;
+  ToolsCostDefault: string,
   TransDate: string;
   MoNo: string;
   ToolsFrom: string;
@@ -121,7 +122,8 @@ export default function OutstandingBAKT() {
       <div className="flex items-center justify-end p-1">
         <Button
           onClick={handleExport}
-          className="gap-2 bg-gradient-to-r from-[#003366] to-[#009999] hover:from-[#004080] hover:to-[#00b3b3]"
+          variant="outline"
+          className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10"
         >
           <FileDown className="h-4 w-4 mr-2" />
           Export to Excel

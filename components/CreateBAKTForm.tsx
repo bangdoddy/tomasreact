@@ -31,6 +31,7 @@ interface BAKTItem {
   ToolsCategory: string;
   ToolsType: string;
   ToolsSize: string;
+  ToolsCostDefault: string;
   NrpPicTools: string;
   NamaPicTools: string;
   NrpMekanik: string;
@@ -68,6 +69,7 @@ interface BAKTDetail {
   RTP: string;
   ToolsBrand: string;
   ToolsSize: string;
+  ToolsCondition: string;
   WO_No: string;
   PayrollDeduction: string;
   ToolsCostDefaultShow: string;
@@ -202,6 +204,7 @@ export default function CreateBAKTForm({
         if (json.length > 0) {
           const detail = json[0]
           setDetailBakt(detail);
+          console.log(detail)
         }
       })
       .catch((error) => console.error("Error:", error));
@@ -239,17 +242,19 @@ export default function CreateBAKTForm({
         <form onSubmit={handleSubmit} className="flex flex-col h-full text-sm">
           <div className="flex-1 overflow-y-auto">
             {/* Tool Information Table - Full Width Edge to Edge */}
-            <div className="w-full border rounded-lg overflow-x-auto ">
+            <div className="w-full border rounded-lg overflow-x-auto mb-2">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-[#009999] hover:bg-[#009999]">
-                    <TableHead className="text-white">MRP</TableHead>
+                    <TableHead className="text-white">NRP</TableHead>
                     <TableHead className="text-white">MEKANIK</TableHead>
                     <TableHead className="text-white">TOOLS ID</TableHead>
                     <TableHead className="text-white">DESCRIPTION</TableHead>
                     <TableHead className="text-white">TYPE</TableHead>
                     <TableHead className="text-white">SIZE</TableHead>
+                    <TableHead className="text-white">START PRICE</TableHead>
                     <TableHead className="text-white">TRANSDATE</TableHead>
+                    <TableHead className="text-white">TOOLS CONDITION</TableHead>
                     {/*<TableHead className="text-white">TOOLS CONDITION</TableHead> */}
                   </TableRow>
                 </TableHeader>
@@ -261,7 +266,9 @@ export default function CreateBAKTForm({
                     <TableCell className="text-gray-900">{baktItem.ToolsName}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.ToolsType}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.ToolsSize}</TableCell>
+                    <TableCell className="text-gray-900">{detailBakt?.ToolsCostDefaultShow}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.TransDate}</TableCell>
+                    <TableCell className="text-gray-900">{baktItem.ToolsConditionName}</TableCell>
                     {/*<TableCell className="text-gray-900">{baktItem.ToolsConditionName}</TableCell>*/}
                   </TableRow>
                 </TableBody>
@@ -269,9 +276,9 @@ export default function CreateBAKTForm({
             </div>
 
             {/* BAKT Form Fields - Single Column Full Width */}
-            <div className="space-y-6 bg-gray-50 p-4">
+            <div className="space-y-6 bg-gray-100 rounded-lg p-4">
               {/* BAKT No */}
-              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-0 max-w-7xl">
+              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-2 max-w-7xl">
                 <Label htmlFor="baktNo" className="text-gray-700">
                   BAKT No
                 </Label>
@@ -286,7 +293,7 @@ export default function CreateBAKTForm({
               </div>
 
               {/* Name */}
-              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-0 max-w-7xl">
+              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-2 max-w-7xl">
                 <Label htmlFor="name" className="text-gray-700">
                   Name
                 </Label>
@@ -303,7 +310,7 @@ export default function CreateBAKTForm({
               </div>
 
               {/* Position */}
-              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-0 max-w-7xl">
+              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-2 max-w-7xl">
                 <Label htmlFor="position" className="text-gray-700">
                   Position
                 </Label>
@@ -319,7 +326,7 @@ export default function CreateBAKTForm({
               </div>
 
               {/* Job Activity */}
-              <div className="grid grid-cols-[200px_auto_1fr] items-start gap-0 max-w-7xl">
+              <div className="grid grid-cols-[200px_auto_1fr] items-start gap-2 max-w-7xl">
                 <Label htmlFor="jobActivity" className="text-gray-700 pt-2">
                   Job Activity
                 </Label>
@@ -330,12 +337,12 @@ export default function CreateBAKTForm({
                   value={formData.jobActivity}
                   onChange={handleChange}
                   rows={4}
-                  className="resize-none bg-white"
+                  className="resize-none bg-white border-gray-300"
                 />
               </div>
 
               {/* Broken / Missing Reason */}
-              <div className="grid grid-cols-[200px_auto_1fr] items-start gap-0 max-w-7xl">
+              <div className="grid grid-cols-[200px_auto_1fr] items-start gap-2 max-w-7xl">
                 <Label htmlFor="brokenReason" className="text-gray-700 pt-2">
                   Broken / Missing Reason
                 </Label>
@@ -346,12 +353,12 @@ export default function CreateBAKTForm({
                   value={formData.brokenReason}
                   onChange={handleChange}
                   rows={4}
-                  className="resize-none bg-white"
+                  className="resize-none bg-white border-gray-300"
                 />
               </div>
 
               {/* PIC Tools */}
-              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-0 max-w-7xl">
+              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-2 max-w-7xl">
                 <Label htmlFor="picTools" className="text-gray-700">
                   PIC Tools
                 </Label>
@@ -367,7 +374,7 @@ export default function CreateBAKTForm({
               </div>
 
               {/* GL / SPV */}
-              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-0 max-w-7xl">
+              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-2 max-w-7xl">
                 <Label htmlFor="glSpv" className="text-gray-700">
                   GL / SPV
                 </Label>
@@ -383,7 +390,7 @@ export default function CreateBAKTForm({
               </div>
 
               {/* Section Head */}
-              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-0 max-w-7xl">
+              <div className="grid grid-cols-[200px_auto_1fr] items-center gap-2 max-w-7xl">
                 <Label htmlFor="sectionHead" className="text-gray-700">
                   Section Head
                 </Label>
