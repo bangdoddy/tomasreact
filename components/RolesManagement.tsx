@@ -94,7 +94,7 @@ export default function RolesManagement() {
 
   const handleEdit = (role: GenSetting) => {
     setEditingRole(role);
-    setFormData({ Kode: role.Kode, Keterangan: role.Keterangan, Detail:role.Detail, Kategori:role.Kategori });
+    setFormData({ Kode: role.Kode, Keterangan: role.Keterangan, Detail: role.Detail, Kategori: role.Kategori });
     setIsDialogOpen(true);
   };
 
@@ -145,7 +145,7 @@ export default function RolesManagement() {
       toast.error("Failed. Message: " + ex.Message);
     }
   };
-   
+
 
   const handleDeleteRole = async () => {
     if (!editingRole) return;
@@ -186,7 +186,7 @@ export default function RolesManagement() {
   /*Load Server */
   const ReloadMaster = () => {
     const params = new URLSearchParams({
-      Kategori: 'Jabatan', 
+      Kategori: 'Jabatan',
       jobsite: currentUser.Jobsite
     });
     fetch(API.GENERALSETTING() + `?${params.toString()}`, {
@@ -194,7 +194,7 @@ export default function RolesManagement() {
     })
       .then((response) => response.json())
       .then((json: GenSetting[]) => {
-        for (var x = 0; x < json.length;x++){
+        for (var x = 0; x < json.length; x++) {
           if (json[x].Detail == null || json[x].Detail == "") {
             for (var y = 0; y < roles.length; y++) {
               if (json[x].Keterangan?.toLowerCase() == roles[y].position?.toLowerCase()) {
@@ -208,11 +208,11 @@ export default function RolesManagement() {
       })
       .catch((error) => console.error("Error:", error));
   };
-    
+
   useEffect(() => {
     if (itemList.length == 0) {
       ReloadMaster();
-    }  
+    }
   });
 
 
@@ -240,38 +240,38 @@ export default function RolesManagement() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-l-4 border-l-[#009999]">
+        <Card className="border-l-4 border-l-[#009999] shadow-md">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Roles</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-[#003366]">{itemList.length}</span>
-              <UserCircle className="h-8 w-8 text-[#009999]" />
+              <span className="text-gray-500 text-lg">{itemList.length}</span>
+              <UserCircle className="h-8 w-8 text-[#009999] p-1" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-[#009999] shadow-md">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Active Roles</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-[#003366]">{itemList.filter(r => r.Jumlah > 0).length}</span>
-              <UserCircle className="h-8 w-8 text-blue-500" />
+              <span className="text-gray-500 text-lg">{itemList.filter(r => r.Jumlah > 0).length}</span>
+              <UserCircle className="h-8 w-8 text-blue-500 p-1" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-gray-400">
+        <Card className="border-l-4 border-l-[#009999] shadow-md">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Inactive Roles</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-[#003366]">{itemList.filter(r => r.Jumlah === 0).length}</span>
-              <UserCircle className="h-8 w-8 text-gray-400" />
+              <span className="text-gray-500 text-lg">{itemList.filter(r => r.Jumlah === 0).length}</span>
+              <UserCircle className="h-8 w-8 text-gray-400 p-1" />
             </div>
           </CardContent>
         </Card>

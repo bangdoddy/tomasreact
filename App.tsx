@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Toaster, toast } from "sonner"; 
 import LoginSplit from "./components/LoginSplit";
 import MainLayout from "./components/MainLayout"; 
+import PrintBAKTReview from "./components/reports/PrintBAKTReview";
 import { useAuth, AuthUsers } from "./service/AuthContext";
 
 
@@ -62,11 +63,17 @@ export interface Tool {
 function App() { 
   const { isAuthenticated, currentUser, login, logout } = useAuth();
    
+  const urlParams = new URLSearchParams(window.location.search);
+  const printMode = urlParams.get('print');
+  const baNo = urlParams.get('ba_no');
+
   return (
     <div className="min-h-screen">
       <Toaster position="top-right" richColors />
       {!isAuthenticated ? (
         <LoginSplit onLogin={login} />
+      ) : printMode === 'BAKTReview' && baNo ? (
+        <PrintBAKTReview ba_no={baNo} />
       ) : (
         <MainLayout currentUser={currentUser!} onLogout={logout} />
       )}

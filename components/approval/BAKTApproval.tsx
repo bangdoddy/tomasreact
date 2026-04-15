@@ -40,6 +40,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel } from "../../model/Models";
@@ -55,7 +65,7 @@ interface BAKTRequest {
   projectName: string;
   estimatedValue: number;
   description: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: 'Pending' | 'Waiting' | 'Approved' | 'Rejected';
   urgency: 'Urgent' | 'Normal' | 'Low';
 }
 
@@ -90,7 +100,11 @@ export default function BAKTApproval() {
 
   const [requests, setRequests] = useState<BAKTRequest[]>([]);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [selectedBakt, setSelectedBakt] = useState<BaktResult | null>(null);
+  const [baktToApprove, setBaktToApprove] = useState<BaktResult | null>(null);
+  const [baktToReject, setBaktToReject] = useState<BaktResult | null>(null);
 
   const filteredRequests = baktTools.filter((req) => {
     const matchesSearch =
@@ -108,6 +122,8 @@ export default function BAKTApproval() {
     switch (status) {
       case 'Pending':
         return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+      case 'Waiting':
+        return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'Approved':
         return 'bg-green-100 text-green-700 border-green-300';
       case 'Approved LV5':
@@ -169,9 +185,9 @@ export default function BAKTApproval() {
           action: "APPROVE",
           Jobsite: currentUser.Jobsite,
           NrpUser: currentUser.Nrp,
-          ItemKey: bakt.BA_No,
+          BaktNo: bakt.BA_No,
           Nrp: bakt.NRPMechanic,
-          JobActivity: bakt.StUser,
+          Reason: bakt.StUser,
         })
       });
 
@@ -195,8 +211,41 @@ export default function BAKTApproval() {
     }
   };
 
-  const handleReject = (id: string) => {
-    toast.error('BAKT request rejected');
+  const handleReject = async (bakt: BaktResult) => {
+    try {
+      const response = await fetch(API.BAKT(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "REJECT",
+          Jobsite: currentUser.Jobsite,
+          NrpUser: currentUser.Nrp,
+          BaktNo: bakt.BA_No,
+          Nrp: bakt.NRPMechanic,
+          Reason: bakt.StUser,
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          GetBaktList();
+          toast.success(resData?.Message ?? 'successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
   };
 
   const handleViewDetails = (bakt: BaktResult) => {
@@ -366,6 +415,7 @@ export default function BAKTApproval() {
               <SelectContent>
                 <SelectItem value="All">All Status</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Waiting">Waiting</SelectItem>
                 <SelectItem value="Approved">Approved</SelectItem>
                 <SelectItem value="Rejected">Rejected</SelectItem>
               </SelectContent>
@@ -453,7 +503,10 @@ export default function BAKTApproval() {
                                 size="icon"
                                 className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
                                 title="Approve"
-                                onClick={() => handleApprove(request)}
+                                onClick={() => {
+                                  setBaktToApprove(request);
+                                  setIsApproveDialogOpen(true);
+                                }}
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
@@ -462,7 +515,10 @@ export default function BAKTApproval() {
                                 size="icon"
                                 className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                                 title="Reject"
-                                onClick={() => handleReject(request.BA_No)}
+                                onClick={() => {
+                                  setBaktToReject(request);
+                                  setIsRejectDialogOpen(true);
+                                }}
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>
@@ -568,6 +624,58 @@ export default function BAKTApproval() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Approve Confirmation Dialog */}
+      <AlertDialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Approval</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve BAKT No. <span className="font-mono font-bold text-[#009999]">{baktToApprove?.BA_No}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBaktToApprove(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (baktToApprove) {
+                  handleApprove(baktToApprove);
+                  setBaktToApprove(null);
+                }
+              }}
+              className="bg-[#009999] hover:bg-[#007777] text-white"
+            >
+              Confirm Approve
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Confirmation Dialog */}
+      <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Rejection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject BAKT No. <span className="font-mono font-bold text-red-600">{baktToReject?.BA_No}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBaktToReject(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (baktToReject) {
+                  handleReject(baktToReject);
+                  setBaktToReject(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Confirm Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -16,6 +16,16 @@ import {
   SelectValue,
 } from './ui/select';
 import { InputRef } from './ui/inputref';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -184,6 +194,8 @@ export default function BookingTools() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string>('');
   // Mock bookings data
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -380,9 +392,8 @@ export default function BookingTools() {
         const resData = data[0];
         if (resData?.Status == 1) {
           ReloadMaster();
-          handleBackToList();
           GetToolsList();
-
+          handleBackToList();
           toast.success('Tool ' + id + ' deleted');
         } else {
           toast.error(resData?.Message ?? "Failed");
@@ -651,7 +662,10 @@ export default function BookingTools() {
                             size="icon"
                             className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
                             title="Delete"
-                            onClick={() => handleDeleteBooking(booking.items.map(item => item.toolId).join(','))}
+                            onClick={() => {
+                              setDeleteTargetId(booking.items.map(item => item.toolId).join(','));
+                              setIsDeleteDialogOpen(true);
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -806,6 +820,7 @@ export default function BookingTools() {
                       }}
                       showTimeSelect
                       showTimeSelectOnly
+                      timeIntervals={30}
                       timeCaption="Time"
                       dateFormat="HH:mm"
                       timeFormat="HH:mm"
@@ -863,7 +878,7 @@ export default function BookingTools() {
                       }}
                       showTimeSelect
                       showTimeSelectOnly
-                      timeIntervals={1}
+                      timeIntervals={30}
                       timeCaption="Time"
                       dateFormat="HH:mm"
                       timeFormat="HH:mm"
@@ -1007,6 +1022,29 @@ export default function BookingTools() {
           </div>
         </div>
       )}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteTargetId('')}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                handleDeleteBooking(deleteTargetId);
+                setDeleteTargetId('');
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

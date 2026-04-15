@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Search, Download, ClipboardList } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { toast } from 'sonner@2.0.3'; 
+import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel } from "../../model/Models";
 import { API } from '../../config';
+import { useReactToPrint } from "react-to-print";
 import * as XLSX from 'xlsx';
 
 interface BaktResult {
@@ -35,11 +36,11 @@ interface BaktResult {
 }
 
 export default function BAKTReport() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [baktTools, setBaktTools] = useState<BaktResult[]>([])
-  const [summary, setSummary] = useState({ total: 89, completed: 75, inProgress: 10, pending: 4 }) 
+  const [summary, setSummary] = useState({ total: 89, completed: 75, inProgress: 10, pending: 4 })
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -48,7 +49,7 @@ export default function BAKTReport() {
       case 'Completed':
         return 'bg-green-100 text-green-700 border-green-300';
       case 'In Progress':
-        return 'bg-blue-100 text-blue-700 border-blue-300'; 
+        return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'Rejected':
         return 'bg-red-100 text-red-700 border-red-300';
       default:
@@ -68,7 +69,7 @@ export default function BAKTReport() {
 
     return matchesSearch && matchesStatus;
   });
-   
+
 
   const saveToExcel = (data: BaktResult[]) => {
     const worksheet = XLSX.utils.json_to_sheet(
@@ -91,7 +92,7 @@ export default function BAKTReport() {
 
   const GetBaktList = () => {
     const params = new URLSearchParams({
-      act:"REPORT",
+      act: "REPORT",
       jobsite: currentUser.Jobsite,
       nrp: currentUser.Nrp
     });
@@ -130,7 +131,7 @@ export default function BAKTReport() {
           {/*  <Download className="h-4 w-4 mr-2" />*/}
           {/*  Export PDF*/}
           {/*</Button>*/}
-          <Button className="bg-[#009999] hover:bg-[#008080] text-white" onClick={() => saveToExcel(baktTools) }>
+          <Button className="bg-[#009999] hover:bg-[#008080] text-white" onClick={() => saveToExcel(baktTools)}>
             <Download className="h-4 w-4 mr-2" />
             Export Excel
           </Button>
@@ -165,7 +166,7 @@ export default function BAKTReport() {
       </div>
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 p-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input placeholder="Search BAKT..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
@@ -196,12 +197,17 @@ export default function BAKTReport() {
                 ) : (
                   filteredRequests.map((request) => (
                     <TableRow key={request.BA_No} className="hover:bg-gray-50">
-                      <TableCell className="text-[#009999]">{request.BA_No }</TableCell>
-                      <TableCell>{ request.ToolsName}</TableCell>
-                      <TableCell>{ request.CreatedDate }</TableCell>
-                      <TableCell>{ request.Nama}</TableCell>
+                      <TableCell
+                        className="text-[#009999] cursor-pointer hover:underline font-medium"
+                        onClick={() => window.open(`/?print=BAKTReview&ba_no=${request.BA_No}`, '_blank')}
+                      >
+                        {request.BA_No}
+                      </TableCell>
+                      <TableCell>{request.ToolsName}</TableCell>
+                      <TableCell>{request.CreatedDate}</TableCell>
+                      <TableCell>{request.Nama}</TableCell>
                       <TableCell className="text-center">
-                        <Badge className={`${getStatusColor(request.StReportBAKT)}` }>{request.StReportBAKT}</Badge>
+                        <Badge className={`${getStatusColor(request.StReportBAKT)}`}>{request.StReportBAKT}</Badge>
                       </TableCell>
                     </TableRow>
                   ))

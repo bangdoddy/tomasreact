@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, FileDown, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Search, FileDown, Calendar, ChevronRight, ChevronLeft, Eye, Pencil } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -19,9 +19,18 @@ import {
   SelectValue,
 } from './ui/select';
 import { Badge } from './ui/badge';
-import { useAuth, AuthUsers } from "../service/AuthContext"; 
+import { useAuth, AuthUsers } from "../service/AuthContext";
 import { API } from '../config';
 import { toast } from 'sonner@2.0.3';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from './ui/dialog';
+import { Textarea } from './ui/textarea';
 import * as XLSX from 'xlsx';
 
 interface FollowUpItem {
@@ -44,7 +53,7 @@ interface FollowUpUnit {
   CreatedDate: string;
   TargetDate: string;
   FUStatus: string;
-  Remark: string;  
+  Remark: string;
 }
 
 export default function FollowUp() {
@@ -56,6 +65,14 @@ export default function FollowUp() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<FollowUpItem | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    remarks: '',
+    toolCondition: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
   const filteredItems = followUpItems.filter((item) => {
     const query = searchQuery.toLowerCase();
     return (
@@ -66,7 +83,7 @@ export default function FollowUp() {
       item.status.toLowerCase().includes(query)
     );
   });
-   
+
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -93,7 +110,7 @@ export default function FollowUp() {
     console.log('Export Follow Up data');
     saveToExcel(followUpItems);
   };
-   
+
   const saveToExcel = (data: FollowUpItem[]) => {
     const worksheet = XLSX.utils.json_to_sheet(
       data.map((tool) => ({
@@ -116,6 +133,58 @@ export default function FollowUp() {
   }
 
 
+  const handleEdit = (item: FollowUpItem) => {
+    setEditingItem(item);
+    setEditFormData({
+      remarks: item.remarks,
+      toolCondition: item.status
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!editingItem) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(API.BAKT(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "UPDATEFOLLOWUP",
+          Jobsite: currentUser.Jobsite,
+          NrpUser: currentUser.Nrp,
+          BaktNo: editingItem.baktNumber,
+          ToolsId: editingItem.toolsId,
+          FUStatus: editFormData.toolCondition,
+          Remark: editFormData.remarks
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const resData = data[0];
+
+      if (resData?.Status == 1) {
+        toast.success(resData?.Message || 'Follow-up updated successfully');
+        setIsEditDialogOpen(false);
+        ReloadFollowUp();
+      } else {
+        toast.error(resData?.Message || "Failed to update follow-up");
+      }
+    } catch (error: any) {
+      console.error('Error updating follow-up:', error);
+      toast.error(error.message || 'An error occurred while saving');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleViewDetails = (item: FollowUpItem) => {
     console.log('View details for:', item);
     // Implement view details logic
@@ -130,16 +199,16 @@ export default function FollowUp() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: FollowUpUnit[]) => { 
-        const items: FollowUpItem[] = json.map((u) => { 
+      .then((json: FollowUpUnit[]) => {
+        const items: FollowUpItem[] = json.map((u) => {
           return {
             baktNumber: u.BA_No ?? '',
             toolsId: u.IdTools ?? '',
             description: u.ToolsName ?? '',
-            mekanik: u.NamaMekanik??'',
-            createdDate: u.CreatedDate??'',
-            targetDate: u.TargetDate??'',
-            status: u.FUStatus??'',
+            mekanik: u.NamaMekanik ?? '',
+            createdDate: u.CreatedDate ?? '',
+            targetDate: u.TargetDate ?? '',
+            status: u.FUStatus ?? '',
             remarks: u.Remark ?? '',
           };
         });
@@ -159,12 +228,13 @@ export default function FollowUp() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[#003366] mb-2">Follow Up BAKT</h1>
+          <h1 className="text-lg font-bold text-[#003366] mb-2">Follow Up BAKT</h1>
           <p className="text-gray-500 text-sm">Track and monitor BAKT progress and completion</p>
         </div>
         <Button
           onClick={handleExport}
-          className="bg-[#009999] hover:bg-[#00b8b8] text-white"
+          variant="outline"
+          className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10"
         >
           <FileDown className="h-4 w-4 mr-2" />
           Export to Excel
@@ -241,37 +311,45 @@ export default function FollowUp() {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#003366] hover:bg-[#003366]">
-              <TableHead className="text-white">BAKT Number</TableHead>
-              <TableHead className="text-white">Tools ID</TableHead>
-              <TableHead className="text-white">Description</TableHead>
-              <TableHead className="text-white">Mekanik</TableHead>
-              <TableHead className="text-white">Created Date</TableHead>
-              <TableHead className="text-white">Target Date</TableHead>
-              <TableHead className="text-white">Status</TableHead>
-              <TableHead className="text-white">Remarks</TableHead>
-              <TableHead className="text-white bg-gray-600">Action</TableHead>
+              <TableHead className="text-white text-center">BAKT Number</TableHead>
+              <TableHead className="text-white text-center">Tools ID</TableHead>
+              <TableHead className="text-white text-center">Description</TableHead>
+              <TableHead className="text-white text-center">Mekanik</TableHead>
+              <TableHead className="text-white text-center">Created Date</TableHead>
+              <TableHead className="text-white text-center">Target Date</TableHead>
+              <TableHead className="text-white text-center">Status</TableHead>
+              <TableHead className="text-white text-center">Remarks</TableHead>
+              <TableHead className="text-white bg-gray-600 text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentItems.length > 0 ? (
               currentItems.map((item, index) => (
                 <TableRow key={index} className="hover:bg-gray-50">
-                  <TableCell className="text-gray-900">{item.baktNumber}</TableCell>
-                  <TableCell className="text-gray-900">{item.toolsId}</TableCell>
-                  <TableCell className="text-gray-900">{item.description}</TableCell>
-                  <TableCell className="text-gray-900">{item.mekanik}</TableCell>
-                  <TableCell className="text-gray-900">{item.createdDate}</TableCell>
-                  <TableCell className="text-gray-900">{item.targetDate}</TableCell>
+                  <TableCell className="text-gray-600">{item.baktNumber}</TableCell>
+                  <TableCell className="text-gray-600">{item.toolsId}</TableCell>
+                  <TableCell className="text-gray-600">{item.description}</TableCell>
+                  <TableCell className="text-gray-600">{item.mekanik}</TableCell>
+                  <TableCell className="text-gray-600">{item.createdDate}</TableCell>
+                  <TableCell className="text-gray-600">{item.targetDate}</TableCell>
                   <TableCell>{getStatusBadge(item.status)}</TableCell>
-                  <TableCell className="text-gray-900">{item.remarks}</TableCell>
-                  <TableCell>
-                    <Button
+                  <TableCell className="text-gray-600">{item.remarks}</TableCell>
+                  <TableCell className="flex gap-2 justify-center">
+                    {/* <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleViewDetails(item)}
-                      className="border-[#009999] text-[#009999] hover:bg-[#009999] hover:text-white"
+                      className="border-amber-500 text-amber-600"
                     >
-                      View Details
+                      <Eye className="h-4 w-4 mr-2" />
+                    </Button> */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(item)}
+                      className="border-amber-500 text-amber-600"
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -288,7 +366,7 @@ export default function FollowUp() {
       </div>
 
       {/* Pagination */}
-      <div className={`flex items-center justify-between mt-1  ${isPagingShow ? "" :"hidden"} `}>
+      <div className={`flex items-center justify-between mt-1  ${isPagingShow ? "" : "hidden"} `}>
         <div className="flex items-center">
           <Label htmlFor="itemsPerPage" className="mr-2">
             Items per page:
@@ -337,6 +415,83 @@ export default function FollowUp() {
       {/*  </p>*/}
       {/*  <p>Total Follow-Up: {followUpItems.length} BAKTs</p>*/}
       {/*</div>*/}
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="bg-[#003366] text-white p-6">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Pencil className="h-6 w-6 text-[#00cccc]" />
+              Edit Follow-Up Status
+            </DialogTitle>
+            <DialogDescription className="text-blue-100/70">
+              BAKT No. <span className="text-white font-mono">{editingItem?.baktNumber}</span>
+              <div className="mt-2">{editingItem?.mekanik}</div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-6 space-y-6 bg-white">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tools ID</Label>
+              <div className="p-2 bg-gray-50 rounded border text-sm font-medium text-gray-700">
+                {editingItem?.toolsId}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
+              <div className="p-2 bg-gray-50 rounded border text-sm font-medium text-gray-700">
+                {editingItem?.description}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="toolCondition" className="text-sm font-medium text-gray-700">Tool Condition</Label>
+              <Select
+                value={editFormData.toolCondition}
+                onValueChange={(value) => setEditFormData(prev => ({ ...prev, toolCondition: value }))}
+              >
+                <SelectTrigger id="toolCondition" className="w-full">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Con 3">R2</SelectItem>
+                  <SelectItem value="TA">TA</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">Remarks</Label>
+              <Textarea
+                id="remarks"
+                placeholder="Enter follow-up remarks..."
+                value={editFormData.remarks}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, remarks: e.target.value }))}
+                className="min-h-[100px] resize-none"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="p-6 pt-0 bg-white">
+            <div className="flex items-center justify-end gap-3 w-full">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveChanges}
+                disabled={isSaving}
+                className="bg-[#009999] hover:bg-[#007777] text-white min-w-[120px]"
+              >
+                {isSaving ? 'Updating...' : 'Update'}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

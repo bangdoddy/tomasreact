@@ -254,7 +254,8 @@ export default function CreateBAKTForm({
                     <TableHead className="text-white">SIZE</TableHead>
                     <TableHead className="text-white">START PRICE</TableHead>
                     <TableHead className="text-white">TRANSDATE</TableHead>
-                    <TableHead className="text-white">TOOLS CONDITION</TableHead>
+                    <TableHead className="text-white">CONDITION</TableHead>
+                    <TableHead className="text-white">% RTP</TableHead>
                     {/*<TableHead className="text-white">TOOLS CONDITION</TableHead> */}
                   </TableRow>
                 </TableHeader>
@@ -269,7 +270,7 @@ export default function CreateBAKTForm({
                     <TableCell className="text-gray-900">{detailBakt?.ToolsCostDefaultShow}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.TransDate}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.ToolsConditionName}</TableCell>
-                    {/*<TableCell className="text-gray-900">{baktItem.ToolsConditionName}</TableCell>*/}
+                    <TableCell className="text-gray-900">{detailBakt?.RTP}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
