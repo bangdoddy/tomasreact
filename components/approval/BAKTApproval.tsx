@@ -496,7 +496,7 @@ export default function BAKTApproval() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {request.StApprovedBAKT === 'Pending' && (
+                          {request.StApprovedBAKT != 'Waiting' && (
                             <>
                               <Button
                                 variant="ghost"

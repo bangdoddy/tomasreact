@@ -20,6 +20,8 @@ interface BaktResult {
     Jabatan: string;
     NRPSuperior: string;
     NamaSuperior: string;
+    NRP_ToolKeeper: string;
+    NamaToolKeeper: string;
     ToolsId: string;
     ToolsName: string;
     TotalPrice: number;
@@ -29,6 +31,9 @@ interface BaktResult {
     ToolsCondition: string;
     StApprovedBAKT: string;
     StReportBAKT: string;
+    ApprovedByMechanic: string;
+    ApprovedByToolsKeeper: string;
+    ApprovedBySectionHead: string;
     CreatedDate: string;
 }
 
@@ -67,7 +72,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
             try {
                 setLoading(true);
                 const params = new URLSearchParams({
-                    act: "REPORT",
+                    action: "REPORT",
                     jobsite: currentUser?.Jobsite || '',
                     nrp: currentUser?.Nrp || ''
                 });
@@ -130,11 +135,15 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
             <div ref={contentRef} className="bg-white p-8 mt-48 rounded-lg border border-gray-200 print:shadow-none print:border-none" style={{ fontFamily: 'Arial, Roboto' }}>
                 {/* Document Header */}
                 <br />
-                <div className="border-b-2 border-gray-900 pb-6 mb-8 flex justify-center items-start">
-                    <div>
-                        <h2 className="text-lg font-bold text-gray-900 text-center uppercase tracking-tighter">BERITA ACARA</h2>
-                        <p className="text-md font-bold text-gray-700">KEBUTUHAN ALAT / TENAGA (BAKT)</p>
+                <div className="border-b-2 border-gray-900 pb-6 mb-8 flex items-center justify-between">
+                    <div className="w-20">
+                        <img src="../src/assets/alamtri.png" alt="Logo" className="h-20 w-20" />
                     </div>
+                    <div className="flex-1">
+                        <h2 className="text-lg font-bold text-gray-900 text-center uppercase tracking-tighter">BERITA ACARA</h2>
+                        <p className="text-md font-bold text-gray-700 text-center">KEBUTUHAN ALAT / TENAGA (BAKT)</p>
+                    </div>
+                    <div className="w-20"></div>
                 </div>
 
                 <div className="border-b-2 border-gray-900 pb-6 mb-8 flex justify-center items-start">
@@ -214,36 +223,45 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                 <div className="grid grid-cols-3 gap-8 mt-48 text-center">
                     <div className="space-y-12">
                         <span className="block text-xs font-bold text-gray-400 uppercase border-b pb-1">Yang menyerahkan</span>
-                        <div>
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                        </div>
+                        {baktDetails.ApprovedByMechanic ? (
+                            <div className="p-4 h-30 w-30">
+                                <img src="../src/assets/approved_mark.png" alt="penyerah" />
+                            </div>
+                        ) : (
+                            <div className="p-4 h-30 w-30">
+                                <br /><br /><br /><br />
+                            </div>
+                        )}
                         <div>
                             <div className="text-sm font-bold text-gray-900 inline-block px-4">{baktDetails.Nama}</div>
                         </div>
                     </div>
                     <div className="space-y-12">
                         <span className="block text-xs font-bold text-gray-400 uppercase border-b pb-1">Yang menerima</span>
+                        {baktDetails.ApprovedByToolsKeeper ? (
+                            <div className="p-4 h-30 w-30">
+                                <img src="../src/assets/approved_mark.png" alt="penerima" />
+                            </div>
+                        ) : (
+                            <div className="p-4 h-30 w-30">
+                                <br /><br /><br /><br />
+                            </div>
+                        )}
                         <div>
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                        </div>
-                        <div>
-                            <div className="text-sm font-bold text-gray-900 inline-block px-4">{baktDetails.NamaSuperior}</div>
+                            <div className="text-sm font-bold text-gray-900 inline-block px-4">{baktDetails.NamaToolKeeper}</div>
                         </div>
                     </div>
                     <div className="space-y-12">
                         <span className="block text-xs font-bold text-gray-400 uppercase border-b pb-1">Yang mengetahui</span>
-                        <div>
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                        </div>
+                        {baktDetails.ApprovedBySectionHead ? (
+                            <div className="p-4 h-30 w-30">
+                                <img src="../src/assets/approved_mark.png" alt="section head" />
+                            </div>
+                        ) : (
+                            <div className="p-4 h-30 w-30">
+                                <br /><br /><br /><br />
+                            </div>
+                        )}
                         <div>
                             <div className="text-sm font-bold text-gray-900 inline-block px-4">Plant Section Head</div>
                         </div>

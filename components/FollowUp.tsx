@@ -460,10 +460,9 @@ export default function FollowUp() {
                   <SelectValue placeholder="Select condition" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Con4">BAKT Created</SelectItem>
-                  <SelectItem value="Con2">R1</SelectItem>
+                  <SelectItem value="Con1">Good</SelectItem>
+                  <SelectItem value="rfu3">Repairing</SelectItem>
                   <SelectItem value="Con3">R2</SelectItem>
-                  <SelectItem value="TA">TA</SelectItem>
                 </SelectContent>
               </Select>
             </div>

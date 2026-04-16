@@ -599,9 +599,19 @@ export default function RentTools() {
   }
 
   const GetTransactionList = () => {
+    var aktifuser = "";
+
+    console.log(currentUser?.Jabatan.toUpperCase());
+    if (currentUser?.Jabatan.toUpperCase() == "SUPER USER") {
+      aktifuser = ""
+    } else {
+      aktifuser = currentUser.Nrp
+    }
+
     const params = new URLSearchParams({
       // action: "WITHTOTAL",
       jobsite: currentUser.Jobsite,
+      nrp: aktifuser,
       // current: `${currentPage}`,
       // perpage: `${itemsPerPage}`,
       // filter: searchQuery
@@ -937,7 +947,7 @@ export default function RentTools() {
 
       {/* Completed Transactions List - At Bottom */}
       {!isAddScreenOpen && (
-        <Card className="border-0 shadow-lg">
+        <Card className="border-0 shadow-lg p-2">
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>

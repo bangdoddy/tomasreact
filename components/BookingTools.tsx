@@ -262,6 +262,21 @@ export default function BookingTools() {
           toast.error(`${selected.Nama} is new, Please info Section Head`);
         } else if (selected.Status === "Booked") {
           toast.error(`${selected.Nama} is booked by Other`);
+
+          const newItem: BookingItem = {
+            toolId: selected.Kode,
+            toolName: selected.Nama,
+            toolType: selected.ToolsType,
+            bookingDate,
+            bookingTime,
+            duration,
+          };
+          setBookingItems([...bookingItems, newItem]);
+          setToolId('');
+
+          setTimeout(() => {
+            buttonSubmitRef?.current?.focus();
+          }, 100);
         } else {
           const newItem: BookingItem = {
             toolId: selected.Kode,

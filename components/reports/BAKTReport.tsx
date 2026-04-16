@@ -101,6 +101,7 @@ export default function BAKTReport() {
     })
       .then((response) => response.json())
       .then((json: BaktResult[]) => {
+        console.log(json)
         setBaktTools(json)
         setSummary({
           total: json.length,
