@@ -34,6 +34,7 @@ import { Textarea } from './ui/textarea';
 import * as XLSX from 'xlsx';
 
 interface FollowUpItem {
+  itemkey: string;
   baktNumber: string;
   toolsId: string;
   description: string;
@@ -42,6 +43,7 @@ interface FollowUpItem {
   targetDate: string;
   status: string; // '' | 'In Progress' | 'Pending' | 'Completed' | 'Overdue';
   remarks: string;
+  ToolsCondition: string;
 }
 
 interface FollowUpUnit {
@@ -54,6 +56,7 @@ interface FollowUpUnit {
   TargetDate: string;
   FUStatus: string;
   Remark: string;
+  ToolsCondition: string;
 }
 
 export default function FollowUp() {
@@ -137,7 +140,7 @@ export default function FollowUp() {
     setEditingItem(item);
     setEditFormData({
       remarks: item.remarks,
-      toolCondition: item.status
+      toolCondition: item.ToolsCondition,
     });
     setIsEditDialogOpen(true);
   };
@@ -153,12 +156,13 @@ export default function FollowUp() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          action: "UPDATEFOLLOWUP",
+          action: "UPDATEREQUEST",
           Jobsite: currentUser.Jobsite,
           NrpUser: currentUser.Nrp,
           BaktNo: editingItem.baktNumber,
+          // itemkey: editingItem.itemkey,
           ToolsId: editingItem.toolsId,
-          FUStatus: editFormData.toolCondition,
+          ToolsCondition: editFormData.toolCondition,
           Remark: editFormData.remarks
         })
       });
@@ -210,9 +214,11 @@ export default function FollowUp() {
             targetDate: u.TargetDate ?? '',
             status: u.FUStatus ?? '',
             remarks: u.Remark ?? '',
+            ToolsCondition: u.ToolsCondition ?? '',
           };
         });
 
+        console.log(json);
         setFollowUpItems(items);
 
       })
@@ -454,7 +460,9 @@ export default function FollowUp() {
                   <SelectValue placeholder="Select condition" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Con 3">R2</SelectItem>
+                  <SelectItem value="Con4">BAKT Created</SelectItem>
+                  <SelectItem value="Con2">R1</SelectItem>
+                  <SelectItem value="Con3">R2</SelectItem>
                   <SelectItem value="TA">TA</SelectItem>
                 </SelectContent>
               </Select>
