@@ -42,10 +42,10 @@ interface Booking {
   id: string;
   employeeNRP: string;
   employeeName: string;
-  bookingDate: string;
-  bookingTime: string;
-  DateTo: string;
-  TimeTo: string;
+  StartBookingDate: string;
+  StartBookingTime: string;
+  EndBookingDate: string;
+  EndBookingTime: string;
   items: BookingItem[];
   status: string;
   createdAt: string;
@@ -62,7 +62,7 @@ interface BookingMaster {
   StartBookDate: string;
   StartBookTime: string;
   DateTo: string;
-  TimeTo: string;
+  EndBookingTime: string;
   Duration: string;
   CREATED_AT: string;
 }
@@ -261,7 +261,7 @@ export default function BookingTools() {
         if (selected.Status === "New") {
           toast.error(`${selected.Nama} is new, Please info Section Head`);
         } else if (selected.Status === "Booked") {
-          toast.error(`${selected.Nama} is booked by Other`);
+          toast.warning(`${selected.Nama} is booked by Other`);
 
           const newItem: BookingItem = {
             toolId: selected.Kode,
@@ -462,6 +462,7 @@ export default function BookingTools() {
         var bookingList = toBookings(json);
 
         setBookings(bookingList);
+        console.log(bookingList);
       })
       .catch((error) => console.error("Error:", error));
   };
@@ -482,10 +483,10 @@ export default function BookingTools() {
           id: groupId,                              // <= json.GroupId -> bookings[].id
           employeeNRP: normalize(r.NRP),
           employeeName: normalize(r.Nama),
-          bookingDate: normalize(r.StartBookDate),
-          bookingTime: normalize(r.StartBookTime),
-          DateTo: normalize(r.DateTo),
-          TimeTo: normalize(r.TimeTo),
+          StartBookingDate: normalize(r.StartBookDate),
+          StartBookingTime: normalize(r.StartBookTime),
+          EndBookingDate: normalize(r.DateTo),
+          EndBookingTime: normalize(r.EndBookingTime),
           items: [],
           status: normalize(r.StatusBooking),
           createdAt: normalize(r.CREATED_AT),
@@ -635,6 +636,7 @@ export default function BookingTools() {
                 </thead>
                 <tbody>
                   {filteredTransactions.map((booking) => (
+                    console.log(filteredTransactions),
                     <tr key={booking.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="p-3 text-sm text-[#009999]">{booking.id}</td>
                       <td className="p-3 text-sm">
@@ -644,10 +646,12 @@ export default function BookingTools() {
                         </div>
                       </td>
                       <td className="p-3 text-sm">
-                        {formatDateObj(booking.bookingDate, booking.bookingTime).date}
+                        <p>{formatDateObj(booking.StartBookingDate, booking.StartBookingTime).date}</p>
+                        <p className="text-xs text-gray-500">{booking.StartBookingTime}</p>
                       </td>
                       <td className="p-3 text-sm">
-                        {formatDateObj(booking.DateTo, '').date}
+                        <p>{formatDateObj(booking.EndBookingDate, booking.EndBookingTime).date}</p>
+                        <p className="text-xs text-gray-500">{booking.EndBookingTime}</p>
                       </td>
                       <td className="p-3 text-sm">
                         <div className="flex flex-col gap-1">
@@ -968,18 +972,11 @@ export default function BookingTools() {
                             </span>
                           </div>
                           <div className="flex items-center gap-4 text-xs text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {formatDateStr(item.bookingDate, item.bookingTime).split(' ')[0]}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatDateStr(item.bookingDate, item.bookingTime).split(' ')[1]}
-                            </span>
+
                             <span>Duration: {item.duration} Days</span>
-                            <span className="flex items-center gap-1">
+                            {/* <span className="flex items-center gap-1">
                               To: {addDaysObj(item.bookingDate, item.bookingTime, item.duration).date}
-                            </span>
+                            </span> */}
                           </div>
                         </div>
                         <Button
