@@ -140,7 +140,7 @@ export default function BAKTReport() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="border-[#009999]/20 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total BAKT</CardTitle>
           </CardHeader>
@@ -204,9 +204,9 @@ export default function BAKTReport() {
                       >
                         {request.BA_No}
                       </TableCell>
-                      <TableCell>{request.ToolsName}</TableCell>
-                      <TableCell>{request.CreatedDate}</TableCell>
-                      <TableCell>{request.Nama}</TableCell>
+                      <TableCell className="text-gray-600">{request.ToolsName}</TableCell>
+                      <TableCell className="text-gray-600">{request.CreatedDate}</TableCell>
+                      <TableCell className="text-gray-600">{request.Nama}</TableCell>
                       <TableCell className="text-center">
                         <Badge className={`${getStatusColor(request.StReportBAKT)}`}>{request.StReportBAKT}</Badge>
                       </TableCell>

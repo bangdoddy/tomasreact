@@ -1026,28 +1026,29 @@ export default function RentTools() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          {!transaction.TransReturnDate && (
+                        {currentUser?.Jabatan != "Mechanic" && (
+                          <div className="flex items-center justify-end gap-1">
+                            {!transaction.TransReturnDate && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                                title="Return Tool"
+                                onClick={() => handleReturnClick(transaction)}
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
-                              title="Return Tool"
-                              onClick={() => handleReturnClick(transaction)}
+                              className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
+                              title="Edit Transaction"
+                              onClick={() => handleEditClick(transaction)}
                             >
-                              <RotateCcw className="h-4 w-4" />
+                              <Edit className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
-                            title="Edit Transaction"
-                            onClick={() => handleEditClick(transaction)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {/* <Button
+                            {/* <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
@@ -1056,7 +1057,8 @@ export default function RentTools() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button> */}
-                        </div>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   )) : (

@@ -72,7 +72,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
             try {
                 setLoading(true);
                 const params = new URLSearchParams({
-                    action: "REPORT",
+                    act: "REPORT",
                     jobsite: currentUser?.Jobsite || '',
                     nrp: currentUser?.Nrp || ''
                 });
@@ -222,7 +222,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                 {/* Signature Area */}
                 <div className="grid grid-cols-3 gap-8 mt-48 text-center">
                     <div className="space-y-12">
-                        <span className="block text-xs font-bold text-gray-400 uppercase border-b pb-1">Yang menyerahkan</span>
+                        <span className="block text-xs font-bold text-gray-500 uppercase border-b pb-1">Yang menyerahkan</span>
                         {baktDetails.ApprovedByMechanic ? (
                             <div className="p-4 h-30 w-30">
                                 <img src="../src/assets/approved_mark.png" alt="penyerah" />
@@ -237,7 +237,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                         </div>
                     </div>
                     <div className="space-y-12">
-                        <span className="block text-xs font-bold text-gray-400 uppercase border-b pb-1">Yang menerima</span>
+                        <span className="block text-xs font-bold text-gray-500 uppercase border-b pb-1">Yang menerima</span>
                         {baktDetails.ApprovedByToolsKeeper ? (
                             <div className="p-4 h-30 w-30">
                                 <img src="../src/assets/approved_mark.png" alt="penerima" />
@@ -252,7 +252,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                         </div>
                     </div>
                     <div className="space-y-12">
-                        <span className="block text-xs font-bold text-gray-400 uppercase border-b pb-1">Yang mengetahui</span>
+                        <span className="block text-xs font-bold text-gray-500 uppercase border-b pb-1">Yang mengetahui</span>
                         {baktDetails.ApprovedBySectionHead ? (
                             <div className="p-4 h-30 w-30">
                                 <img src="../src/assets/approved_mark.png" alt="section head" />
