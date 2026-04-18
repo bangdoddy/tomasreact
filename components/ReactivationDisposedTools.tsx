@@ -17,7 +17,7 @@ import {
   Calendar,
   User,
   Wrench,
-  FileText,  ChevronRight, ChevronLeft
+  FileText, ChevronRight, ChevronLeft
 } from 'lucide-react';
 import {
   Table,
@@ -73,7 +73,7 @@ interface DisposedTool {
   lastUsedDate: string;
   estimatedValue: number;
   remarks: string;
-  baktno: string; 
+  baktno: string;
 }
 
 interface DisposalUnit {
@@ -89,7 +89,7 @@ interface DisposalUnit {
   TindakLanjut: string;
   EstimatedValue: number;
   DisposalDate: string;
-  ProposedBy: string; 
+  ProposedBy: string;
 }
 
 export default function ReactivationDisposedTools() {
@@ -100,25 +100,25 @@ export default function ReactivationDisposedTools() {
 
   /*Pagination Items */
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10); 
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DisposedTool | null>(null);
   const [formData, setFormData] = useState({
     id: '',
-    toolId:'',  
-    toolName: '',  
-    toolType: '',   
-    disposalReason: '',   
-    status: '',   
-    remarks: '',  
+    toolId: '',
+    toolName: '',
+    toolType: '',
+    disposalReason: '',
+    status: '',
+    remarks: '',
     BaktNo: '',
-    ToolsCondition:''
+    ToolsCondition: ''
   });
 
   const [regtools, setRegTools] = useState<GlobalModel[]>([]);
-  const [disposedTools, setDisposedTools] = useState<DisposedTool[]>([]);  
+  const [disposedTools, setDisposedTools] = useState<DisposedTool[]>([]);
   //  {
   //    id: 'DT-001',
   //    toolId: 'TL-0245',
@@ -324,7 +324,7 @@ export default function ReactivationDisposedTools() {
           Jobsite: currentUser.Jobsite,
           NrpUser: currentUser.Nrp,
           ItemKey: formData.id,
-          Nrp: formData.toolId, 
+          Nrp: formData.toolId,
           Reason: formData.disposalReason,
           JobActivity: formData.remarks,
           OutFrom: formData.status,
@@ -392,7 +392,7 @@ export default function ReactivationDisposedTools() {
     }
   }
 
-  const handleReactivate = async (id: string, toolid:string) => {
+  const handleReactivate = async (id: string, toolid: string) => {
     try {
       const response = await fetch(API.BAKT(), {
         method: "POST",
@@ -428,7 +428,7 @@ export default function ReactivationDisposedTools() {
       toast.error("Failed. Message: " + ex.Message);
     }
     toast.success('Tool reactivation initiated successfully!');
-  }; 
+  };
 
 
   const saveToExcel = (data: DisposedTool[]) => {
@@ -501,24 +501,24 @@ export default function ReactivationDisposedTools() {
       .then((response) => response.json())
       .then((json: DisposalUnit[]) => {
 
-        const items: DisposedTool[] = (json || []).map((u) => { 
+        const items: DisposedTool[] = (json || []).map((u) => {
           return {
             id: u.ID ?? '',
             toolId: u.ToolsId ?? '',
             toolName: u.ToolsName ?? '',
             toolType: u.ToolsType ?? '',
-            disposalDate:u.DisposalDate,
+            disposalDate: u.DisposalDate,
             disposalReason: u.DisposalReason ?? '',
             proposedBy: u.ProposedBy ?? '',
             department: '',
             status: u.ToolsStatus,
             condition: mapCondition(u.ToolsCondition),
-            lastUsedDate: '',  
-            estimatedValue: Number.isFinite(u.EstimatedValue as any) ? Number(u.EstimatedValue) : 0, 
+            lastUsedDate: '',
+            estimatedValue: Number.isFinite(u.EstimatedValue as any) ? Number(u.EstimatedValue) : 0,
             remarks: u.TindakLanjut ?? '',
-            baktno:u.ItemKey??''
+            baktno: u.ItemKey ?? ''
           };
-        }); 
+        });
         setDisposedTools(items);
 
       })
@@ -570,7 +570,7 @@ export default function ReactivationDisposedTools() {
             onClick={() => saveToExcel(disposedTools)}
           >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export to Excel
           </Button>
           <Button className="bg-[#009999] hover:bg-[#008080] text-white"
             onClick={() => handleAdd()}>
@@ -582,7 +582,7 @@ export default function ReactivationDisposedTools() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="border-[#009999]/20 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Records</CardTitle>
           </CardHeader>
@@ -596,7 +596,7 @@ export default function ReactivationDisposedTools() {
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-200">
+        <Card className="border-yellow-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Pending Disposal</CardTitle>
           </CardHeader>
@@ -610,7 +610,7 @@ export default function ReactivationDisposedTools() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="border-red-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Disposed Tools</CardTitle>
           </CardHeader>
@@ -627,7 +627,7 @@ export default function ReactivationDisposedTools() {
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="border-green-200">
+        <Card className="border-green-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Reactivated Tools</CardTitle>
           </CardHeader>
@@ -641,7 +641,7 @@ export default function ReactivationDisposedTools() {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200">
+        <Card className="border-blue-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Under Review</CardTitle>
           </CardHeader>
@@ -658,7 +658,7 @@ export default function ReactivationDisposedTools() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 p-2">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -727,7 +727,7 @@ export default function ReactivationDisposedTools() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                    currentItems.map((tool) => (
+                  currentItems.map((tool) => (
                     <TableRow key={tool.id} className="hover:bg-gray-50">
                       <TableCell>
                         <span className="text-[#009999]">{tool.toolId}</span>
@@ -787,16 +787,16 @@ export default function ReactivationDisposedTools() {
                           </Button>
                           {(tool.status === 'Pending Disposal' ||
                             tool.status === 'Under Review') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
-                              title="Reactivate"
-                              onClick={() => handleReactivate(tool.id, tool.toolId)}
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </Button>
-                          )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
+                                title="Reactivate"
+                                onClick={() => handleReactivate(tool.id, tool.toolId)}
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -883,7 +883,7 @@ export default function ReactivationDisposedTools() {
               {(editingItem ? 'Edit ' : 'Add ') + titlePage}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4"> 
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="ToolsId">Tools *</Label>
               {/*<Autocomplete*/}
@@ -898,11 +898,11 @@ export default function ReactivationDisposedTools() {
                 disabled={editingItem != null}
                 onValueChange={(value) => {
                   const selected = regtools.find(j => j.Kode === value);
-                  setFormData({ ...formData, toolId: value, toolName: selected.Keterangan, BaktNo:selected.Kategori })
+                  setFormData({ ...formData, toolId: value, toolName: selected.Keterangan, BaktNo: selected.Kategori })
                 }}
               >
                 <SelectTrigger id="ToolsId">
-                  <SelectValue placeholder={(regtools.length>0)?"Select":"Tools is empty"} />
+                  <SelectValue placeholder={(regtools.length > 0) ? "Select" : "Tools is empty"} />
                 </SelectTrigger>
                 <SelectContent>
                   {regtools.slice(0, 100).map((pos) => (

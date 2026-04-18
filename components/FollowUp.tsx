@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, FileDown, Calendar, ChevronRight, ChevronLeft, Eye, Pencil } from 'lucide-react';
+import { Search, FileDown, Calendar, ChevronRight, ChevronLeft, Plus, Eye, Pencil } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -34,7 +34,6 @@ import { Textarea } from './ui/textarea';
 import * as XLSX from 'xlsx';
 
 interface FollowUpItem {
-  itemkey: string;
   baktNumber: string;
   toolsId: string;
   description: string;
@@ -44,6 +43,7 @@ interface FollowUpItem {
   status: string; // '' | 'In Progress' | 'Pending' | 'Completed' | 'Overdue';
   remarks: string;
   ToolsCondition: string;
+  itemkey: string;
 }
 
 interface FollowUpUnit {
@@ -55,8 +55,9 @@ interface FollowUpUnit {
   CreatedDate: string;
   TargetDate: string;
   FUStatus: string;
-  Remark: string;
+  remarks: string;
   ToolsCondition: string;
+  itemkey: string;
 }
 
 export default function FollowUp() {
@@ -75,6 +76,8 @@ export default function FollowUp() {
     toolCondition: ''
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [fuAction, setFuAction] = useState('rfu3');
+  const [fuRemark, setFuRemark] = useState('');
 
   const filteredItems = followUpItems.filter((item) => {
     const query = searchQuery.toLowerCase();
@@ -136,7 +139,7 @@ export default function FollowUp() {
   }
 
 
-  const handleEdit = (item: FollowUpItem) => {
+  const handleAddRequest = (item: FollowUpItem) => {
     setEditingItem(item);
     setEditFormData({
       remarks: item.remarks,
@@ -156,14 +159,15 @@ export default function FollowUp() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          action: "UPDATEREQUEST",
+          action: "INSERTREQUEST",
           Jobsite: currentUser.Jobsite,
           NrpUser: currentUser.Nrp,
           BaktNo: editingItem.baktNumber,
-          // itemkey: editingItem.itemkey,
-          ToolsId: editingItem.toolsId,
-          ToolsCondition: editFormData.toolCondition,
-          Remark: editFormData.remarks
+          itemkey: editingItem.baktNumber,
+          IdTool: editingItem.toolsId,
+          ToolsCondition: fuAction,
+          Reason: editingItem.remarks,
+          JobActivity: fuRemark
         })
       });
 
@@ -175,11 +179,13 @@ export default function FollowUp() {
       const resData = data[0];
 
       if (resData?.Status == 1) {
-        toast.success(resData?.Message || 'Follow-up updated successfully');
+        toast.success(resData?.Message || 'Follow-up added successfully');
         setIsEditDialogOpen(false);
+        setFuAction('');
+        setFuRemark('');
         ReloadFollowUp();
       } else {
-        toast.error(resData?.Message || "Failed to update follow-up");
+        toast.error(resData?.Message || "Failed to add follow-up");
       }
     } catch (error: any) {
       console.error('Error updating follow-up:', error);
@@ -213,12 +219,12 @@ export default function FollowUp() {
             createdDate: u.CreatedDate ?? '',
             targetDate: u.TargetDate ?? '',
             status: u.FUStatus ?? '',
-            remarks: u.Remark ?? '',
-            ToolsCondition: u.ToolsCondition ?? '',
+            remarks: u.remarks ?? '',
+            ToolsCondition: u.ToolsCondition ?? ''
           };
         });
 
-        console.log(json);
+        console.log(items);
         setFollowUpItems(items);
 
       })
@@ -324,7 +330,7 @@ export default function FollowUp() {
               <TableHead className="text-white text-center">Created Date</TableHead>
               <TableHead className="text-white text-center">Target Date</TableHead>
               <TableHead className="text-white text-center">Status</TableHead>
-              <TableHead className="text-white text-center">Remarks</TableHead>
+              {/* <TableHead className="text-white text-center">Remarks</TableHead> */}
               <TableHead className="text-white bg-gray-600 text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -339,7 +345,7 @@ export default function FollowUp() {
                   <TableCell className="text-gray-600">{item.createdDate}</TableCell>
                   <TableCell className="text-gray-600">{item.targetDate}</TableCell>
                   <TableCell>{getStatusBadge(item.status)}</TableCell>
-                  <TableCell className="text-gray-600">{item.remarks}</TableCell>
+                  {/* <TableCell className="text-gray-600">{item.remarks}</TableCell> */}
                   <TableCell className="flex gap-2 justify-center">
                     {/* <Button
                       size="sm"
@@ -351,11 +357,12 @@ export default function FollowUp() {
                     </Button> */}
                     <Button
                       size="sm"
+                      title="Add Follow Up"
                       variant="outline"
-                      onClick={() => handleEdit(item)}
+                      onClick={() => handleAddRequest(item)}
                       className="border-amber-500 text-amber-600"
                     >
-                      <Pencil className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 mr-2" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -427,7 +434,7 @@ export default function FollowUp() {
           <DialogHeader className="bg-[#003366] text-white p-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Pencil className="h-6 w-6 text-[#00cccc]" />
-              Edit Follow-Up Status
+              Add Follow-Up Request
             </DialogTitle>
             <DialogDescription className="text-blue-100/70">
               BAKT No. <span className="text-white font-mono">{editingItem?.baktNumber}</span>
@@ -451,31 +458,39 @@ export default function FollowUp() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="toolCondition" className="text-sm font-medium text-gray-700">Tool Condition</Label>
-              <Select
-                value={editFormData.toolCondition}
-                onValueChange={(value) => setEditFormData(prev => ({ ...prev, toolCondition: value }))}
-              >
-                <SelectTrigger id="toolCondition" className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Con1">Good</SelectItem>
-                  <SelectItem value="rfu3">Repairing</SelectItem>
-                  <SelectItem value="Con3">R2</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">BAKT Reason</Label>
+              <div className="p-2 bg-gray-50 rounded border text-sm font-medium text-gray-700">
+                {editingItem?.remarks}
+              </div>
+
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">Remarks</Label>
-              <Textarea
-                id="remarks"
-                placeholder="Enter follow-up remarks..."
-                value={editFormData.remarks}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, remarks: e.target.value }))}
-                className="min-h-[100px] resize-none"
-              />
+            <div className="space-y-2 flex grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="fu-action" className="text-sm font-medium text-gray-700">Follow Up Action</Label>
+                <Select
+                  value={fuAction}
+                  onValueChange={(value) => setFuAction(value)}
+                >
+                  <SelectTrigger id="fu-action" className="w-full bg-white border-gray-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rfu3">Repairing</SelectItem>
+                    <SelectItem value="Con2">R1</SelectItem>
+                    <SelectItem value="Con1">Good</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="fu-action" className="text-sm font-medium text-gray-700">Remark</Label>
+                <Textarea
+                  id="remarks"
+                  placeholder="Enter follow-up remarks..."
+                  onChange={(e) => setFuRemark(e.target.value)}
+                  className="min-h-[100px] resize-none bg-white border border-gray-300"
+                />
+              </div>
             </div>
           </div>
 
@@ -493,7 +508,7 @@ export default function FollowUp() {
                 disabled={isSaving}
                 className="bg-[#009999] hover:bg-[#007777] text-white min-w-[120px]"
               >
-                {isSaving ? 'Updating...' : 'Update'}
+                {isSaving ? 'Adding...' : 'Add'}
               </Button>
             </div>
           </DialogFooter>
