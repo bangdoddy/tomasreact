@@ -114,7 +114,8 @@ export default function ReactivationDisposedTools() {
     status: '',
     remarks: '',
     BaktNo: '',
-    ToolsCondition: ''
+    ToolsCondition: '',
+    Hasil: 'Con1'
   });
 
   const [regtools, setRegTools] = useState<GlobalModel[]>([]);
@@ -227,6 +228,8 @@ export default function ReactivationDisposedTools() {
         return 'bg-green-100 text-green-700 border-green-300';
       case 'Under Review':
         return 'bg-blue-100 text-blue-700 border-blue-300';
+      case 'Repairing':
+        return 'bg-blue-100 text-blue-700 border-blue-300';
       default:
         return 'bg-gray-100 text-gray-700 border-gray-300';
     }
@@ -258,7 +261,7 @@ export default function ReactivationDisposedTools() {
       case 'Obsolete':
         return 'bg-gray-100 text-gray-700 border-gray-300';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
+        return 'bg-gray-100 text-blue-700 border-blue-300';
     }
   };
 
@@ -519,6 +522,7 @@ export default function ReactivationDisposedTools() {
             baktno: u.ItemKey ?? ''
           };
         });
+        console.log(items);
         setDisposedTools(items);
 
       })
@@ -690,7 +694,7 @@ export default function ReactivationDisposedTools() {
               <SelectContent>
                 <SelectItem value="All">All Status</SelectItem>
                 <SelectItem value="Pending Disposal">Pending Disposal</SelectItem>
-                <SelectItem value="Disposed">Disposed</SelectItem>
+                <SelectItem value="Repairing">Repairing</SelectItem>
                 <SelectItem value="Reactivated">Reactivated</SelectItem>
                 <SelectItem value="Under Review">Under Review</SelectItem>
               </SelectContent>
@@ -742,7 +746,8 @@ export default function ReactivationDisposedTools() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          {new Date(tool.disposalDate).toLocaleDateString()}
+                          {/* {new Date(tool.disposalDate).toLocaleDateString()} */}
+                          {tool.disposalDate}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -777,14 +782,14 @@ export default function ReactivationDisposedTools() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                           {(tool.status === 'Pending Disposal' ||
                             tool.status === 'Under Review') && (
                               <Button
@@ -880,12 +885,23 @@ export default function ReactivationDisposedTools() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[#003366]">
-              {(editingItem ? 'Edit ' : 'Add ') + titlePage}
+              {(editingItem ? 'Follow Up ' : 'Add ') + titlePage}
             </DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
+            <div className="space-y-2 p-2">
+              <Label>BAKT No.</Label>
+              <div className='border border-gray-200 rounded-md p-2 w-full'>
+                {formData.BaktNo}
+              </div>
+            </div>
+
+            <div className="space-y-2 p-2">
               <Label htmlFor="ToolsId">Tools *</Label>
+              <div className='border border-gray-200 rounded-md p-2 w-full'>
+                {formData.toolId + ' - ' + formData.toolName}
+              </div>
               {/*<Autocomplete*/}
               {/*  value={formData.toolName}*/}
               {/*  disabled={editingItem != null}*/}
@@ -893,7 +909,7 @@ export default function ReactivationDisposedTools() {
               {/*  onSelect={(s) => {*/}
               {/*    setFormData({ ...formData, toolId : s.id, toolName: s.label })*/}
               {/*  }} />*/}
-              <Select
+              {/* <Select
                 value={formData.toolId}
                 disabled={editingItem != null}
                 onValueChange={(value) => {
@@ -911,25 +927,35 @@ export default function ReactivationDisposedTools() {
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 p-2">
               <Label htmlFor="CertNumber">Reason *</Label>
-              <Input
-                id="CertNumber"
-                value={formData.disposalReason}
-                onChange={(e) => setFormData({ ...formData, disposalReason: e.target.value })}
-                placeholder="reason"
-              />
+              <div className='border border-gray-200 rounded-md p-2 w-full'>
+                {formData.disposalReason}
+              </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 p-2">
               <Label htmlFor="CertExpired">Remark *</Label>
-              <Input
-                id="CertExpired"
-                value={formData.remarks}
-                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                placeholder="remark"
-              />
+              <div className='border border-gray-200 rounded-md p-2 w-full'>
+                {formData.remarks}
+              </div>
+            </div>
+
+            <div className="space-y-2 p-2">
+              <Label htmlFor="hasil">Hasil *</Label>
+              <Select
+                value={"Con1"}
+                onValueChange={(value) => setFormData({ ...formData, Hasil: value })}
+              >
+                <SelectTrigger id="hasil">
+                  <SelectValue placeholder="Select Hasil" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Con3">R2</SelectItem>
+                  <SelectItem value="Con1">Good</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             {/*<div className="grid grid-cols-2 gap-4"> </div> */}
           </div>

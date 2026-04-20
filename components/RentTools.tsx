@@ -611,7 +611,7 @@ export default function RentTools() {
     const params = new URLSearchParams({
       // action: "WITHTOTAL",
       jobsite: currentUser.Jobsite,
-      nrp: aktifuser,
+      nrp: currentUser?.Nrp,
       // current: `${currentPage}`,
       // perpage: `${itemsPerPage}`,
       // filter: searchQuery

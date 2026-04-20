@@ -72,6 +72,7 @@ export default function FollowUp() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FollowUpItem | null>(null);
   const [editFormData, setEditFormData] = useState({
+    toolsId: '',
     remarks: '',
     toolCondition: ''
   });
@@ -142,9 +143,11 @@ export default function FollowUp() {
   const handleAddRequest = (item: FollowUpItem) => {
     setEditingItem(item);
     setEditFormData({
+      toolsId: item.toolsId,
       remarks: item.remarks,
       toolCondition: item.ToolsCondition,
     });
+
     setIsEditDialogOpen(true);
   };
 
@@ -160,13 +163,14 @@ export default function FollowUp() {
         },
         body: JSON.stringify({
           action: "INSERTREQUEST",
-          Jobsite: currentUser.Jobsite,
-          NrpUser: currentUser.Nrp,
+          jobsite: currentUser.Jobsite,
+          nrpUser: currentUser.Nrp,
           BaktNo: editingItem.baktNumber,
           itemkey: editingItem.baktNumber,
           IdTool: editingItem.toolsId,
-          ToolsCondition: fuAction,
-          Reason: editingItem.remarks,
+          ToolsCondition: editFormData.toolCondition,
+          OutFrom: fuAction,
+          Reason: editFormData.remarks,
           JobActivity: fuRemark
         })
       });
@@ -329,7 +333,7 @@ export default function FollowUp() {
               <TableHead className="text-white text-center">Mekanik</TableHead>
               <TableHead className="text-white text-center">Created Date</TableHead>
               <TableHead className="text-white text-center">Target Date</TableHead>
-              <TableHead className="text-white text-center">Status</TableHead>
+              <TableHead className="text-white text-center">BAKT Status</TableHead>
               {/* <TableHead className="text-white text-center">Remarks</TableHead> */}
               <TableHead className="text-white bg-gray-600 text-center">Action</TableHead>
             </TableRow>
@@ -462,10 +466,24 @@ export default function FollowUp() {
               <div className="p-2 bg-gray-50 rounded border text-sm font-medium text-gray-700">
                 {editingItem?.remarks}
               </div>
-
             </div>
 
             <div className="space-y-2 flex grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="tools-condition" className="text-sm font-medium text-gray-700">Tool Condition</Label>
+                <Select
+                  value={editFormData.toolCondition}
+                  disabled
+                >
+                  <SelectTrigger id="tools-condition" className="w-full bg-white border-gray-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Con2">R1</SelectItem>
+                    <SelectItem value="Con3">R2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="fu-action" className="text-sm font-medium text-gray-700">Follow Up Action</Label>
                 <Select
@@ -477,11 +495,14 @@ export default function FollowUp() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="rfu3">Repairing</SelectItem>
-                    <SelectItem value="Con2">R1</SelectItem>
+                    <SelectItem value="Con3">R2</SelectItem>
                     <SelectItem value="Con1">Good</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
               <div>
                 <Label htmlFor="fu-action" className="text-sm font-medium text-gray-700">Remark</Label>
                 <Textarea

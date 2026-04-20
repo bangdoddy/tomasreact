@@ -103,6 +103,12 @@ export default function CreateBAKTForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.jobActivity || !formData.brokenReason) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     console.log('Create BAKT:', formData);
     // Implement BAKT creation logic
     try {
@@ -120,7 +126,7 @@ export default function CreateBAKTForm({
           BaktNo: formData.baktNo,
           Reason: formData.brokenReason,
           JobActivity: formData.jobActivity,
-          OutFrom: baktItem.ToolsFrom
+          OutFrom: baktItem?.ToolsFrom
         })
       });
 
@@ -212,6 +218,7 @@ export default function CreateBAKTForm({
 
   useEffect(() => {
     if (baktItem) {
+      console.log(baktItem.ItemKey);
       ReloadNrpUser(baktItem.NrpMekanik);
       ReloadDetailBakt(baktItem.ItemKey);
     }
@@ -270,7 +277,7 @@ export default function CreateBAKTForm({
                     <TableCell className="text-gray-900">{detailBakt?.ToolsCostDefaultShow}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.TransDate}</TableCell>
                     <TableCell className="text-gray-900">{baktItem.ToolsConditionName}</TableCell>
-                    <TableCell className="text-gray-900">{detailBakt?.RTP}</TableCell>
+                    <TableCell className="text-gray-900">{detailBakt?.RTP ? detailBakt.RTP : "0"}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

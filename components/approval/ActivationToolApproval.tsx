@@ -93,7 +93,7 @@ interface ToolDataDetail {
 export default function ActivationToolApproval() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('Pending');
+  const [filterStatus, setFilterStatus] = useState('All');
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedBastNo, setSelectedBastNo] = useState('');
   const [selectedNamaPenerima, setSelectedNamaPenerima] = useState('');

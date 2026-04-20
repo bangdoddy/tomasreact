@@ -95,7 +95,7 @@ interface BaktResult {
 export default function BAKTApproval() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('Pending');
+  const [filterStatus, setFilterStatus] = useState('All');
   const [baktTools, setBaktTools] = useState<BaktResult[]>([])
 
   const [requests, setRequests] = useState<BAKTRequest[]>([]);
@@ -290,6 +290,7 @@ export default function BAKTApproval() {
   const GetBaktList = () => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
+      Role: currentUser.Jabatan,
       nrp: currentUser.Nrp
     });
     fetch(API.BAKT() + `?${params.toString()}`, {
@@ -496,7 +497,7 @@ export default function BAKTApproval() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {request.StApprovedBAKT != 'Waiting' && (
+                          {(request.StApprovedBAKT == 'Pending') && (
                             <>
                               <Button
                                 variant="ghost"
