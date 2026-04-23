@@ -81,7 +81,7 @@ export default function StandardQuantity() {
       StatusCapex: '',
       StdQuantity: "0",
       RiskCategory: '',
-      Sertification: ''
+      Sertification: '',
     });
     setIsDialogOpen(true);
   };
@@ -99,6 +99,55 @@ export default function StandardQuantity() {
       Sertification: item.Sertification
     });
     setIsDialogOpen(true);
+  };
+
+  const handleToolSearch = async (toolId: string) => {
+    if (!toolId) return;
+
+    try {
+      const params = new URLSearchParams({
+        action: "WITHTOTAL",
+        jobsite: currentUser.Jobsite,
+        current: "1",
+        perpage: "1",
+        filter: toolId,
+      });
+
+      const response = await fetch(API.REGISTERTOOLS() + `?${params.toString()}`, {
+        method: "GET"
+      });
+
+      if (!response.ok) {
+        toast.error(`Error searching tool: ${response.statusText}`);
+        return;
+      }
+
+      const data = await response.json();
+      const tools = data.data ?? data;
+
+      if (Array.isArray(tools) && tools.length > 0) {
+        const tool = tools.find((t: any) => t.ToolsId.toLowerCase() === toolId.toLowerCase()) || tools[0];
+
+        if (tool.ToolsId.toLowerCase() === toolId.toLowerCase()) {
+          setFormData(prev => ({
+            ...prev,
+            ToolsDesc: tool.ToolsDesc || '',
+            ToolsCategory: tool.ToolsType || tool.ToolsCategory || '',
+            StatusCapex: tool.StatusCapex || '',
+            Sertification: tool.StatusStd || '',
+            Jobsite: tool.ToolsJobsite || '',
+          }));
+          // toast.success("Tool data found and populated");
+        } else {
+          toast.error("Tool ID not found");
+        }
+      } else {
+        toast.error("Tool ID not found");
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      toast.error("Failed to search tool data");
+    }
   };
 
   const handleSave = async () => {
@@ -273,7 +322,7 @@ export default function StandardQuantity() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: GlobalModel[]) => setJobsites(json))
+      .then((json: GlobalModel[]) => { setJobsites(json); console.log(json); })
       .catch((error) => console.error("Error:", error));
   }
 
@@ -597,7 +646,12 @@ export default function StandardQuantity() {
                 disabled={editingItem != null}
                 value={formData.ToolsId}
                 onChange={(e) => setFormData({ ...formData, ToolsId: e.target.value })}
-                placeholder="e.g., Welding Equipment"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleToolSearch(formData.ToolsId);
+                  }
+                }}
+                placeholder="Enter Tools ID then press ENTER..."
               />
             </div>
             <div className="space-y-2">
@@ -612,24 +666,12 @@ export default function StandardQuantity() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Tools Category *</Label>
-                <Select
+                <Input
+                  id="category"
                   value={formData.ToolsCategory}
-                  onValueChange={(value) => {
-                    //const selected = jobsites.find(j => j.Keterangan === value);
-                    setFormData({ ...formData, ToolsCategory: value })
-                  }}
-                >
-                  <SelectTrigger id="add-jobsite">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((pos) => (
-                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                        {pos.Keterangan}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => setFormData({ ...formData, ToolsCategory: e.target.value })}
+                  placeholder="Enter Tools Category..."
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="standardQty">Standard Qty *</Label>
@@ -647,7 +689,7 @@ export default function StandardQuantity() {
                 <Select
                   value={formData.Jobsite}
                   onValueChange={(value) => {
-                    //const selected = jobsites.find(j => j.Keterangan === value);
+                    // const selected = jobsites.find(j => j.Keterangan === value);
                     setFormData({ ...formData, Jobsite: value })
                   }}
                 >
@@ -671,15 +713,17 @@ export default function StandardQuantity() {
                     setFormData({ ...formData, StatusCapex: value })
                   }}
                 >
-                  <SelectTrigger id="add-jobsite">
+                  <SelectTrigger id="statuscapex">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    {statusCapex.map((pos) => (
+                    {/* {statusCapex.map((pos) => (
                       <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
                         {pos.Keterangan}
                       </SelectItem>
-                    ))}
+                    ))} */}
+                    <SelectItem value="CAPEX">CAPEX</SelectItem>
+                    <SelectItem value="OPEX">OPEX</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -706,7 +750,7 @@ export default function StandardQuantity() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="Certification">Sertification</Label>
+                <Label htmlFor="Certification">Certification</Label>
                 <Select
                   value={formData.Sertification}
                   onValueChange={(value) => {
@@ -717,11 +761,8 @@ export default function StandardQuantity() {
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sertifications.map((pos) => (
-                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
-                        {pos.Keterangan}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="X">X</SelectItem>
+                    <SelectItem value="V">V</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

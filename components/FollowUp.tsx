@@ -495,8 +495,8 @@ export default function FollowUp() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="rfu3">Repairing</SelectItem>
-                    <SelectItem value="Con3">R2</SelectItem>
-                    <SelectItem value="Con1">Good</SelectItem>
+                    <SelectItem value="rfu5">R2</SelectItem>
+                    <SelectItem value="rfu4">Good</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

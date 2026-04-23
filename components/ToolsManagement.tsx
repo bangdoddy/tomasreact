@@ -752,7 +752,7 @@ export default function ToolsManagement() {
         <CardContent>
           {/* Search */}
           <div className="mb-6">
-            <div className="relative max-w-md">
+            <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search by ID, description, brand, or condition..."
@@ -795,18 +795,18 @@ export default function ToolsManagement() {
                   ) : (
                     itemList.map((tool) => (
                       <TableRow key={tool.ToolsId} className="hover:bg-gray-50">
-                        <TableCell className="border-r border-gray-200">{tool.ToolsJobsite}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsId}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsDesc}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsLocation}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsSerialNo}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsQty}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsType}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsDateIn}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsBrand}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsGroupType}</TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsSize}</TableCell>
-                        <TableCell className="border-r border-gray-200">
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsJobsite}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsId}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsDesc}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsLocation}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSerialNo}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsQty}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsType}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsDateIn}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsBrand}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsGroupType}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSize}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs ${tool.StTools === 'Good'
                               ? 'bg-green-100 text-green-800'

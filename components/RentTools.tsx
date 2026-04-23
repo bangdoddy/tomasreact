@@ -482,7 +482,7 @@ export default function RentTools() {
         //  toast.error(resData?.Message ?? "Failed");
         //}
       } else {
-        toast.error("Failed, No Respont");
+        toast.error("Failed, No Response");
       }
     } catch (ex: any) {
       toast.error("Failed. Message: " + ex.message);
@@ -582,7 +582,7 @@ export default function RentTools() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: GlobalModel[]) => setRegTools(json))
+      .then((json: GlobalModel[]) => setRegTools(json.filter(j => j.Status === 'Open')))
       .catch((error) => console.error("Error:", error));
   }
   const GetToolCondition = () => {
@@ -654,6 +654,7 @@ export default function RentTools() {
       nrpInputRef.current?.focus();
       console.log("ref is focus")
     }
+    console.log(regtools)
   }, []);
 
   const exportToExcel = () => {
@@ -819,7 +820,7 @@ export default function RentTools() {
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <X className="h-4 w-4 text-red-600" />
-                    <p className="text-xs text-red-800 font-medium">Tool Not Found</p>
+                    <p className="text-xs text-red-800 font-medium">Tool Not Avalaible</p>
                   </div>
                 </div>
               )}

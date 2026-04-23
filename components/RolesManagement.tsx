@@ -295,8 +295,8 @@ export default function RolesManagement() {
             <TableBody>
               {currentItems.map((role) => (
                 <TableRow key={role.Kode}>
-                  <TableCell>{role.Kode}</TableCell>
-                  <TableCell>{role.Keterangan}</TableCell>
+                  <TableCell className="text-gray-600">{role.Kode}</TableCell>
+                  <TableCell className="text-gray-600">{role.Keterangan}</TableCell>
                   <TableCell className="text-gray-600">{role.Detail}</TableCell>
                   <TableCell className="text-center">
                     <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#009999] text-white text-sm">

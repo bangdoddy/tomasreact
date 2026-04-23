@@ -97,6 +97,7 @@ export default function ReactivationDisposedTools() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterCondition, setFilterCondition] = useState('All');
+  const [fuAction, setFuAction] = useState('rfu4');
 
   /*Pagination Items */
   const [currentPage, setCurrentPage] = useState(1);
@@ -226,8 +227,8 @@ export default function ReactivationDisposedTools() {
         return 'bg-red-100 text-red-700 border-red-300';
       case 'Reactivated':
         return 'bg-green-100 text-green-700 border-green-300';
-      case 'Under Review':
-        return 'bg-blue-100 text-blue-700 border-blue-300';
+      case 'R2':
+        return 'bg-red-100 text-red-700 border-red-300';
       case 'Repairing':
         return 'bg-blue-100 text-blue-700 border-blue-300';
       default:
@@ -285,7 +286,8 @@ export default function ReactivationDisposedTools() {
       status: '',
       remarks: '',
       BaktNo: '',
-      ToolsCondition: ''
+      ToolsCondition: '',
+      Hasil: ''
     });
     setIsDialogOpen(true);
   }
@@ -302,6 +304,7 @@ export default function ReactivationDisposedTools() {
       remarks: item.remarks,
       BaktNo: item.baktno,
       ToolsCondition: item.condition,
+      Hasil: item.condition === 'R2' ? 'Con1' : 'Con2'
     });
     setIsDialogOpen(true);
   }
@@ -330,9 +333,10 @@ export default function ReactivationDisposedTools() {
           Nrp: formData.toolId,
           Reason: formData.disposalReason,
           JobActivity: formData.remarks,
-          OutFrom: formData.status,
+          OutFrom: fuAction,
           BaktNo: formData.BaktNo,
-          ToolsCondition: formData.ToolsCondition,
+          IdTool: formData.toolId,
+          // ToolsCondition: fuAction,
         })
       });
 
@@ -370,6 +374,8 @@ export default function ReactivationDisposedTools() {
           action: "DELETEREQUEST",
           Jobsite: currentUser.Jobsite,
           ItemKey: editingItem.id,
+          idTool: editingItem.toolId,
+          ToolsCondition: editingItem.condition,
         })
       });
 
@@ -463,7 +469,7 @@ export default function ReactivationDisposedTools() {
     pendingDisposal: disposedTools.filter((t) => t.status === 'Pending Disposal').length,
     disposed: disposedTools.filter((t) => t.status === 'Disposed').length,
     reactivated: disposedTools.filter((t) => t.status === 'Reactivated').length,
-    underReview: disposedTools.filter((t) => t.status === 'Under Review').length,
+    damaged: disposedTools.filter((t) => t.status === 'R2').length,
     totalValue: disposedTools.reduce((sum, t) => sum + t.estimatedValue, 0),
   };
 
@@ -517,7 +523,7 @@ export default function ReactivationDisposedTools() {
             status: u.ToolsStatus,
             condition: mapCondition(u.ToolsCondition),
             lastUsedDate: '',
-            estimatedValue: Number.isFinite(u.EstimatedValue as any) ? Number(u.EstimatedValue) : 0,
+            estimatedValue: u.EstimatedValue, // Number.isFinite(u.EstimatedValue as any) ? Number(u.EstimatedValue) : 0,
             remarks: u.TindakLanjut ?? '',
             baktno: u.ItemKey ?? ''
           };
@@ -588,7 +594,7 @@ export default function ReactivationDisposedTools() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-[#009999]/20 p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Total Records</CardTitle>
+            <CardTitle className="text-sm text-gray-500">Total Records</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -602,11 +608,11 @@ export default function ReactivationDisposedTools() {
 
         <Card className="border-yellow-200 p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Pending Disposal</CardTitle>
+            <CardTitle className="text-sm text-gray-500 font-bold">R2</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl text-yellow-600">{stats.pendingDisposal}</div>
+              <div className="text-2xl text-yellow-600">{stats.damaged}</div>
               <div className="p-2 bg-yellow-100 rounded-lg">
                 <AlertTriangle className="h-5 w-5 text-yellow-600" />
               </div>
@@ -616,7 +622,7 @@ export default function ReactivationDisposedTools() {
 
         <Card className="border-red-200 p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Disposed Tools</CardTitle>
+            <CardTitle className="text-sm text-gray-500">Disposed Tools</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -633,7 +639,7 @@ export default function ReactivationDisposedTools() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="border-green-200 p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Reactivated Tools</CardTitle>
+            <CardTitle className="text-sm text-gray-500">Reactivated Tools</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -647,7 +653,7 @@ export default function ReactivationDisposedTools() {
 
         <Card className="border-blue-200 p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Under Review</CardTitle>
+            <CardTitle className="text-sm text-gray-500">Under Review</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -693,10 +699,9 @@ export default function ReactivationDisposedTools() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All Status</SelectItem>
-                <SelectItem value="Pending Disposal">Pending Disposal</SelectItem>
+                <SelectItem value="R2">Damaged</SelectItem>
                 <SelectItem value="Repairing">Repairing</SelectItem>
                 <SelectItem value="Reactivated">Reactivated</SelectItem>
-                <SelectItem value="Under Review">Under Review</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -713,8 +718,8 @@ export default function ReactivationDisposedTools() {
                   <TableHead>Tool ID</TableHead>
                   <TableHead>Tool Name</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Disposal Date</TableHead>
-                  <TableHead>Disposal Reason</TableHead>
+                  <TableHead>Follow-Up Date</TableHead>
+                  <TableHead>Reason</TableHead>
                   <TableHead>Proposed By</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Condition</TableHead>
@@ -790,27 +795,17 @@ export default function ReactivationDisposedTools() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button> */}
-                          {(tool.status === 'Pending Disposal' ||
-                            tool.status === 'Under Review') && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
-                                title="Reactivate"
-                                onClick={() => handleReactivate(tool.id, tool.toolId)}
-                              >
-                                <RefreshCw className="h-4 w-4" />
-                              </Button>
-                            )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
-                            title="Edit"
-                            onClick={() => handleEdit(tool)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          {tool.status != 'Reactivated' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
+                              title="Edit"
+                              onClick={() => handleEdit(tool)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -945,15 +940,15 @@ export default function ReactivationDisposedTools() {
             <div className="space-y-2 p-2">
               <Label htmlFor="hasil">Hasil *</Label>
               <Select
-                value={"Con1"}
-                onValueChange={(value) => setFormData({ ...formData, Hasil: value })}
+                value={fuAction}
+                onValueChange={(value) => { setFuAction(value); setFormData({ ...formData, Hasil: value }) }}
               >
                 <SelectTrigger id="hasil">
                   <SelectValue placeholder="Select Hasil" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Con3">R2</SelectItem>
-                  <SelectItem value="Con1">Good</SelectItem>
+                  <SelectItem value="rfu5">R2</SelectItem>
+                  <SelectItem value="rfu4">Good</SelectItem>
                 </SelectContent>
               </Select>
             </div>

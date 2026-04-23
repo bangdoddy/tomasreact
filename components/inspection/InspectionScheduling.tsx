@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -51,6 +51,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel } from "../../model/Models";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { API } from '../../config';
 import * as XLSX from 'xlsx';
 
@@ -67,15 +69,44 @@ interface Schedule {
   ValidateBy: string;
   AuditDate: string;
   AuditTime: string;
-  AuditType: string; 
+  AuditType: string;
+  ToolsLocation: string;
 }
 
+const CustomDateInput = forwardRef(({ value, onClick, className }: any, ref: any) => (
+  <div className="relative w-full">
+    <Input
+      value={value}
+      onClick={onClick}
+      ref={ref}
+      className={className}
+      readOnly
+      placeholder="dd-MM-yyyy"
+    />
+    <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+  </div>
+));
+
+const CustomTimeInput = forwardRef(({ value, onClick, className }: any, ref: any) => (
+  <div className="relative w-full">
+    <Input
+      value={value}
+      onClick={onClick}
+      ref={ref}
+      className={className}
+      readOnly
+      placeholder="HH:mm"
+    />
+    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+  </div>
+));
+
 export default function InspectionScheduling() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Schedule | null>(null);
   const [formData, setFormData] = useState({
     ItemKey: '',
@@ -86,10 +117,12 @@ export default function InspectionScheduling() {
     NamaUser: '',
   });
 
-  const [categories, setCategories] = useState<GlobalModel[]>([]); 
-  const [userAudit, setUserAudit] = useState<GlobalModel[]>([]); 
+  const [categories, setCategories] = useState<GlobalModel[]>([]);
+  const [userAudit, setUserAudit] = useState<GlobalModel[]>([]);
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [createdDate, setCreatedDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState(new Date());
   /*
     {
       id: 'SCH-001',
@@ -139,7 +172,7 @@ export default function InspectionScheduling() {
       location: 'Workshop A',
       ItemKey: '',
     },
-  ]*/  
+  ]*/
 
   const filteredSchedules = schedules.filter((schedule) => {
     return (
@@ -188,11 +221,14 @@ export default function InspectionScheduling() {
   }
   /*Action */
   const handleAdd = () => {
+    const now = new Date();
     setEditingItem(null);
+    setCreatedDate(now);
+    setSelectedTime(now);
     setFormData({
       ItemKey: '',
-      AuditDate: '',
-      AuditTime: '',
+      AuditDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
+      AuditTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
       ToolsKategori: '',
       NrpUser: '',
       NamaUser: '',
@@ -202,6 +238,17 @@ export default function InspectionScheduling() {
 
   const handleEdit = (item: Schedule) => {
     setEditingItem(item);
+    setCreatedDate(item.AuditDate ? new Date(item.AuditDate) : new Date());
+
+    if (item.AuditTime) {
+      const [hours, minutes] = item.AuditTime.split(':');
+      const time = new Date();
+      time.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      setSelectedTime(time);
+    } else {
+      setSelectedTime(new Date());
+    }
+
     setFormData({
       ItemKey: item.ItemKey,
       AuditDate: item.AuditDate,
@@ -236,7 +283,7 @@ export default function InspectionScheduling() {
           Nrp: formData.NrpUser,
           ItemKey: formData.ItemKey,
           ToolType: formData.ToolsKategori,
-          Auditdate: formData.AuditDate+' '+formData.AuditTime
+          Auditdate: formData.AuditDate + ' ' + formData.AuditTime
         })
       });
 
@@ -255,7 +302,7 @@ export default function InspectionScheduling() {
           toast.error(resData?.Message ?? "Failed");
         }
       } else {
-        toast.error("Failed, No Respont");
+        toast.error("Failed, No Response");
       }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
@@ -303,14 +350,14 @@ export default function InspectionScheduling() {
   const saveToExcel = (data: Schedule[]) => {
     const worksheet = XLSX.utils.json_to_sheet(
       data.map((tool) => ({
-        'Schedule ID': tool.ItemKey+"_"+tool.ToolsType ,
+        'Schedule ID': tool.ItemKey + "_" + tool.ToolsType,
         'Tool Category': tool.ToolsTypeDesc,
         'Date': tool.AuditDate,
         'Time': tool.AuditTime,
         'Inspector': tool.Auditor,
         'Type': tool.AuditType,
         'Location': '',
-        'Status': tool.ToolsAuditStatus, 
+        'Status': tool.ToolsAuditStatus,
       }))
     );
 
@@ -330,7 +377,7 @@ export default function InspectionScheduling() {
 
   /*Load Server */
   const ReloadMaster = () => {
-    const params = new URLSearchParams({ 
+    const params = new URLSearchParams({
       jobsite: currentUser.Jobsite
     });
     fetch(API.AUDITTOOLS() + `?${params.toString()}`, {
@@ -338,7 +385,7 @@ export default function InspectionScheduling() {
     })
       .then((response) => response.json())
       .then((json: Schedule[]) => {
-        setSchedules(json);
+        setSchedules(json); console.log(json);
       })
       .catch((error) => console.error("Error:", error));
   };
@@ -357,7 +404,7 @@ export default function InspectionScheduling() {
   const ReloadUserAudit = () => {
     const params = new URLSearchParams({
       showdata: "AUDITOR",
-      jobsite : currentUser.Jobsite
+      jobsite: currentUser.Jobsite
     });
     fetch(API.FILTERS() + `?${params.toString()}`, {
       method: "GET"
@@ -367,13 +414,13 @@ export default function InspectionScheduling() {
       .catch((error) => console.error("Error:", error));
   }
 
-  
 
-  useEffect(() => { 
-    ReloadMaster(); 
+
+  useEffect(() => {
+    ReloadMaster();
     ReloadCategory();
     ReloadUserAudit();
-  },[]);
+  }, []);
 
   const titlePage = "Schedule"
   return (
@@ -391,10 +438,10 @@ export default function InspectionScheduling() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="border-gray-300 hover:bg-gray-50"
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10"
             onClick={() => saveToExcel(schedules)}>
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export to Excel
           </Button>
           <Button className="bg-[#009999] hover:bg-[#008080] text-white"
             onClick={() => handleAdd()}>
@@ -411,7 +458,7 @@ export default function InspectionScheduling() {
             <CardTitle className="text-sm text-gray-600">Scheduled</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-1">
               <div className="text-2xl text-blue-600">{stats.scheduled}</div>
               <div className="p-2 bg-blue-100 rounded-lg">
                 <CalendarIcon className="h-5 w-5 text-blue-600" />
@@ -425,7 +472,7 @@ export default function InspectionScheduling() {
             <CardTitle className="text-sm text-gray-600">In Progress</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-1">
               <div className="text-2xl text-yellow-600">{stats.inProgress}</div>
               <div className="p-2 bg-yellow-100 rounded-lg">
                 <Clock className="h-5 w-5 text-yellow-600" />
@@ -439,7 +486,7 @@ export default function InspectionScheduling() {
             <CardTitle className="text-sm text-gray-600">Completed</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-1">
               <div className="text-2xl text-green-600">{stats.completed}</div>
               <div className="p-2 bg-green-100 rounded-lg">
                 <CalendarIcon className="h-5 w-5 text-green-600" />
@@ -451,7 +498,7 @@ export default function InspectionScheduling() {
 
       {/* Search */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 p-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -471,7 +518,7 @@ export default function InspectionScheduling() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead>Schedule ID</TableHead> 
+                  <TableHead>Schedule ID</TableHead>
                   <TableHead>Tool Category</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Time</TableHead>
@@ -493,8 +540,8 @@ export default function InspectionScheduling() {
                   filteredSchedules.map((schedule) => (
                     <TableRow key={schedule.ItemKey} className="hover:bg-gray-50">
                       <TableCell>
-                        <span className="text-[#009999]">{schedule.ItemKey+'_'+schedule.ToolsType}</span>
-                      </TableCell> 
+                        <span className="text-[#009999]">{schedule.ItemKey + '_' + schedule.ToolsType}</span>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Wrench className="h-4 w-4 text-gray-400" />
@@ -520,7 +567,7 @@ export default function InspectionScheduling() {
                         </div>
                       </TableCell>
                       <TableCell>{schedule.AuditType}</TableCell>
-                      <TableCell>{}</TableCell>
+                      <TableCell>{schedule.ToolsLocation}</TableCell>
                       <TableCell>
                         <Badge className={`w-fit ${getStatusColor(schedule.ToolsAuditStatus)}`}>
                           {schedule.ToolsAuditStatus}
@@ -582,33 +629,65 @@ export default function InspectionScheduling() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="auditDate">Date *</Label>
-                <Input
-                  id="auditDate"
-                  type="date"  
-                  value={formData.AuditDate}
-                  onChange={(e) => setFormData({ ...formData, AuditDate: e.target.value })} 
+                <DatePicker
+                  selected={createdDate}
+                  onChange={(date: any) => {
+                    setCreatedDate(date);
+                    if (date) {
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      setFormData(prev => ({ ...prev, AuditDate: `${year}-${month}-${day}` }));
+                    } else {
+                      setFormData(prev => ({ ...prev, AuditDate: '' }));
+                    }
+                    console.log(formData.AuditDate)
+                  }}
+                  dateFormat="dd-MM-yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
                   {...(() => {
                     const { min, max } = getDateRangeFromDateStr(formData.AuditDate);
-                    console.log("MinMax:" + min + "<>" + max);
                     return {
-                      min,  
-                      max,
+                      minDate: min ? new Date(min) : undefined,
+                      maxDate: max ? new Date(max) : undefined,
                     };
-                  })()} 
-                  placeholder="e.g., JB001"
+                  })()}
+                  customInput={
+                    <CustomDateInput
+                      className="w-full pl-10 h-10 border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                    />
+                  }
+                  wrapperClassName="w-full"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="auditTime">Time *</Label>
-                <Input
-                  id="auditTime"
-                  type="time" 
-                  value={formData.AuditTime}
-                  onChange={(e) => setFormData({ ...formData, AuditTime: e.target.value })}
-                  placeholder="e.g., JB001"
+                <DatePicker
+                  selected={selectedTime}
+                  onChange={(date: Date | null) => {
+                    setSelectedTime(date || new Date());
+                    if (date) {
+                      const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                      setFormData(prev => ({ ...prev, AuditTime: timeStr }));
+                    }
+                  }}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={30}
+                  timeCaption="Time"
+                  dateFormat="HH:mm"
+                  timeFormat="HH:mm"
+                  customInput={
+                    <CustomTimeInput
+                      className="w-full pl-10 h-10 border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                    />
+                  }
+                  wrapperClassName="w-full"
                 />
               </div>
-            </div> 
+            </div>
             <div className="space-y-2">
               <Label htmlFor="category">Tools Category *</Label>
               <Select

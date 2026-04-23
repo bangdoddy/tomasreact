@@ -41,22 +41,22 @@ import * as XLSX from 'xlsx';
 import { useAuth, AuthUsers } from "../service/AuthContext";
 import { GenSetting, GlobalModel } from "../model/Models";
 import { API } from '../config';
- 
-export default function GeneralSetting({ kategori }: { kategori?: string }) { 
+
+export default function GeneralSetting({ kategori }: { kategori?: string }) {
   const isSpesific = Boolean(kategori);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>("ALL");
   useEffect(() => {
-    setSelectedCategory(kategori || "ALL"); 
+    setSelectedCategory(kategori || "ALL");
   }, [kategori]);
 
   const { currentUser } = useAuth();
   const [itemList, setItemList] = useState<GenSetting[]>([]);
-  const [categories, setCategories] = useState<GlobalModel[]>([]); 
+  const [categories, setCategories] = useState<GlobalModel[]>([]);
 
   /*Pagination Items */
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  /*Model Edit */ 
+  /*Model Edit */
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<GenSetting | null>(null);
@@ -64,17 +64,17 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
     Kode: '',
     Keterangan: '',
     Detail: '',
-    Kategori: '', 
+    Kategori: '',
   });
 
-  /*Action */  
+  /*Action */
   const handleAdd = () => {
     setEditingItem(null);
     setFormData({
       Kode: '',
       Keterangan: '',
       Detail: '',
-      Kategori: isSpesific?kategori:'', 
+      Kategori: isSpesific ? kategori : '',
     });
     setIsDialogOpen(true);
   }
@@ -85,7 +85,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
       Kode: item.Kode,
       Keterangan: item.Keterangan,
       Detail: item.Detail,
-      Kategori: item.Kategori  
+      Kategori: item.Kategori
     });
     setIsDialogOpen(true);
   }
@@ -94,7 +94,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
     setIsDeleteDialogOpen(true);
   }
   const handleSave = async () => {
-    if (!formData.Kode || !formData.Keterangan  || !formData.Kategori  ) {
+    if (!formData.Kode || !formData.Keterangan || !formData.Kategori) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -110,7 +110,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
           Kode: formData.Kode,
           Keterangan: formData.Keterangan,
           Detail: formData.Detail,
-          Kategori: formData.Kategori 
+          Kategori: formData.Kategori
         })
       });
 
@@ -146,7 +146,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
         },
         body: JSON.stringify({
           action: "DELETE",
-          Kode: editingItem.Kode, 
+          Kode: editingItem.Kode,
         })
       });
 
@@ -183,7 +183,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
       .then((response) => response.json())
       .then((json: GenSetting[]) => setItemList(json))
       .catch((error) => console.error("Error:", error));
-  }; 
+  };
   const ReloadCategory = () => {
     const params = new URLSearchParams({
       showdata: "MASTERSETTING"
@@ -206,7 +206,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
   });
   //Filter Data
   const filteredList = itemList.filter(
-    (user) => user.Kategori.toLowerCase().includes(selectedCategory.toLowerCase()) || selectedCategory==="ALL"
+    (user) => user.Kategori.toLowerCase().includes(selectedCategory.toLowerCase()) || selectedCategory === "ALL"
   );
   // Pagination calculations
   const totalPages = Math.ceil(filteredList.length / itemsPerPage);
@@ -214,7 +214,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredList.slice(startIndex, endIndex);
 
-  const titlePage = kategori ??"General Setting"
+  const titlePage = kategori ?? "General Setting"
 
   return (
     <div className="space-y-6">
@@ -223,7 +223,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
           <h1 className="text-[#003366]">{titlePage}</h1>
           <p className="text-gray-600 mt-1">Manage Master {titlePage} </p>
         </div>
-        <div className="flex gap-2">  
+        <div className="flex gap-2">
           {!isSpesific && (
             <Select
               value={selectedCategory}
@@ -255,7 +255,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
           </Button>
         </div>
       </div>
-      <Card>
+      <Card className="p-2">
         <CardHeader>
           <CardTitle className="text-[#003366]">{titlePage} List</CardTitle>
         </CardHeader>
@@ -264,21 +264,21 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Kode</TableHead>
-                  <TableHead>Nama</TableHead>
-                  <TableHead>Detail</TableHead>
-                  <TableHead>Category</TableHead> 
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="bg-gray-200">Kode</TableHead>
+                  <TableHead className="bg-gray-200">Nama</TableHead>
+                  <TableHead className="bg-gray-200">Detail</TableHead>
+                  <TableHead className="bg-gray-200">Category</TableHead>
+                  <TableHead className="text-right bg-gray-200">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.map((item) => { 
+                {currentItems.map((item) => {
                   return (
                     <TableRow key={item.Kode}>
-                      <TableCell>{item.Kode}</TableCell>
-                      <TableCell>{item.Keterangan}</TableCell>
-                      <TableCell>{item.Detail}</TableCell>
-                      <TableCell>{item.Kategori}</TableCell> 
+                      <TableCell className="text-gray-600">{item.Kode}</TableCell>
+                      <TableCell className="text-gray-600">{item.Keterangan}</TableCell>
+                      <TableCell className="text-gray-600">{item.Detail}</TableCell>
+                      <TableCell className="text-gray-600">{item.Kategori}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -354,7 +354,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[#003366]">
-              {(editingItem ? 'Edit ' : 'Add ')+titlePage}
+              {(editingItem ? 'Edit ' : 'Add ') + titlePage}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -385,13 +385,13 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
                 onChange={(e) => setFormData({ ...formData, Detail: e.target.value })}
                 placeholder="e.g., Welding Machine All"
               />
-            </div> 
+            </div>
             <div className="space-y-2">
               <Label htmlFor="category">Tools Category *</Label>
               <Select
                 value={formData.Kategori}
-                disabled={isSpesific}  
-                onValueChange={(value) => { 
+                disabled={isSpesific}
+                onValueChange={(value) => {
                   setFormData({ ...formData, Kategori: value })
                 }}
               >
@@ -406,7 +406,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
                   ))}
                 </SelectContent>
               </Select>
-            </div>  
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
