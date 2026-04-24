@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import {
@@ -7,7 +7,10 @@ import {
   ShoppingCart,
   Calendar,
   TrendingUp,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
+import { Label } from '../ui/label';
 import {
   Table,
   TableBody,
@@ -33,42 +36,55 @@ import { API } from '../../config';
 import * as XLSX from 'xlsx';
 
 interface RentReturnData {
-  Periode: string;
-  PeriodeName: string;
+  NO: string;
+  NRP: string;
+  NAMA: string;
+  RentStatus: string;
   Total: number;
-  Returned: number;
-  Rented: number;
-  Overdue: number;
-  ReturnRates: number; 
+  StUser: string;
+  ActionReturn: string;
+  LastCondition: string;
+  AgingDay: string;
+  AgingHour: string;
+  TransIdTools: string;
+  ToolsDesc: string;
+  ToolsSize: string;
+  ToolsType: string;
+  TransDateRental: string;
+  TransReturnDate: string;
 }
 
-interface RentReturnReport {
-  ToolsId: string;
-  NamaTools: string;
-  Mekanik: string;
-  NamaMekanik: string;
-  NamaToolKeeper: string;
-  DateRental: string;
-  DateReturn: string;
-  ReturnCondition: string;
-  stRent: string;
-  StOverdue: string; 
-}
 
 export default function RentReturnReport() {
-  const { currentUser } = useAuth();  
+  const { currentUser } = useAuth();
   const [reportData, setReportData] = useState<RentReturnData[]>([]);
-  const [reportDetails, setReportDetails] = useState<RentReturnReport[]>([]);
+  // const [reportDetails, setReportDetails] = useState<RentReturnReport[]>([]);
   const [isSummary, setIsSummary] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPeriod, setFilterPeriod] = useState('This Month');
-   
-  const stats = {
-    totalRented: reportData.reduce((sum, d) => sum + d.Total, 0) + reportDetails.length,
-    totalReturned: reportData.reduce((sum, d) => sum + d.Returned, 0)+ reportDetails.filter(item => item.stRent === "Return").length,
-    currentlyRented: reportData.reduce((sum, d) => sum + d.Rented, 0) + reportDetails.filter(item => item.stRent === "Rent").length,
-    overdueReturns: 0,
+
+  // Pagination Items
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const parseDate = (dateStr: string) => {
+    if (!dateStr) return new Date(NaN);
+    // Handle dd-MM-yyyy or dd/MM/yyyy
+    const datePart = dateStr.split(' ')[0];
+    const separator = datePart.includes('-') ? '-' : datePart.includes('/') ? '/' : null;
+
+    if (separator) {
+      const parts = datePart.split(separator);
+      if (parts.length === 3) {
+        const [day, month, year] = parts;
+        if (year && year.length === 4) {
+          return new Date(Number(year), Number(month) - 1, Number(day));
+        }
+      }
+    }
+    return new Date(dateStr);
   };
+
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -95,16 +111,16 @@ export default function RentReturnReport() {
     toast.success('Data exported successfully');
   }
 
-  const saveToExcel2 = (data: RentReturnReport[]) => {
+  const saveToExcel2 = (data: RentReturnData[]) => {
     const worksheet = XLSX.utils.json_to_sheet(
       data.map((tool) => ({
-        'ToolsId': tool.ToolsId,
-        'Tools Name': tool.NamaTools,
-        'Peminjam': tool.NamaMekanik,
-        'Rent Date': tool.DateRental,
-        'Return Date': tool.DateReturn,
-        'Status': tool.stRent,
-        'Condition': tool.ReturnCondition
+        'ToolsId': tool.TransIdTools,
+        'Tools Name': tool.ToolsDesc,
+        'Peminjam': tool.NAMA,
+        'Rent Date': tool.TransDateRental,
+        'Return Date': tool.TransReturnDate,
+        'Status': tool.RentStatus,
+        'Condition': tool.LastCondition
       }))
     );
 
@@ -115,59 +131,111 @@ export default function RentReturnReport() {
     toast.success('Data exported successfully');
   }
 
-  const ReloadMaster = (mode:string) => {
+  const ReloadMaster = () => {
     const params = new URLSearchParams({
       act: "REPORT",
-      jobsite: currentUser.Jobsite,
-      qty:mode
+      jobsite: currentUser?.Jobsite || '',
+      nrp: currentUser?.Nrp || '',
     });
     fetch(API.RENTTOOLS() + `?${params.toString()}`, {
       method: "GET"
     })
       .then((response) => response.json())
       .then((json: RentReturnData[]) => {
-        setIsSummary(true);
-        setReportDetails([]);
+        //setIsSummary(true);
+        //setReportDetails([]);
         setReportData(json);
+        console.log(json);
       })
       .catch((error) => console.error("Error:", error));
   };
 
-  const ReloadMaster2 = (mode: string) => {
-    const params = new URLSearchParams({
-      act: "REPORT",
-      jobsite: currentUser.Jobsite,
-      qty: mode
-    });
-    fetch(API.RENTTOOLS() + `?${params.toString()}`, {
-      method: "GET"
+  // const ReloadMaster2 = (mode: string) => {
+  //   const params = new URLSearchParams({
+  //     action: "REPORT",
+  //     jobsite: currentUser.Jobsite,
+  //     nrp: currentUser?.Nrp,
+  //     qty: mode
+  //   });
+  //   fetch(API.RENTTOOLS() + `?${params.toString()}`, {
+  //     method: "GET"
+  //   })
+  //     .then((response) => response.json())
+  //     .then((json: RentReturnData[]) => {
+  //       setIsSummary(false);
+  //       setReportData(json);
+  //       //setReportDetails(json);
+  //     })
+  //     .catch((error) => console.error("Error:", error));
+  // };
+
+  // const ReloadData = () => {
+  //   if (filterPeriod === "This Month") { ReloadMaster2("0"); }
+  //   else if (filterPeriod === "Last Month") { ReloadMaster2("1"); }
+  //   else if (filterPeriod === "Last 3 Months") { ReloadMaster("3"); }
+  //   else if (filterPeriod === "Last 6 Months") { ReloadMaster("6"); }
+  // }
+
+  const filteredData = reportData
+    .filter((item) => {
+      const query = searchTerm.toLowerCase();
+      const matchesSearch = (
+        item.ToolsDesc.toLowerCase().includes(query) ||
+        item.TransIdTools.toLowerCase().includes(query) ||
+        item.NAMA.toLowerCase().includes(query)
+      );
+
+      const recordDate = parseDate(item.TransDateRental);
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      let matchesPeriod = true;
+      if (filterPeriod === "This Month") {
+        matchesPeriod = recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+      } else if (filterPeriod === "Last Month") {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        matchesPeriod = recordDate.getMonth() === lastMonth && recordDate.getFullYear() === lastMonthYear;
+      } else if (filterPeriod === "Last 3 Months") {
+        const threeMonthsAgo = new Date(currentYear, currentMonth - 2, 1);
+        matchesPeriod = recordDate >= threeMonthsAgo;
+      } else if (filterPeriod === "Last 6 Months") {
+        const sixMonthsAgo = new Date(currentYear, currentMonth - 5, 1);
+        matchesPeriod = recordDate >= sixMonthsAgo;
+      }
+
+      return matchesSearch && matchesPeriod;
     })
-      .then((response) => response.json())
-      .then((json: RentReturnReport[]) => {
-        setIsSummary(false);
-        setReportData([]);
-        setReportDetails(json);
-      })
-      .catch((error) => console.error("Error:", error));
+    .sort((a, b) => {
+      const dateA = parseDate(a.TransDateRental).getTime();
+      const dateB = parseDate(b.TransDateRental).getTime();
+      return dateB - dateA;
+    });
+
+  const stats = {
+    totalRented: filteredData.length,
+    totalReturned: filteredData.filter(item => item.RentStatus === "Dikembalikan").length,
+    currentlyRented: filteredData.filter(item => item.RentStatus === "Dipinjam").length,
+    overdueReturns: 0,
   };
 
-  const ReloadData = () => { 
-    if (filterPeriod === "This Month") { ReloadMaster2("0"); }
-    else if (filterPeriod === "Last Month") { ReloadMaster2("1"); }
-    else if (filterPeriod === "Last 3 Months") { ReloadMaster("3"); }
-    else if (filterPeriod === "Last 6 Months") { ReloadMaster("6"); } 
-  }
+  /*Pagination Items (fallback to client-side if total is not set) */
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredData.slice(startIndex, endIndex);
 
   useEffect(() => {
-    ReloadData();
+    ReloadMaster();
     console.log("Reload Users")
   }, []);
 
-  useEffect(() => {
-    ReloadData();
-    scrollToTop();
-    console.log("Reload filterPeriod : " + filterPeriod);
-  }, [filterPeriod]);
+  // useEffect(() => {
+  //   ReloadMaster();
+  //   scrollToTop();
+  //   console.log("Reload filterPeriod : " + filterPeriod);
+  // }, []);
 
   return (
     <div className="space-y-6">
@@ -188,8 +256,8 @@ export default function RentReturnReport() {
             Export PDF
           </Button>
           <Button className="bg-[#009999] hover:bg-[#008080] text-white" onClick={() => {
-            if (isSummary) saveToExcel(reportData);
-            else saveToExcel2(reportDetails);
+            // if (isSummary) saveToExcel(reportData);
+            saveToExcel2(reportData);
           }}>
             <Download className="h-4 w-4 mr-2" />
             Export Excel
@@ -235,7 +303,7 @@ export default function RentReturnReport() {
         </Card>
       </div>
 
-      {isSummary && (
+      {/* {isSummary && (
         <Card>
           <CardHeader>
             <CardTitle>Rent & Return Trend</CardTitle>
@@ -255,9 +323,9 @@ export default function RentReturnReport() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      )}
+      )} */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 p-2">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -286,76 +354,94 @@ export default function RentReturnReport() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            {isSummary && (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead>Period</TableHead>
-                    <TableHead className="text-center">Rented</TableHead>
-                    <TableHead className="text-center">Returned</TableHead>
-                    <TableHead className="text-center">Overdue</TableHead>
-                    <TableHead className="text-center">Return Rate</TableHead>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead>ToolsId</TableHead>
+                  <TableHead className="text-center">Tools Name</TableHead>
+                  <TableHead className="text-center">Peminjam</TableHead>
+                  <TableHead className="text-center">Rent Date</TableHead>
+                  <TableHead className="text-center">Return Date</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Condition</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10 text-gray-500">
+                      No data found
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reportData.map((data) => {
-                    const returnRate = data.ReturnRates; // ((data.Returned / data.rented) * 100).toFixed(1);
-                    return (
-                      <TableRow key={data.Periode} className="hover:bg-gray-50">
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {data.PeriodeName}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">{data.Total}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-300">
-                            {data.Returned}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge className="bg-red-100 text-red-700 border-red-300">
-                            {data.Overdue}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">{returnRate}%</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-            {!isSummary && (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead>ToolsId</TableHead> 
-                    <TableHead className="text-center">Tools Name</TableHead>
-                    <TableHead className="text-center">Peminjam</TableHead>
-                    <TableHead className="text-center">Rent Date</TableHead>
-                    <TableHead className="text-center">Return Date</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="text-center">Condition</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reportDetails.map((data) => { 
-                    return (
-                      <TableRow key={data.ToolsId+data.Mekanik+data.DateRental} className="hover:bg-gray-50">
-                        <TableCell>{data.ToolsId}</TableCell>
-                        <TableCell>{data.NamaTools}</TableCell>
-                        <TableCell>{data.NamaMekanik}</TableCell>
-                        <TableCell className="text-center">{data.DateRental} </TableCell>
-                        <TableCell className="text-center">{data.DateReturn}</TableCell>
-                        <TableCell className="text-center">{data.stRent}</TableCell>
-                        <TableCell className="text-center">{data.ReturnCondition}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
+                ) : (
+                  currentItems.map((data) => (
+                    <TableRow key={data.NO} className="hover:bg-gray-50">
+                      <TableCell className="text-gray-500">{data.TransIdTools}</TableCell>
+                      <TableCell className="text-gray-500">{data.ToolsDesc}</TableCell>
+                      <TableCell className="text-gray-500">{data.NAMA}</TableCell>
+                      <TableCell className="text-gray-500">{data.TransDateRental}</TableCell>
+                      <TableCell className="text-gray-500">{data.TransReturnDate}</TableCell>
+                      <TableCell className="">{data.RentStatus}</TableCell>
+                      <TableCell className="">{data.LastCondition}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-100">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="itemsPerPage" className="text-sm text-gray-600">
+                  Items per page:
+                </Label>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={(value) => {
+                    setItemsPerPage(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger id="itemsPerPage" className="w-[80px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600 ml-4">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of {filteredData.length} entries
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium">Page {currentPage}</span>
+                  <span className="text-sm text-gray-600">of {totalPages || 1}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

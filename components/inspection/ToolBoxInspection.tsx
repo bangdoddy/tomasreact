@@ -69,7 +69,7 @@ interface ToolBoxInspection {
 }
 
 export default function ToolBoxInspection() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
   /*Pagination Items */
@@ -136,7 +136,7 @@ export default function ToolBoxInspection() {
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredInspections.slice(startIndex, endIndex);
   const isPagingShow = filteredInspections.length > itemsPerPage;
-   
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pass':
@@ -190,12 +190,12 @@ export default function ToolBoxInspection() {
       .then((response) => response.json())
       .then((json: AuditRequest[]) => {
         const items: ToolBoxInspection[] = (json || []).map((u) => {
-          return { 
-            id: u.NoUrut ? 'TBI-'+u.NoUrut :'TBI',
-            toolBoxId: u.IdToolBox??'',
+          return {
+            id: u.NoUrut ? 'TBI-' + u.NoUrut : 'TBI',
+            toolBoxId: u.IdToolBox ?? '',
             inspectionDate: u.AuditDate ?? '',
-            inspector: u.NamaPicToolBox??'',
-            location: u.ToolsLocation??'',
+            inspector: u.NamaPicToolBox ?? '',
+            location: u.ToolsLocation ?? '',
             toolsCount: Number(u.Total) ?? 0,
             status: u.StAudit ?? '',
             issues: u.RemarkAudit ?? '',
@@ -203,7 +203,7 @@ export default function ToolBoxInspection() {
           };
         });
         setInspections(items);
-
+        console.log(items);
       })
       .catch((error) => console.error("Error:", error));
   };
@@ -228,9 +228,9 @@ export default function ToolBoxInspection() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="border-gray-300 hover:bg-gray-50">
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export to Excel
           </Button>
           <Button className="bg-[#009999] hover:bg-[#008080] text-white">
             <Plus className="h-4 w-4 mr-2" />
@@ -241,7 +241,7 @@ export default function ToolBoxInspection() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="border-[#009999]/20 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Inspections</CardTitle>
           </CardHeader>
@@ -255,7 +255,7 @@ export default function ToolBoxInspection() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="border-green-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Passed</CardTitle>
           </CardHeader>
@@ -269,7 +269,7 @@ export default function ToolBoxInspection() {
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-200">
+        <Card className="border-yellow-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Partial</CardTitle>
           </CardHeader>
@@ -300,7 +300,7 @@ export default function ToolBoxInspection() {
 
       {/* Search */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 p-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -387,14 +387,14 @@ export default function ToolBoxInspection() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                           <Button
                             variant="ghost"
                             size="icon"

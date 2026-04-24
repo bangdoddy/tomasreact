@@ -503,7 +503,7 @@ export default function StandardQuantity() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="p-2">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-[#003366] w-full max-w-[50px]">
             Standard Quantity List

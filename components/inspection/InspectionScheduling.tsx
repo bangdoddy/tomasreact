@@ -249,6 +249,7 @@ export default function InspectionScheduling() {
       setSelectedTime(new Date());
     }
 
+    console.log(item);
     setFormData({
       ItemKey: item.ItemKey,
       AuditDate: item.AuditDate,
@@ -575,14 +576,14 @@ export default function InspectionScheduling() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                           <Button
                             variant="ghost"
                             size="icon"

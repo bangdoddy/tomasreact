@@ -80,7 +80,10 @@ interface CompletedTransaction {
   TransEstReturnDate: string;
   TransReturnDate: string;
   MONumber: string;
+  RentStatus: string;
   ToolCondition: string;
+  AgingDay: string;
+  AgingHour: string;
   Tools: RentedTool[];
 }
 export default function RentTools() {
@@ -609,8 +612,8 @@ export default function RentTools() {
     }
 
     const params = new URLSearchParams({
-      // action: "WITHTOTAL",
-      jobsite: currentUser.Jobsite,
+      // action: "READ",
+      jobsite: currentUser?.Jobsite,
       nrp: currentUser?.Nrp,
       // current: `${currentPage}`,
       // perpage: `${itemsPerPage}`,
@@ -670,7 +673,11 @@ export default function RentTools() {
         'NRP': rent.NRP,
         'Est. Return Date': rent.TransEstReturnDate,
         'Return Date': rent.TransReturnDate,
+        'Status': rent.RentStatus,
         'Condition': rent.ToolCondition,
+        'Aging Day': rent.AgingDay,
+        'Aging Hour': rent.AgingHour,
+
       }))
     );
 

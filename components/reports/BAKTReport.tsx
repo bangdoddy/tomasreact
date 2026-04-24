@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Search, Download, ClipboardList } from 'lucide-react';
+import { Search, Download, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -10,6 +10,14 @@ import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel } from "../../model/Models";
 import { API } from '../../config';
 import { useReactToPrint } from "react-to-print";
+import { Label } from '../ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import * as XLSX from 'xlsx';
 
 interface BaktResult {
@@ -42,6 +50,10 @@ export default function BAKTReport() {
   const [baktTools, setBaktTools] = useState<BaktResult[]>([])
   const [summary, setSummary] = useState({ total: 89, completed: 75, inProgress: 10, pending: 4 })
 
+  // Pagination Items
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending':
@@ -69,6 +81,12 @@ export default function BAKTReport() {
 
     return matchesSearch && matchesStatus;
   });
+
+  /*Pagination Items (fallback to client-side if total is not set) */
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredRequests.slice(startIndex, endIndex);
 
 
   const saveToExcel = (data: BaktResult[]) => {
@@ -170,7 +188,7 @@ export default function BAKTReport() {
         <CardContent className="pt-6 p-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search BAKT..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+            <Input placeholder="Search By BAKT Number, Tools Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
         </CardContent>
       </Card>
@@ -189,14 +207,14 @@ export default function BAKTReport() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRequests.length === 0 ? (
+                {currentItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                       No BAKT requests found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredRequests.map((request) => (
+                  currentItems.map((request) => (
                     <TableRow key={request.BA_No} className="hover:bg-gray-50">
                       <TableCell
                         className="text-[#009999] cursor-pointer hover:underline font-medium"
@@ -233,6 +251,60 @@ export default function BAKTReport() {
                 {/*</TableRow>*/}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-100">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="itemsPerPage" className="text-sm text-gray-600">
+                Items per page:
+              </Label>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger id="itemsPerPage" className="w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-gray-600 ml-4">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredRequests.length)} of {filteredRequests.length} entries
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-medium">Page {currentPage}</span>
+                <span className="text-sm text-gray-600">of {totalPages || 1}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
