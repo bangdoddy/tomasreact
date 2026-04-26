@@ -29,6 +29,10 @@ export default function AutoComplete({ options, onSelect, placeholder, value,dis
     setActiveIndex(filtered.length ? 0 : -1);
   }, [filtered.length]);
 
+  useEffect(() => {
+    setQuery(value || "");
+  }, [value]);
+
   const handleSelect = (opt: Option) => {
     setQuery(opt.label);
     setOpen(false);
