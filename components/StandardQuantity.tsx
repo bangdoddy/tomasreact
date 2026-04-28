@@ -99,6 +99,7 @@ export default function StandardQuantity() {
       Sertification: item.Sertification
     });
     setIsDialogOpen(true);
+    console.log(formData);
   };
 
   const handleToolSearch = async (toolId: string) => {
@@ -346,7 +347,7 @@ export default function StandardQuantity() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: GlobalModel[]) => setRiskCategories(json))
+      .then((json: GlobalModel[]) => { console.log(json); setRiskCategories(json) })
       .catch((error) => console.error("Error:", error));
   }
   const ReloadStatusCapex = () => {
@@ -373,24 +374,30 @@ export default function StandardQuantity() {
   }
 
   useEffect(() => {
-    if (itemList.length == 0) {
-      ReloadMaster();
-    } else if (jobsites.length === 0) {
-      ReloadJobsites();
-      console.log("Reload Jobsite")
-    } else if (statusCapex.length === 0) {
-      ReloadStatusCapex();
-      console.log("Reload statusCapex")
-    } else if (riskCategorys.length === 0) {
-      ReloadRiskCategori();
-      console.log("Reload riskCategorys")
-    } else if (sertifications.length === 0) {
-      ReloadCertification();
-      console.log("Reload sertifications")
-    } else if (categories.length === 0) {
-      ReloadCategory()
-      console.log("Reload categories")
-    }
+    // if (itemList.length == 0) {
+    //   ReloadMaster();
+    // } else if (jobsites.length === 0) {
+    //   ReloadJobsites();
+    //   console.log("Reload Jobsite")
+    // } else if (statusCapex.length === 0) {
+    //   ReloadStatusCapex();
+    //   console.log("Reload statusCapex")
+    // } else if (riskCategorys.length === 0) {
+    //   ReloadRiskCategori();
+    //   console.log("Reload riskCategorys")
+    // } else if (sertifications.length === 0) {
+    //   ReloadCertification();
+    //   console.log("Reload sertifications")
+    // } else if (categories.length === 0) {
+    //   ReloadCategory()
+    //   console.log("Reload categories")
+    // }
+    ReloadMaster();
+    ReloadStatusCapex();
+    ReloadJobsites();
+    ReloadRiskCategori();
+    ReloadCertification();
+    ReloadCategory()
   }, []);
 
   // Pagination calculations
@@ -666,12 +673,30 @@ export default function StandardQuantity() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Tools Category *</Label>
-                <Input
+                {/* <Input
                   id="category"
                   value={formData.ToolsCategory}
                   onChange={(e) => setFormData({ ...formData, ToolsCategory: e.target.value })}
                   placeholder="Enter Tools Category..."
-                />
+                /> */}
+                <Select
+                  value={formData.ToolsCategory}
+                  onValueChange={(value) => {
+                    // const selected = jobsites.find(j => j.Keterangan === value);
+                    setFormData({ ...formData, ToolsCategory: value })
+                  }}
+                >
+                  <SelectTrigger id="add-jobsite">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((pos) => (
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="standardQty">Standard Qty *</Label>
@@ -741,11 +766,14 @@ export default function StandardQuantity() {
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    {riskCategorys.map((pos) => (
+                    {/* {riskCategorys.map((pos) => (
                       <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
                         {pos.Keterangan}
                       </SelectItem>
-                    ))}
+                    ))} */}
+                    <SelectItem value="H">High</SelectItem>
+                    <SelectItem value="M">Medium</SelectItem>
+                    <SelectItem value="L">Low</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

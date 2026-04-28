@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import AutoComplete from '../ui/AutoComplete';
-import { Checkbox } from '../ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -18,6 +18,7 @@ import {
   Calendar,
   User, ChevronRight, ChevronLeft, RefreshCcw, ArrowUp
 } from 'lucide-react';
+import { cn } from '../ui/utils';
 import {
   Table,
   TableBody,
@@ -83,6 +84,7 @@ interface ToolBoxItems {
   Kode: string;
   Nama: string;
   ToolsIDToolBox: string;
+  ToolsCondition: string;
 }
 
 export default function ToolBoxInspection() {
@@ -90,7 +92,7 @@ export default function ToolBoxInspection() {
   const [searchTerm, setSearchTerm] = useState('');
   const [toolBox, setToolBox] = useState<ToolBoxData[]>([]);
   const [toolsList, setToolsList] = useState<ToolBoxItems[]>([]);
-  const [checkedTools, setCheckedTools] = useState<Record<string, boolean>>({});
+  const [toolConditions, setToolConditions] = useState<Record<string, string>>({});
 
   const toolBoxOptions = toolBox.map(box => ({
     id: box.ToolsIDToolBox,
@@ -261,10 +263,10 @@ export default function ToolBoxInspection() {
         const filtered = (json || []).filter(t => t.ToolsIDToolBox === targetBoxId);
         setToolsList(filtered);
 
-        // Initialize checkboxes
-        const initialChecked: Record<string, boolean> = {};
-        filtered.forEach(t => initialChecked[t.Kode] = false);
-        setCheckedTools(initialChecked);
+        // Initialize conditions
+        const initialConditions: Record<string, string> = {};
+        filtered.forEach(t => initialConditions[t.Kode] = t.ToolsCondition || "");
+        setToolConditions(initialConditions);
 
         console.log("Tools in Box:", json);
       })
@@ -274,17 +276,19 @@ export default function ToolBoxInspection() {
   const handleReset = () => {
     setSearchTerm('');
     setToolsList([]);
-    setCheckedTools({});
+    setToolConditions({});
   };
 
   const handleSubmitInspection = async () => {
-    const checkedToolIds = Object.keys(checkedTools).filter(id => checkedTools[id]);
+    // Validation: Check if all tools in the list have a selected condition
+    const incompleteTools = toolsList.filter(tool => !toolConditions[tool.Kode] || toolConditions[tool.Kode] === "");
 
-    if (checkedToolIds.length === 0) {
-      toast.error('Please check at least one tool to submit.');
+    if (incompleteTools.length > 0) {
+      toast.error(`Inspection Incomplete: Please select a condition for all ${incompleteTools.length} tool(s) remaining.`);
       return;
     }
 
+    const checkedToolIds = Object.keys(toolConditions).filter(id => toolConditions[id] !== "");
     const now = new Date();
     const auditDateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
     let successCount = 0;
@@ -306,7 +310,8 @@ export default function ToolBoxInspection() {
               ToolIdChild: toolId,
               Jobsite: currentUser.Jobsite,
               Nrpuser: currentUser.Nrp,
-              AuditDate: auditDateStr
+              AuditDate: auditDateStr,
+              ToolCondition: toolConditions[toolId]
             })
           });
 
@@ -351,38 +356,11 @@ export default function ToolBoxInspection() {
     }
   };
 
-  const ReloadAuditData = () => {
-    const params = new URLSearchParams({
-      jobsite: currentUser.Jobsite,
-      act: "AUDITTOOLSBOX"
-    });
-    fetch(API.AUDITTOOLS() + `?${params.toString()}`, {
-      method: "GET"
-    })
-      .then((response) => response.json())
-      .then((json: AuditRequest[]) => {
-        const items: ToolBoxInspection[] = (json || []).map((u) => {
-          return {
-            id: u.NoUrut ? 'TBI-' + u.NoUrut : 'TBI',
-            toolBoxId: u.IdToolBox ?? '',
-            inspectionDate: u.AuditDate ?? '',
-            inspector: u.NamaPicToolBox ?? '',
-            location: u.ToolsLocation ?? '',
-            toolsCount: Number(u.Total) ?? 0,
-            status: u.StAudit ?? '',
-            issues: u.RemarkAudit ?? '',
-            nextInspection: u.AuditDate ?? '',
-          };
-        });
-        setInspections(items);
-
-      })
-      .catch((error) => console.error("Error:", error));
-  };
 
   useEffect(() => {
     GetToolBox();
     GetToolsList();
+    console.log(toolConditions);
     // ReloadAuditData();
   }, []);
 
@@ -429,131 +407,165 @@ export default function ToolBoxInspection() {
       </Card>
 
       {/* Tool Todo List */}
-      {searchTerm && toolsList.length > 0 && (
-        <Card className="border-0 shadow-xl bg-white/80 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 p-2">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 py-5">
-            <div className="flex items-center justify-between">
+      {searchTerm && (
+        toolsList.length > 0 ? (
+          <Card className="border-0 shadow-xl bg-white/80 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 p-2">
+            <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 py-5">
+              <div className="flex items-center justify-between">
 
-              <Badge variant="outline" className="bg-[#009999]/5 text-[#009999] border-[#009999]/20 px-3 py-1">
-                {Object.values(checkedTools).filter(Boolean).length} / {toolsList.length} Checked
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="max-h-[400px] overflow-y-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
-                    <TableHead className="w-16 text-center font-bold text-gray-700">No</TableHead>
-                    <TableHead className="font-bold text-gray-700">Tool Description</TableHead>
-                    <TableHead className="w-40 text-center font-bold text-gray-700">
-                      Action
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentTodoItems.map((tool, index) => (
-                    <TableRow
-                      key={tool.Kode}
-                      className={`hover:bg-[#009999]/5 transition-all duration-200 ${checkedTools[tool.Kode] ? 'bg-green-50/30' : ''}`}
-                    >
-                      <TableCell className="text-center text-gray-400 font-medium">
-                        {String(startTodoIndex + index + 1).padStart(2, '0')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col py-1">
-                          <span className={`font-semibold transition-all ${checkedTools[tool.Kode] ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                            {tool.Nama}
-                          </span>
-                          <span className="text-xs font-mono text-gray-400 mt-0.5 tracking-wider">
-                            {tool.Kode}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center items-center h-full">
-                          <Checkbox
-                            checked={!!checkedTools[tool.Kode]}
-                            onCheckedChange={(checked: any) => {
-                              setCheckedTools(prev => ({
-                                ...prev,
-                                [tool.Kode]: !!checked
-                              }));
-                            }}
-                            className="h-6 w-6 rounded-full border-2 border-gray-300 data-[state=checked]:bg-[#009999] data-[state=checked]:border-[#009999] data-[state=checked]:text-white transition-all duration-200 active:scale-90"
-                          />
-                        </div>
-                      </TableCell>
+                <Badge variant="outline" className="bg-[#009999]/5 text-[#009999] border-[#009999]/20 px-3 py-1">
+                  {Object.values(toolConditions).filter(val => val !== "").length} / {toolsList.length} Checked
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="max-h-[400px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+                      <TableHead className="w-16 text-center font-bold text-gray-700">No</TableHead>
+                      <TableHead className="font-bold text-gray-700">Tool Description</TableHead>
+                      <TableHead className="w-40 text-center font-bold text-gray-700">
+                        Action
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {(currentTodoItems.map((tool, index) => (
+                      <TableRow
+                        key={tool.Kode}
+                        className={`hover:bg-[#009999]/5 transition-all duration-200 ${toolConditions[tool.Kode] ? 'bg-green-50/30' : ''}`}
+                      >
+                        <TableCell className="text-center text-gray-400 font-medium">
+                          {String(startTodoIndex + index + 1).padStart(2, '0')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col py-1">
+                            <span className={`font-semibold transition-all ${toolConditions[tool.Kode] ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                              {tool.Nama}
+                            </span>
+                            <span className="text-xs font-mono text-gray-400 mt-0.5 tracking-wider">
+                              {tool.Kode}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center items-center h-full">
+                            <RadioGroup
+                              value={toolConditions[tool.Kode] || ""}
+                              onValueChange={(value) => {
+                                setToolConditions(prev => ({
+                                  ...prev,
+                                  [tool.Kode]: value
+                                }));
 
-            {/* Todo List Pagination Controls */}
-            <div className="flex items-center justify-between p-4 bg-gray-50/30 border-t border-gray-100">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="todoItemsPerPage" className="text-xs text-gray-500">
-                  Items per page:
-                </Label>
-                <Select
-                  value={todoItemsPerPage.toString()}
-                  onValueChange={(value) => {
-                    setTodoItemsPerPage(Number(value));
-                    setTodoCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger id="todoItemsPerPage" className="h-8 w-20 text-xs bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
+                                // setToolsList(prev => prev.map(t =>
+                                //   t.Kode === tool.Kode ? { ...t, ToolsCondition: value } : t
+                                // ));
+                              }}
+
+                              className="flex items-center gap-2 justify-center"
+                            >
+                              {[
+                                { value: 'Con1', label: 'Good' },
+                                { value: 'Con2', label: 'R1' },
+                                { value: 'Con3', label: 'R2' },
+                              ].map((opt) => (
+                                <div key={opt.value} className="flex items-center">
+                                  <RadioGroupItem
+                                    value={opt.value}
+                                    id={`${opt.value}-${tool.Kode}`}
+                                    className="h-5 w-5 border-black text-black"
+                                  />
+                                  <Label
+                                    htmlFor={`${opt.value}-${tool.Kode}`}
+                                    className="text-sm font-medium cursor-pointer text-gray-700 p-1"
+                                  >
+                                    {opt.label}
+                                  </Label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )))}
+
+                  </TableBody>
+                </Table>
               </div>
 
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-gray-500">
-                  Page {todoCurrentPage} of {totalTodoPages || 1}
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 bg-white"
-                    onClick={() => setTodoCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={todoCurrentPage === 1}
+              {/* Todo List Pagination Controls */}
+              <div className="flex items-center justify-between p-4 bg-gray-50/30 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="todoItemsPerPage" className="text-xs text-gray-500">
+                    Items per page:
+                  </Label>
+                  <Select
+                    value={todoItemsPerPage.toString()}
+                    onValueChange={(value) => {
+                      setTodoItemsPerPage(Number(value));
+                      setTodoCurrentPage(1);
+                    }}
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 bg-white"
-                    onClick={() => setTodoCurrentPage((prev) => Math.min(prev + 1, totalTodoPages))}
-                    disabled={todoCurrentPage === totalTodoPages || totalTodoPages === 0}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                    <SelectTrigger id="todoItemsPerPage" className="h-8 w-20 text-xs bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-gray-500">
+                    Page {todoCurrentPage} of {totalTodoPages || 1}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 bg-white"
+                      onClick={() => setTodoCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={todoCurrentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 bg-white"
+                      onClick={() => setTodoCurrentPage((prev) => Math.min(prev + 1, totalTodoPages))}
+                      disabled={todoCurrentPage === totalTodoPages || totalTodoPages === 0}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="p-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-              <p className="text-sm text-gray-500">
-                Ensure all tools are present and in good condition before submitting.
-              </p>
-              <Button
-                onClick={handleSubmitInspection}
-                disabled={toolsList.length === 0}
-                className="bg-green-500 hover:bg-green-600 h-10 rounded-xl"
-              >
-                Submit Inspection
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="p-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                <p className="text-sm text-gray-500">
+                  Ensure all tools are present and in good condition before submitting.
+                </p>
+                <Button
+                  onClick={handleSubmitInspection}
+                  disabled={toolsList.length === 0}
+                  className="bg-green-500 hover:bg-green-600 h-10 rounded-xl"
+                >
+                  Submit Inspection
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent>
+              <p className="text-center text-gray-500 py-8">No records found for this toolbox Or maybe already checked</p>
+            </CardContent>
+          </Card>
+        )
       )}
 
       {/* Inspection Table */}

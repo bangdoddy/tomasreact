@@ -53,11 +53,11 @@ interface UserResponse {
 }
 
 export default function UserPopulation() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('All');
   const [userData, setUserData] = useState<UserData[]>([]);
-    
+
   const filteredData = userData.filter((data) => {
     const matchesSearch = data.department.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment = filterDepartment === 'All' || data.department === filterDepartment;
@@ -78,7 +78,7 @@ export default function UserPopulation() {
         'Total': tool.totalUsers,
         'Aktif': tool.activeUsers,
         'Inactive': tool.inactiveUsers,
-        'Aktif Rate': tool.activeRate 
+        'Aktif Rate': tool.activeRate
       }))
     );
 
@@ -100,20 +100,20 @@ export default function UserPopulation() {
       .then((response) => response.json())
       .then((json: UserResponse[]) => {
         const deptData = json.map((r) => ({
-            department: r.Keterangan ?? '',
-            totalUsers: r.Total ?? 0,
-            activeUsers: r.Active ?? 0,
-            inactiveUsers: r.NotActive ?? 0,
-            activeRate:r.ActiveRate??0,
-        })); 
+          department: r.Keterangan ?? '',
+          totalUsers: r.Total ?? 0,
+          activeUsers: r.Active ?? 0,
+          inactiveUsers: r.NotActive ?? 0,
+          activeRate: r.ActiveRate ?? 0,
+        }));
         setUserData(deptData);
       })
       .catch((error) => console.error("Error:", error));
   };
 
-  useEffect(() => { 
-      ReloadMaster();
-      console.log("Reload Users") 
+  useEffect(() => {
+    ReloadMaster();
+    console.log("Reload Users")
   }, []);
 
   return (
@@ -151,7 +151,7 @@ export default function UserPopulation() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Users</CardTitle>
           </CardHeader>
@@ -165,7 +165,7 @@ export default function UserPopulation() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Active Users</CardTitle>
           </CardHeader>
@@ -179,7 +179,7 @@ export default function UserPopulation() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Inactive Users</CardTitle>
           </CardHeader>
@@ -193,7 +193,7 @@ export default function UserPopulation() {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Departments</CardTitle>
           </CardHeader>
@@ -230,7 +230,7 @@ export default function UserPopulation() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 p-2">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

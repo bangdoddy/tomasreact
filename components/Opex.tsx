@@ -147,7 +147,7 @@ export default function Opex() {
             <CardContent>
               <div className="space-y-4">
                 {budgetCategories.map((item) => (
-                  <div key={item.category} className="space-y-2">
+                  <div key={item.category} className="space-y-2 p-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-700">{item.category}</span>
                       <span className="text-gray-600">

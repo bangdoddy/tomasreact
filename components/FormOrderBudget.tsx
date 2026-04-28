@@ -227,8 +227,8 @@ export default function FormOrderBudget() {
   };
 
   const budgetRemaining = stats.totalBudgetAllocated - stats.totalBudgetUsed;
-  const percentageUsed = stats.totalBudgetAllocated > 0 
-    ? ((stats.totalBudgetUsed / stats.totalBudgetAllocated) * 100).toFixed(1) 
+  const percentageUsed = stats.totalBudgetAllocated > 0
+    ? ((stats.totalBudgetUsed / stats.totalBudgetAllocated) * 100).toFixed(1)
     : '0.0';
 
   return (
@@ -322,7 +322,7 @@ export default function FormOrderBudget() {
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-yellow-200">
+        <Card className="border-yellow-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Pending Orders</CardTitle>
           </CardHeader>
@@ -336,7 +336,7 @@ export default function FormOrderBudget() {
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200">
+        <Card className="border-purple-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Processing Orders</CardTitle>
           </CardHeader>
@@ -350,7 +350,7 @@ export default function FormOrderBudget() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="border-green-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Completed Orders</CardTitle>
           </CardHeader>
@@ -366,48 +366,44 @@ export default function FormOrderBudget() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by order number, description, or department..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+      <div className="flex flex-col sm:flex-row gap-4 p-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search by order number, description, or department..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-white border-gray-400"
+          />
+        </div>
 
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Categories</SelectItem>
-                <SelectItem value="Tools">Tools</SelectItem>
-                <SelectItem value="Equipment">Equipment</SelectItem>
-                <SelectItem value="Materials">Materials</SelectItem>
-                <SelectItem value="Services">Services</SelectItem>
-              </SelectContent>
-            </Select>
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
+            <SelectValue placeholder="Filter by Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Categories</SelectItem>
+            <SelectItem value="Tools">Tools</SelectItem>
+            <SelectItem value="Equipment">Equipment</SelectItem>
+            <SelectItem value="Materials">Materials</SelectItem>
+            <SelectItem value="Services">Services</SelectItem>
+          </SelectContent>
+        </Select>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Status</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Approved">Approved</SelectItem>
-                <SelectItem value="Processing">Processing</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Status</SelectItem>
+            <SelectItem value="Pending">Pending</SelectItem>
+            <SelectItem value="Approved">Approved</SelectItem>
+            <SelectItem value="Processing">Processing</SelectItem>
+            <SelectItem value="Completed">Completed</SelectItem>
+            <SelectItem value="Rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Order Budget Table */}
       <Card>

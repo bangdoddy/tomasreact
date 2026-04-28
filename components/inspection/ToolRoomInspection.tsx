@@ -71,7 +71,7 @@ interface ToolRoomInspection {
 }
 
 export default function ToolRoomInspection() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
   /*Pagination Items */
@@ -192,19 +192,19 @@ export default function ToolRoomInspection() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: AuditRequest[]) => { 
+      .then((json: AuditRequest[]) => {
         const items: ToolRoomInspection[] = (json || []).map((u) => {
           return {
-            id: u.NoUrut ? 'TRI-' + u.NoUrut :'TRI',
-            roomId: u.NoUrut ?'ROOM-'+u.NoUrut: 'ROOM',
+            id: u.NoUrut ? 'TRI-' + u.NoUrut : 'TRI',
+            roomId: u.NoUrut ? 'ROOM-' + u.NoUrut : 'ROOM',
             roomName: u.ToolsLocation,
-            inspectionDate: u.AuditDate??'',
+            inspectionDate: u.AuditDate ?? '',
             inspector: '',
-            toolsCount: Number(u.Total)??0,
-            status: u.StAudit??'',
+            toolsCount: Number(u.Total) ?? 0,
+            status: u.StAudit ?? '',
             cleanliness: '',
             issues: u.RemarkAudit ?? '',
-            nextInspection: u.AuditDate??''
+            nextInspection: u.AuditDate ?? ''
           };
         });
         setInspections(items);
@@ -212,9 +212,9 @@ export default function ToolRoomInspection() {
       })
       .catch((error) => console.error("Error:", error));
   };
-    
+
   useEffect(() => {
-    ReloadAuditData(); 
+    ReloadAuditData();
   }, []);
 
 
@@ -233,9 +233,9 @@ export default function ToolRoomInspection() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="border-gray-300 hover:bg-gray-50">
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export to Excel
           </Button>
           <Button className="bg-[#009999] hover:bg-[#008080] text-white">
             <Plus className="h-4 w-4 mr-2" />
@@ -246,7 +246,7 @@ export default function ToolRoomInspection() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="border-[#009999]/20 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Rooms</CardTitle>
           </CardHeader>
@@ -260,7 +260,7 @@ export default function ToolRoomInspection() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="border-green-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Excellent</CardTitle>
           </CardHeader>
@@ -274,7 +274,7 @@ export default function ToolRoomInspection() {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200">
+        <Card className="border-blue-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Good</CardTitle>
           </CardHeader>
@@ -288,7 +288,7 @@ export default function ToolRoomInspection() {
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-200">
+        <Card className="border-yellow-200 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Needs Attention</CardTitle>
           </CardHeader>
@@ -304,19 +304,17 @@ export default function ToolRoomInspection() {
       </div>
 
       {/* Search */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by room ID, name, or inspector..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search by room ID, name, or inspector..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-white border-gray-400"
+          />
+        </div>
+      </div>
 
       {/* Inspection Table */}
       <Card>
@@ -346,7 +344,7 @@ export default function ToolRoomInspection() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                    currentItems.map((inspection) => (
+                  currentItems.map((inspection) => (
                     <TableRow key={inspection.id} className="hover:bg-gray-50">
                       <TableCell>
                         <span className="text-[#009999]">{inspection.id}</span>
