@@ -37,6 +37,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../../service/AuthContext";
@@ -55,7 +65,7 @@ interface ToolActivationRequest {
   category: string;
   quantity: number;
   justification: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: 'Pending' | 'Waiting' | 'Approved' | 'Rejected';
   priority: 'High' | 'Medium' | 'Low';
 }
 
@@ -101,6 +111,10 @@ export default function ActivationToolApproval() {
   const [activationTools, setActivationTools] = useState<ActivationToolData[]>([])
   const [toolDetail, setToolDetail] = useState<ToolDataDetail[]>([])
   const [requests, setRequests] = useState<ToolActivationRequest[]>([]);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [toolToApprove, setToolToApprove] = useState<ActivationToolData | null>(null);
+  const [toolToReject, setToolToReject] = useState<ActivationToolData | null>(null);
 
   const filteredData = activationTools.filter((req) => {
     const matchesSearch =
@@ -116,6 +130,8 @@ export default function ActivationToolApproval() {
     switch (status) {
       case 'Pending':
         return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+      case 'Waiting':
+        return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'Approved':
         return 'bg-green-100 text-green-700 border-green-300';
       case 'Approved LV1':
@@ -165,19 +181,42 @@ export default function ActivationToolApproval() {
     setIsDetailDialogOpen(true);
   }
 
-  const handleApprove = (id: string) => {
-    setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: 'Approved' as const } : r))
-    );
-    toast.success('Tool activation request approved!');
-  };
+  const handleRejectActivation = async (tools: ActivationToolData) => {
+    try {
+      const response = await fetch(API.ACTIVATIONTOOLS(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "REJECT",
+          Jobsite: currentUser.Jobsite,
+          NrpUser: currentUser.Nrp,
+          BastNo: tools.NoBAST,
+          Nrp: tools.NRPPenerima,
+          Nama: tools.StUser,
+        })
+      });
 
-  const handleReject = (id: string) => {
-    setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: 'Rejected' as const } : r))
-    );
-    toast.error('Tool activation request rejected');
-  };
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          GetActivationList();
+          toast.success(resData?.Message ?? 'successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
+  }
 
   const handleApproveActivation = async (tools: ActivationToolData) => {
     try {
@@ -302,11 +341,11 @@ export default function ActivationToolApproval() {
 
         <Button
           variant="outline"
-          className="border-gray-300 hover:bg-gray-50"
+          className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10"
           onClick={() => saveToExcel(activationTools)}
         >
           <Download className="h-4 w-4 mr-2" />
-          Export
+          Export to Excel
         </Button>
       </div>
 
@@ -390,6 +429,7 @@ export default function ActivationToolApproval() {
               <SelectContent>
                 <SelectItem value="All">All Status</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Waiting">Waiting</SelectItem>
                 <SelectItem value="Approved">Approved</SelectItem>
                 <SelectItem value="Rejected">Rejected</SelectItem>
               </SelectContent>
@@ -494,7 +534,10 @@ export default function ActivationToolApproval() {
                                 size="icon"
                                 className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
                                 title="Approve"
-                                onClick={() => handleApproveActivation(request)}
+                                onClick={() => {
+                                  setToolToApprove(request);
+                                  setIsApproveDialogOpen(true);
+                                }}
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
@@ -503,7 +546,10 @@ export default function ActivationToolApproval() {
                                 size="icon"
                                 className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                                 title="Reject"
-                                onClick={() => handleReject(request.NoBAST)}
+                                onClick={() => {
+                                  setToolToReject(request);
+                                  setIsRejectDialogOpen(true);
+                                }}
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>
@@ -671,6 +717,58 @@ export default function ActivationToolApproval() {
           </Card>
         </DialogContent>
       </Dialog>
+
+      {/* Approve Confirmation Dialog */}
+      <AlertDialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Approval</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve activation for BAST No. <span className="font-mono font-bold text-[#009999]">{toolToApprove?.NoBAST}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setToolToApprove(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (toolToApprove) {
+                  handleApproveActivation(toolToApprove);
+                  setToolToApprove(null);
+                }
+              }}
+              className="bg-[#009999] hover:bg-[#007777] text-white"
+            >
+              Confirm Approve
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Confirmation Dialog */}
+      <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Rejection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject activation for BAST No. <span className="font-mono font-bold text-red-600">{toolToReject?.NoBAST}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setToolToReject(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (toolToReject) {
+                  handleRejectActivation(toolToReject);
+                  setToolToReject(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Confirm Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Footer */}
       <div className="text-sm text-gray-600">

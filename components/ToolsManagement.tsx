@@ -714,7 +714,7 @@ export default function ToolsManagement() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="p-2">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>

@@ -251,11 +251,11 @@ export default function RentReturnReport() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast.success('Report exported!')}>
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10" onClick={() => toast.success('Report exported!')}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
           </Button>
-          <Button className="bg-[#009999] hover:bg-[#008080] text-white" onClick={() => {
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10" onClick={() => {
             // if (isSummary) saveToExcel(reportData);
             saveToExcel2(reportData);
           }}>
@@ -266,7 +266,7 @@ export default function RentReturnReport() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Rented</CardTitle>
           </CardHeader>
@@ -275,7 +275,7 @@ export default function RentReturnReport() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Returned</CardTitle>
           </CardHeader>
@@ -284,7 +284,7 @@ export default function RentReturnReport() {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Currently Rented</CardTitle>
           </CardHeader>
@@ -293,7 +293,7 @@ export default function RentReturnReport() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Overdue Returns</CardTitle>
           </CardHeader>
@@ -324,32 +324,28 @@ export default function RentReturnReport() {
           </CardContent>
         </Card>
       )} */}
-      <Card>
-        <CardContent className="pt-4 p-2">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search transactions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={filterPeriod} onValueChange={setFilterPeriod}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="This Month">This Month</SelectItem>
-                <SelectItem value="Last Month">Last Month</SelectItem>
-                <SelectItem value="Last 3 Months">Last 3 Months</SelectItem>
-                <SelectItem value="Last 6 Months">Last 6 Months</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search transactions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-white border-gray-400"
+          />
+        </div>
+        <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+          <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="This Month">This Month</SelectItem>
+            <SelectItem value="Last Month">Last Month</SelectItem>
+            <SelectItem value="Last 3 Months">Last 3 Months</SelectItem>
+            <SelectItem value="Last 6 Months">Last 6 Months</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <Card>
         <CardContent className="p-0">
@@ -381,8 +377,20 @@ export default function RentReturnReport() {
                       <TableCell className="text-gray-500">{data.NAMA}</TableCell>
                       <TableCell className="text-gray-500">{data.TransDateRental}</TableCell>
                       <TableCell className="text-gray-500">{data.TransReturnDate}</TableCell>
-                      <TableCell className="">{data.RentStatus}</TableCell>
-                      <TableCell className="">{data.LastCondition}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge
+                          className={
+                            data.RentStatus === 'Dikembalikan'
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200 border-none'
+                              : data.RentStatus === 'Dipinjam'
+                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-none'
+                                : ''
+                          }
+                        >
+                          {data.RentStatus}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">{data.LastCondition}</TableCell>
                     </TableRow>
                   ))
                 )}

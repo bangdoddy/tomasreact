@@ -57,7 +57,7 @@ import { GlobalModel, AuditRequest } from "../../model/Models";
 import { API } from '../../config';
 import * as XLSX from 'xlsx';
 
-interface ToolRoomInspection {
+interface ToolRoomInspectionData {
   id: string;
   roomId: string;
   roomName: string;
@@ -78,7 +78,7 @@ export default function ToolRoomInspection() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const [inspections, setInspections] = useState<ToolRoomInspection[]>([
+  const [inspections, setInspections] = useState<ToolRoomInspectionData[]>([
     {
       id: 'TRI-001',
       roomId: 'ROOM-A1',
@@ -193,7 +193,7 @@ export default function ToolRoomInspection() {
     })
       .then((response) => response.json())
       .then((json: AuditRequest[]) => {
-        const items: ToolRoomInspection[] = (json || []).map((u) => {
+        const items: ToolRoomInspectionData[] = (json || []).map((u) => {
           return {
             id: u.NoUrut ? 'TRI-' + u.NoUrut : 'TRI',
             roomId: u.NoUrut ? 'ROOM-' + u.NoUrut : 'ROOM',

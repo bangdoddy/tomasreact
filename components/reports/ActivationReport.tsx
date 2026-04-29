@@ -33,16 +33,23 @@ interface ActivationToolData {
   Tools: ActivationToolData[];
 }
 export default function ActivationReport() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
   const [activationTools, setActivationTools] = useState<ActivationToolData[]>([])
 
   const stats = {
-    total: activationTools.length, 
+    total: activationTools.length,
     pending: activationTools.filter((r) => r.StApprovedBAST === 'Pending').length,
     approved: activationTools.filter((r) => r.StApprovedBAST === 'Approved').length,
     rejected: activationTools.filter((r) => r.StApprovedBAST === 'Rejected').length,
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
   };
 
   const filteredData = activationTools.filter((req) => {
@@ -71,12 +78,12 @@ export default function ActivationReport() {
 
   const saveToExcel = (data: ActivationToolData[]) => {
     const worksheet = XLSX.utils.json_to_sheet(
-      data.map((tool) => ({ 
+      data.map((tool) => ({
         'Tool ID': tool.ToolsId,
         'Tool Name': tool.ToolsDesc,
-        'Request Date': tool.GivenDate,
+        'Request Date': formatDate(tool.GivenDate),
         'Requested By': tool.NamaPenerima,
-        'Status': tool.StApprovedBAST, 
+        'Status': tool.StApprovedBAST,
       }))
     );
 
@@ -97,7 +104,7 @@ export default function ActivationReport() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: ActivationToolData[]) => setActivationTools(json) )
+      .then((json: ActivationToolData[]) => { setActivationTools(json); console.log(json) })
       .catch((error) => console.error("Error:", error));
   }
 
@@ -117,11 +124,11 @@ export default function ActivationReport() {
           <p className="text-sm text-gray-600 mt-1">Tool activation status and history</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast.success('Report exported!')}>
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10" onClick={() => toast.success('Report exported!')}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
           </Button>
-          <Button className="bg-[#009999] hover:bg-[#008080] text-white" onClick={() => saveToExcel(activationTools)}>
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10" onClick={() => saveToExcel(activationTools)}>
             <Download className="h-4 w-4 mr-2" />
             Export Excel
           </Button>
@@ -129,25 +136,25 @@ export default function ActivationReport() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Activations</CardTitle>
           </CardHeader>
           <CardContent><div className="text-2xl text-gray-900">{stats.total}</div></CardContent>
         </Card>
-        <Card className="border-green-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Approved</CardTitle>
           </CardHeader>
           <CardContent><div className="text-2xl text-green-600">{stats.approved}</div></CardContent>
         </Card>
-        <Card className="border-yellow-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Pending</CardTitle>
           </CardHeader>
           <CardContent><div className="text-2xl text-yellow-600">{stats.pending}</div></CardContent>
         </Card>
-        <Card className="border-red-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Rejected</CardTitle>
           </CardHeader>
@@ -155,21 +162,22 @@ export default function ActivationReport() {
         </Card>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search activations..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input placeholder="Search by Tool ID, Tool name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 bg-white border-gray-400" />
+        </div>
+      </div>
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto shadow-md rounded-lg">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
+                  <TableHead>BAST No.</TableHead>
                   <TableHead>Tool ID</TableHead>
                   <TableHead>Tool Name</TableHead>
                   <TableHead>Request Date</TableHead>
@@ -186,9 +194,10 @@ export default function ActivationReport() {
                   </TableRow>
                 ) : (filteredData.map((tool) => (
                   <TableRow className="hover:bg-gray-50">
-                    <TableCell className="text-[#009999]">{tool.ToolsId}</TableCell>
+                    <TableCell className="text-[#009999]">{tool.NoBAST}</TableCell>
+                    <TableCell>{tool.ToolsId}</TableCell>
                     <TableCell>{tool.ToolsDesc}</TableCell>
-                    <TableCell>{tool.ToolsDateIn}</TableCell>
+                    <TableCell>{formatDate(tool.ToolsDateIn)}</TableCell>
                     <TableCell>{tool.NamaPenerima}</TableCell>
                     <TableCell className="text-center">
                       <Badge className={`w-fit ${getStatusColor(tool.StApprovedBAST)}`}>
@@ -197,7 +206,7 @@ export default function ActivationReport() {
                     </TableCell>
                   </TableRow>
                 ))
-                )} 
+                )}
               </TableBody>
             </Table>
           </div>

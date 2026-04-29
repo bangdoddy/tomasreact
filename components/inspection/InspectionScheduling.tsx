@@ -552,7 +552,10 @@ export default function InspectionScheduling() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <CalendarIcon className="h-4 w-4 text-gray-400" />
-                          {new Date(schedule.AuditDate).toLocaleDateString()}
+                          {(() => {
+                            const d = new Date(schedule.AuditDate);
+                            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                          })()}
                         </div>
                       </TableCell>
                       <TableCell>

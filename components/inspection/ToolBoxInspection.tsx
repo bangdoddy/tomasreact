@@ -383,8 +383,8 @@ export default function ToolBoxInspection() {
       {/* Search */}
       <Card>
         <CardContent className="pt-4 p-2">
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="flex-1 w-full">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="w-full">
               <AutoComplete
                 options={toolBoxOptions}
                 onSelect={handleSelectToolBox}
