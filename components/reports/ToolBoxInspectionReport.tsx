@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
+import AutoComplete from '../ui/AutoComplete';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Search, Download, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Download, Package, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -13,6 +14,7 @@ import { useAuth } from '../../service/AuthContext';
 import * as XLSX from 'xlsx';
 
 interface ToolBoxItems {
+  ToolsBoxId: string;
   ToolsId: string;
   ToolsDesc: string;
   ToolsBrand: string;
@@ -35,28 +37,72 @@ interface ToolBoxItems {
   AuditMonth: { month: string; status: string | null }[];
 }
 
+interface ToolBoxData {
+  Idx: string;
+  ToolsBoxType: string;
+  ToolsBoxBrand: string;
+  ToolsPICToolBox: string;
+  ToolsIDToolBox: string;
+  ToolsSize: string;
+}
+
 export default function ToolBoxInspectionReport() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchToolbox, setSearchToolbox] = useState('ALL');
+  const [toolBox, setToolBox] = useState<ToolBoxData[]>([]);
   const [reportData, setReportData] = useState<ToolBoxItems[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const filteredData = reportData.filter(row =>
-    row.ToolsId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    row.ToolsDesc.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    row.ToolsBrand.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = useMemo(() => {
+    if (!searchTerm && searchToolbox === 'ALL') return [];
+
+    return reportData.filter(row => {
+      const matchesSearch =
+        row.ToolsId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        row.ToolsDesc.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        row.ToolsBrand.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesToolbox =
+        searchToolbox === "" || searchToolbox === "ALL" ||
+        row.ToolsBoxId?.toLowerCase().includes(searchToolbox.toLowerCase());
+
+      return matchesSearch && matchesToolbox;
+    });
+  }, [reportData, searchTerm, searchToolbox]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, searchToolbox]);
+
+  const toolBoxOptions = toolBox.map(box => ({
+    id: box.ToolsIDToolBox,
+    label: box.ToolsIDToolBox + ' - ' + box.ToolsPICToolBox
+  }));
+
+  const handleSelectToolBox = (option: { id: string, label: string }) => {
+    setSearchToolbox(option.id);
+    setCurrentPage(1);
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    setSearchToolbox('ALL');
+    setCurrentPage(1);
+  };
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentItems = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
+
   const stats = useMemo(() => {
     let totalInspections = 0;
     let passed = 0;
     let failed = 0;
+    let missing = 0
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     reportData.forEach(tool => {
@@ -66,8 +112,10 @@ export default function ToolBoxInspectionReport() {
           totalInspections++;
           if (status === 'Good') {
             passed++;
-          } else if (status === 'R1' || status === 'R2' || status === 'TA') {
+          } else if (status === 'R1' || status === 'R2') {
             failed++;
+          } else if (status === 'TA') {
+            missing++;
           }
         }
       });
@@ -77,7 +125,8 @@ export default function ToolBoxInspectionReport() {
       total: totalInspections,
       passed: passed,
       failed: failed,
-      pending: reportData.length // Total tools tracked
+      missing: missing,
+      // pending: reportData.length // Total tools tracked in report view
     };
   }, [reportData]);
 
@@ -144,7 +193,21 @@ export default function ToolBoxInspectionReport() {
     }
   };
 
+  const GetToolBox = () => {
+    const params = new URLSearchParams({
+      showdata: "TOOLBOX",
+      jobsite: currentUser.Jobsite
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: ToolBoxData[]) => setToolBox(json))
+      .catch((error) => console.error("Error:", error));
+  }
+
   useEffect(() => {
+    GetToolBox();
     ReloadAuditData();
   }, []);
 
@@ -185,24 +248,41 @@ export default function ToolBoxInspectionReport() {
         </Card>
         <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Failed</CardTitle>
+            <CardTitle className="text-sm text-gray-600">Damage</CardTitle>
           </CardHeader>
           <CardContent><div className="text-2xl text-red-600">{stats.failed}</div></CardContent>
         </Card>
-        <Card className="shadow-md p-1 hidden">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Pending</CardTitle>
+            <CardTitle className="text-sm text-gray-600">Missing</CardTitle>
           </CardHeader>
-          <CardContent><div className="text-2xl text-yellow-600">{stats.pending}</div></CardContent>
+          <CardContent><div className="text-2xl text-yellow-600">{stats.missing}</div></CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardContent className="pt-4 p-2">
-          <div className="relative">
+        <CardContent className="pt-4 flex gap-2 p-2">
+          <div className="w-full">
+            <AutoComplete
+              options={toolBoxOptions}
+              onSelect={handleSelectToolBox}
+              placeholder="Type Tool Box ID or mechanic name..."
+              value={searchToolbox === 'ALL' ? '' : toolBox.find(b => b.ToolsIDToolBox === searchToolbox)?.ToolsIDToolBox + ' - ' + toolBox.find(b => b.ToolsIDToolBox === searchToolbox)?.ToolsPICToolBox || searchToolbox}
+            />
+          </div>
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input placeholder="Search by Tool ID, Tool Name or Brand..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="gap-2 border-gray-200 text-gray-600 hover:bg-gray-100 h-10"
+            disabled={!searchTerm && searchToolbox === 'ALL'}
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Reset
+          </Button>
         </CardContent>
       </Card>
 
@@ -248,7 +328,9 @@ export default function ToolBoxInspectionReport() {
                 {currentItems.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={19} className="h-32 text-center text-gray-500 italic">
-                      No records found matching your search.
+                      {!searchTerm && searchToolbox === 'ALL' 
+                        ? 'Please select a Tool Box or enter a search term to view results.' 
+                        : 'No records found matching your search.'}
                     </TableCell>
                   </TableRow>
                 )}

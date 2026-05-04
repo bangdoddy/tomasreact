@@ -104,7 +104,7 @@ export default function ToolBoxInspection() {
     setSearchTerm(option.id);
     console.log(searchTerm);
     setTodoCurrentPage(1); // Reset page on selection
-    GetToolsList(option.id);
+    GetToolsList();
   };
 
   /*Pagination History */
@@ -244,15 +244,16 @@ export default function ToolBoxInspection() {
       .catch((error) => console.error("Error:", error));
   }
 
-  const GetToolsList = (boxId?: string) => {
+  // const GetToolsList = (boxId?: string) => {
+  const GetToolsList = () => {
     if (!currentUser) return;
-    const targetBoxId = boxId || searchTerm;
-    if (!targetBoxId) return;
+    // const targetBoxId = boxId || searchTerm;
+    // if (!targetBoxId) return;
 
     const params = new URLSearchParams({
       showdata: "AUDITTOOLS",
       jobsite: currentUser.Jobsite,
-      keyword: targetBoxId
+      nrp: currentUser.Nrp
     });
     fetch(API.FILTERS() + `?${params.toString()}`, {
       method: "GET"
@@ -260,8 +261,10 @@ export default function ToolBoxInspection() {
       .then((response) => response.json())
       .then((json: ToolBoxItems[]) => {
         // Filter tools that belong to the selected toolbox
-        const filtered = (json || []).filter(t => t.ToolsIDToolBox === targetBoxId);
+        // const filtered = (json || []).filter(t => t.ToolsIDToolBox === targetBoxId);
+        const filtered = (json);
         setToolsList(filtered);
+        setSearchTerm(filtered[0].ToolsIDToolBox);
 
         // Initialize conditions
         const initialConditions: Record<string, string> = {};
@@ -346,7 +349,7 @@ export default function ToolBoxInspection() {
         // handleReset();
         // Optionally reload audit history
         GetToolsList();
-        ReloadAuditData();
+        // ReloadAuditData();
       } else if (failCount > 0) {
         toast.error(`Failed to submit inspection: ${errorMessage}`);
       }
@@ -358,9 +361,8 @@ export default function ToolBoxInspection() {
 
 
   useEffect(() => {
-    GetToolBox();
+    // GetToolBox();
     GetToolsList();
-    console.log(toolConditions);
     // ReloadAuditData();
   }, []);
 
@@ -380,20 +382,26 @@ export default function ToolBoxInspection() {
         </div>
       </div>
 
-      {/* Search */}
-      <Card>
-        <CardContent className="pt-4 p-2">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="w-full">
-              <AutoComplete
-                options={toolBoxOptions}
-                onSelect={handleSelectToolBox}
-                placeholder="Type or select Tool Box name"
-                value={toolBox.find(b => b.ToolsIDToolBox === searchTerm)?.ToolsDesc || searchTerm}
-              />
+      {/* Header Tool Box */}
+      <Card className="border-none shadow-sm bg-gray-50/50">
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tool Box Information</span>
+                <div className="flex items-center gap-2">
+                  <span className="uppercase font-medium text-gray-600 tracking-wider">
+                    {toolsList.length > 0 ? toolsList[0].ToolsIDToolBox : '---'}
+                  </span>
+
+                  <span className="text-gray-600 font-medium">
+                    {toolsList.length > 0 ? toolsList[0].Nama : 'No Toolbox Selected'}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <Button
+            {/* <Button
               variant="outline"
               onClick={handleReset}
               className="h-10 px-4 flex items-center gap-2 border-gray-200 hover:bg-gray-100 text-gray-600"
@@ -401,172 +409,171 @@ export default function ToolBoxInspection() {
             >
               <RefreshCcw className="h-4 w-4" />
               Reset
-            </Button>
+            </Button> */}
           </div>
         </CardContent>
       </Card>
 
       {/* Tool Todo List */}
-      {searchTerm && (
-        toolsList.length > 0 ? (
-          <Card className="border-0 shadow-xl bg-white/80 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 p-2">
-            <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 py-5">
-              <div className="flex items-center justify-between">
+      {toolsList.length > 0 ? (
+        <Card className="border-0 shadow-xl bg-white/80 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 p-2">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 py-5">
+            <div className="flex items-center justify-end">
 
-                <Badge variant="outline" className="bg-[#009999]/5 text-[#009999] border-[#009999]/20 px-3 py-1">
-                  {Object.values(toolConditions).filter(val => val !== "").length} / {toolsList.length} Checked
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="max-h-[400px] overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
-                      <TableHead className="w-16 text-center font-bold text-gray-700">No</TableHead>
-                      <TableHead className="font-bold text-gray-700">Tool Description</TableHead>
-                      <TableHead className="w-40 text-center font-bold text-gray-700">
-                        Action
-                      </TableHead>
+              <Badge variant="outline" className="bg-[#009999]/5 text-[#009999] border-[#009999]/20 px-3 py-1">
+                {Object.values(toolConditions).filter(val => val !== "").length} / {toolsList.length} Checked
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="max-h-[400px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+                    <TableHead className="w-16 text-center font-bold text-gray-700">No</TableHead>
+                    <TableHead className="font-bold text-gray-700">Tool Description</TableHead>
+                    <TableHead className="w-40 text-center font-bold text-gray-700">
+                      Action
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(currentTodoItems.map((tool, index) => (
+                    <TableRow
+                      key={tool.Kode}
+                      className={`hover:bg-[#009999]/5 transition-all duration-200 ${toolConditions[tool.Kode] ? 'bg-green-50/30' : ''}`}
+                    >
+                      <TableCell className="text-center text-gray-400 font-medium">
+                        {String(startTodoIndex + index + 1).padStart(2, '0')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col py-1">
+                          <span className={`font-semibold transition-all ${toolConditions[tool.Kode] ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                            {tool.Nama}
+                          </span>
+                          <span className="text-xs font-mono text-gray-400 mt-0.5 tracking-wider">
+                            {tool.Kode}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center items-center h-full">
+                          <RadioGroup
+                            value={toolConditions[tool.Kode] || ""}
+                            onValueChange={(value) => {
+                              setToolConditions(prev => ({
+                                ...prev,
+                                [tool.Kode]: value
+                              }));
+
+                              // setToolsList(prev => prev.map(t =>
+                              //   t.Kode === tool.Kode ? { ...t, ToolsCondition: value } : t
+                              // ));
+                            }}
+
+                            className="flex items-center gap-2 justify-center"
+                          >
+                            {[
+                              { value: 'Con1', label: 'Good' },
+                              { value: 'Con2', label: 'R1' },
+                              { value: 'Con3', label: 'R2' },
+                            ].map((opt) => (
+                              <div key={opt.value} className="flex items-center">
+                                <RadioGroupItem
+                                  value={opt.value}
+                                  id={`${opt.value}-${tool.Kode}`}
+                                  className="h-5 w-5 border-black text-black"
+                                />
+                                <Label
+                                  htmlFor={`${opt.value}-${tool.Kode}`}
+                                  className="text-sm font-medium cursor-pointer text-gray-700 p-1"
+                                >
+                                  {opt.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(currentTodoItems.map((tool, index) => (
-                      <TableRow
-                        key={tool.Kode}
-                        className={`hover:bg-[#009999]/5 transition-all duration-200 ${toolConditions[tool.Kode] ? 'bg-green-50/30' : ''}`}
-                      >
-                        <TableCell className="text-center text-gray-400 font-medium">
-                          {String(startTodoIndex + index + 1).padStart(2, '0')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col py-1">
-                            <span className={`font-semibold transition-all ${toolConditions[tool.Kode] ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                              {tool.Nama}
-                            </span>
-                            <span className="text-xs font-mono text-gray-400 mt-0.5 tracking-wider">
-                              {tool.Kode}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex justify-center items-center h-full">
-                            <RadioGroup
-                              value={toolConditions[tool.Kode] || ""}
-                              onValueChange={(value) => {
-                                setToolConditions(prev => ({
-                                  ...prev,
-                                  [tool.Kode]: value
-                                }));
+                  )))}
 
-                                // setToolsList(prev => prev.map(t =>
-                                //   t.Kode === tool.Kode ? { ...t, ToolsCondition: value } : t
-                                // ));
-                              }}
+                </TableBody>
+              </Table>
+            </div>
 
-                              className="flex items-center gap-2 justify-center"
-                            >
-                              {[
-                                { value: 'Con1', label: 'Good' },
-                                { value: 'Con2', label: 'R1' },
-                                { value: 'Con3', label: 'R2' },
-                              ].map((opt) => (
-                                <div key={opt.value} className="flex items-center">
-                                  <RadioGroupItem
-                                    value={opt.value}
-                                    id={`${opt.value}-${tool.Kode}`}
-                                    className="h-5 w-5 border-black text-black"
-                                  />
-                                  <Label
-                                    htmlFor={`${opt.value}-${tool.Kode}`}
-                                    className="text-sm font-medium cursor-pointer text-gray-700 p-1"
-                                  >
-                                    {opt.label}
-                                  </Label>
-                                </div>
-                              ))}
-                            </RadioGroup>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )))}
-
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Todo List Pagination Controls */}
-              <div className="flex items-center justify-between p-4 bg-gray-50/30 border-t border-gray-100">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="todoItemsPerPage" className="text-xs text-gray-500">
-                    Items per page:
-                  </Label>
-                  <Select
-                    value={todoItemsPerPage.toString()}
-                    onValueChange={(value) => {
-                      setTodoItemsPerPage(Number(value));
-                      setTodoCurrentPage(1);
-                    }}
-                  >
-                    <SelectTrigger id="todoItemsPerPage" className="h-8 w-20 text-xs bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-gray-500">
-                    Page {todoCurrentPage} of {totalTodoPages || 1}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 bg-white"
-                      onClick={() => setTodoCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={todoCurrentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 bg-white"
-                      onClick={() => setTodoCurrentPage((prev) => Math.min(prev + 1, totalTodoPages))}
-                      disabled={todoCurrentPage === totalTodoPages || totalTodoPages === 0}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <div className="p-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-                <p className="text-sm text-gray-500">
-                  Ensure all tools are present and in good condition before submitting.
-                </p>
-                <Button
-                  onClick={handleSubmitInspection}
-                  disabled={toolsList.length === 0}
-                  className="bg-green-500 hover:bg-green-600 h-10 rounded-xl"
+            {/* Todo List Pagination Controls */}
+            <div className="flex items-center justify-between p-4 bg-gray-50/30 border-t border-gray-100">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="todoItemsPerPage" className="text-xs text-gray-500">
+                  Items per page:
+                </Label>
+                <Select
+                  value={todoItemsPerPage.toString()}
+                  onValueChange={(value) => {
+                    setTodoItemsPerPage(Number(value));
+                    setTodoCurrentPage(1);
+                  }}
                 >
-                  Submit Inspection
-                </Button>
+                  <SelectTrigger id="todoItemsPerPage" className="h-8 w-20 text-xs bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent>
-              <p className="text-center text-gray-500 py-8">No records found for this toolbox Or maybe already checked</p>
-            </CardContent>
-          </Card>
-        )
-      )}
+
+              <div className="flex items-center gap-4">
+                <span className="text-xs text-gray-500">
+                  Page {todoCurrentPage} of {totalTodoPages || 1}
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 bg-white"
+                    onClick={() => setTodoCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={todoCurrentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 bg-white"
+                    onClick={() => setTodoCurrentPage((prev) => Math.min(prev + 1, totalTodoPages))}
+                    disabled={todoCurrentPage === totalTodoPages || totalTodoPages === 0}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="p-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                Ensure all tools are present and in good condition before submitting.
+              </p>
+              <Button
+                onClick={handleSubmitInspection}
+                disabled={toolsList.length === 0}
+                className="bg-green-500 hover:bg-green-600 h-10 rounded-xl"
+              >
+                Submit Inspection
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="mt-4 bg-yellow-50 border-yellow-500">
+          <CardContent>
+            <p className="text-center text-yellow-600 py-8">No tools to be checked</p>
+          </CardContent>
+        </Card>
+      )
+      }
 
       {/* Inspection Table */}
       <Card>
@@ -579,6 +586,6 @@ export default function ToolBoxInspection() {
         </CardContent>
       </Card>
 
-    </div>
+    </div >
   );
 }

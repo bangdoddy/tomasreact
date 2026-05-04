@@ -32,6 +32,7 @@ interface ActivationToolData {
   StApproved: number;
   Tools: ActivationToolData[];
 }
+
 export default function ActivationReport() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +45,7 @@ export default function ActivationReport() {
     approved: activationTools.filter((r) => r.StApprovedBAST === 'Approved').length,
     rejected: activationTools.filter((r) => r.StApprovedBAST === 'Rejected').length,
   };
+
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "-";

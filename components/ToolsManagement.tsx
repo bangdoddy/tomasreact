@@ -453,7 +453,8 @@ export default function ToolsManagement() {
       .then((response) => response.json())
       .then((data) => {
         setTotalPages(data.total ?? -1);
-        setItemList(data.data ?? data)
+        setItemList(data.data ?? data);
+        console.log(data);
       })
       .catch((error) => console.error("Error:", error));
   };
@@ -1397,7 +1398,7 @@ export default function ToolsManagement() {
                 <Label htmlFor="add-toolboxpic">Pic ToolBox *</Label>
                 <Select
                   value={formData.ToolsPICToolBox}
-                  disabled={formData.ToolsGroupType !== "TOOL"}
+                  // disabled={formData.ToolsGroupType !== "TOOL"}
                   onValueChange={(value) => setFormData({ ...formData, ToolsPICToolBox: value })}
                 >
                   <SelectTrigger id="add-toolboxpic">
