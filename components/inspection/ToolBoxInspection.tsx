@@ -476,7 +476,7 @@ export default function ToolBoxInspection() {
                             {[
                               { value: 'Con1', label: 'Good' },
                               { value: 'Con2', label: 'R1' },
-                              { value: 'Con3', label: 'R2' },
+                              { value: 'Con3', label: 'TA' },
                             ].map((opt) => (
                               <div key={opt.value} className="flex items-center">
                                 <RadioGroupItem

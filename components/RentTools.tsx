@@ -366,6 +366,7 @@ export default function RentTools() {
       setSelectedToolData(null);
       setToolFound(false);
     }
+    console.log(rentedTools);
   };
 
 
@@ -524,7 +525,9 @@ export default function RentTools() {
           // Update local state
           setCompletedTransactions(prev => prev.filter(t => t.TransIdTools !== id));
           // Refresh from server to be sure
+
           GetTransactionList();
+          handleResetTransaction();
         } else {
           toast.error(data[0]?.Message || 'Failed to delete transaction');
         }
@@ -541,6 +544,7 @@ export default function RentTools() {
     setRentedTools([]);
     setToolIdScan('');
     setSelectedToolData(null);
+    GetToolsList();
   };
 
   // Toggle state for New Rent vs List

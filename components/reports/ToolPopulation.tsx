@@ -1,4 +1,4 @@
-import { useState , useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import {
@@ -58,11 +58,11 @@ interface ToolReport {
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
 export default function ToolPopulation() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [toolData, setToolData] = useState<ToolData[]>([]);
-    
+
   const filteredData = toolData.filter((data) => {
     const matchesSearch = data.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'All' || data.category === filterCategory;
@@ -94,7 +94,7 @@ export default function ToolPopulation() {
         'R1': tool.r1,
         'R2': tool.r2,
         'TA': tool.ta,
-        'Good Rates': tool.GoodRates, 
+        'Good Rates': tool.GoodRates,
       }))
     );
 
@@ -116,23 +116,23 @@ export default function ToolPopulation() {
       .then((response) => response.json())
       .then((json: ToolReport[]) => {
         const deptData = json.map((r) => ({
-          catId:r.Kode,
-          category: r.Keterangan??'',
+          catId: r.Kode,
+          category: r.Keterangan ?? '',
           total: r.Total ?? 0,
           good: r.Good ?? 0,
           r1: r.R1 ?? 0,
           r2: r.R2 ?? 0,
           ta: r.TA ?? 0,
-          GoodRates: r.GoodRates ?? 0, 
-        })); 
+          GoodRates: r.GoodRates ?? 0,
+        }));
         setToolData(deptData);
       })
       .catch((error) => console.error("Error:", error));
   };
 
-  useEffect(() => { 
-      ReloadMaster();
-      console.log("Reload Users") 
+  useEffect(() => {
+    ReloadMaster();
+    console.log("Reload Users")
   }, []);
   return (
     <div className="space-y-6">
@@ -159,7 +159,7 @@ export default function ToolPopulation() {
           </Button>
           <Button
             className="bg-[#009999] hover:bg-[#008080] text-white"
-            onClick={() => saveToExcel(toolData) }
+            onClick={() => saveToExcel(toolData)}
           >
             <Download className="h-4 w-4 mr-2" />
             Export Excel
@@ -169,7 +169,7 @@ export default function ToolPopulation() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="shadow-sm p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Tools</CardTitle>
           </CardHeader>
@@ -183,7 +183,7 @@ export default function ToolPopulation() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="shadow-sm p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Good Condition</CardTitle>
           </CardHeader>
@@ -197,7 +197,7 @@ export default function ToolPopulation() {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200">
+        <Card className="shadow-sm p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">R1 Condition</CardTitle>
           </CardHeader>
@@ -211,7 +211,7 @@ export default function ToolPopulation() {
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200">
+        <Card className="shadow-sm p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">R2 Condition</CardTitle>
           </CardHeader>
@@ -225,7 +225,7 @@ export default function ToolPopulation() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="shadow-sm p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">TA Condition</CardTitle>
           </CardHeader>

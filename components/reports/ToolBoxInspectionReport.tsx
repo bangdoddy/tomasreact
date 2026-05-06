@@ -46,6 +46,15 @@ interface ToolBoxData {
   ToolsSize: string;
 }
 
+const bimonthlyPeriods = [
+  { label: 'Jan - Feb', months: ['Jan', 'Feb'] },
+  { label: 'Mar - Apr', months: ['Mar', 'Apr'] },
+  { label: 'May - Jun', months: ['May', 'Jun'] },
+  { label: 'Jul - Aug', months: ['Jul', 'Aug'] },
+  { label: 'Sep - Oct', months: ['Sep', 'Oct'] },
+  { label: 'Nov - Dec', months: ['Nov', 'Dec'] },
+];
+
 export default function ToolBoxInspectionReport() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -160,26 +169,25 @@ export default function ToolBoxInspectionReport() {
       const currentYear = new Date().getFullYear();
       const filename = `Toolbox_items_Audit_${currentYear}.xlsx`;
 
-      const exportData = reportData.map((item, index) => ({
-        'NO': index + 1,
-        'TOOLS LOCATION': item.ToolsLocation,
-        'TOOLSID': item.ToolsId,
-        'DESCRIPTION': item.ToolsDesc,
-        'BRAND': item.ToolsBrand,
-        'SIZE': item.ToolsSize,
-        'Jan': item.Jan || '',
-        'Feb': item.Feb || '',
-        'Mar': item.Mar || '',
-        'Apr': item.Apr || '',
-        'May': item.May || '',
-        'Jun': item.Jun || '',
-        'Jul': item.Jul || '',
-        'Aug': item.Aug || '',
-        'Sep': item.Sep || '',
-        'Oct': item.Oct || '',
-        'Nov': item.Nov || '',
-        'Dec': item.Dec || '',
-      }));
+      const exportData = reportData.map((item, index) => {
+        const row: any = {
+          'NO': index + 1,
+          'TOOLS LOCATION': item.ToolsLocation,
+          'TOOLSID': item.ToolsId,
+          'DESCRIPTION': item.ToolsDesc,
+          'BRAND': item.ToolsBrand,
+          'SIZE': item.ToolsSize,
+        };
+
+        bimonthlyPeriods.forEach(period => {
+          const statuses = period.months
+            .map(m => (item as any)[m])
+            .filter(v => v && v.trim() !== '');
+          row[period.label] = statuses.join(' / ') || '';
+        });
+
+        return row;
+      });
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
@@ -297,9 +305,9 @@ export default function ToolBoxInspectionReport() {
                       {col}
                     </TableHead>
                   ))}
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                  {bimonthlyPeriods.map((period, i) => (
                     <TableHead key={i} className="bg-yellow-100 font-bold py-3 text-center whitespace-nowrap px-4 border-b-2">
-                      {month}
+                      {period.label}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -313,12 +321,13 @@ export default function ToolBoxInspectionReport() {
                     <TableCell className="text-xs whitespace-nowrap">{row.ToolsDesc}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{row.ToolsBrand}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap text-center">{row.ToolsSize}</TableCell>
-                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => {
-                      const audit = row.AuditMonth?.find(a => a.month === month);
+                    {bimonthlyPeriods.map((period, i) => {
+                      const audits = row.AuditMonth?.filter(a => period.months.includes(a.month) && a.status);
+                      const status = audits?.map(a => a.status).join(' / ') || '-';
                       return (
                         <TableCell key={i} className="text-center text-[10px] py-2 border-l border-gray-100">
-                          {audit?.status ? (
-                            <span className="text-green-600 font-bold">{audit.status}</span>
+                          {status !== '-' ? (
+                            <span className="text-green-600 font-bold">{status}</span>
                           ) : '-'}
                         </TableCell>
                       );
@@ -327,7 +336,7 @@ export default function ToolBoxInspectionReport() {
                 ))}
                 {currentItems.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={19} className="h-32 text-center text-gray-500 italic">
+                    <TableCell colSpan={12} className="h-32 text-center text-gray-500 italic">
                       {!searchTerm && searchToolbox === 'ALL' 
                         ? 'Please select a Tool Box or enter a search term to view results.' 
                         : 'No records found matching your search.'}

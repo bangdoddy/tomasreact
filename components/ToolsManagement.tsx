@@ -400,7 +400,7 @@ export default function ToolsManagement() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const data = new Uint8Array(event.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
@@ -408,27 +408,97 @@ export default function ToolsManagement() {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-        //const importedTools: Tool[] = jsonData.map((row, index) => ({
-        //  id: Math.max(...tools.map((t) => t.id), 0) + index + 1,
-        //  toolsJobsite: row['Tools Jobsite'] || row['ToolsJobsite'] || '',
-        //  toolsId: row['Tools Id'] || row['ToolsId'] || '',
-        //  toolsDesc: row['Tools Desc'] || row['ToolsDesc'] || '',
-        //  toolsLocation: row['Tools Location'] || row['ToolsLocation'] || '',
-        //  toolsSerialNo: row['Tools Serial No'] || row['ToolsSerialNo'] || '',
-        //  toolsQty: row['Tools Qty'] || row['ToolsQty'] || '',
-        //  toolsCategory: row['Tools Category'] || row['ToolsCategory'] || '',
-        //  toolsDateIn: row['Tools Date In'] || row['ToolsDateIn'] || '',
-        //  toolsBrand: row['Tools Brand'] || row['ToolsBrand'] || '',
-        //  toolsType: row['Tools Type'] || row['ToolsType'] || '',
-        //  toolsSize: row['Tools Size'] || row['ToolsSize'] || '',
-        //  toolsCondition: row['Tools Condition'] || row['ToolsCondition'] || '',
-        //  toolsWorkgroup: row['Tools Workgroup'] || row['ToolsWorkgroup'] || '',
-        //  cost: row['Cost'] || 0,
-        //}));
-        //toast.success(`Successfully imported ${importedTools.length} tools`);
-        toast.success(`Feature in maintenance`);
+        const importedTools = jsonData.map((row) => ({
+          ToolsJobsite: row['Tools Jobsite'] || row['ToolsJobsite'] || '',
+          ToolsId: row['Tools Id'] || row['ToolsId'] || '',
+          ToolsDesc: row['Tools Desc'] || row['ToolsDesc'] || '',
+          ToolsLocation: row['Tools Location'] || row['ToolsLocation'] || '',
+          ToolsSerialNo: row['Tools Serial No'] || row['ToolsSerialNo'] || '',
+          ToolsType: row['Tools Category'] || row['ToolsCategory'] || '',
+          ToolsDateIn: row['Tools Date In'] || row['ToolsDateIn'] || '',
+          ToolsBrand: row['Tools Brand'] || row['ToolsBrand'] || '',
+          ToolsGroupType: row['Tools Type'] || row['ToolsType'] || '',
+          ToolsSize: row['Tools Size'] || row['ToolsSize'] || '',
+          StTools: row['Tools Condition'] || row['ToolsCondition'] || '',
+          ToolsCostDefault: row['Cost'] || 0,
+          ToolsPicPerson: row['ToolsPicPerson'] || row['ToolsPicPerson'] || '',
+        }));
+
+        if (importedTools.length === 0) {
+          toast.error("No data found in Excel sheet");
+          return;
+        }
+
+        toast.info(`Importing ${importedTools.length} tools...`);
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const tool of importedTools) {
+          try {
+            const response = await fetch(API.REGISTERTOOLS(), {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                action: "INSERT",
+                Jobsite: tool.ToolsJobsite || currentUser.Jobsite,
+                ToolId: tool.ToolsId,
+                ToolsIdEll: "",
+                ToolsDesc: tool.ToolsDesc,
+                ToolsLocation: tool.ToolsLocation,
+                ToolsCostDefault: String(tool.ToolsCostDefault),
+                ToolsDateIn: tool.ToolsDateIn ? (String(tool.ToolsDateIn).replace("T", " ") + (String(tool.ToolsDateIn).length <= 10 ? " 00:00:00" : ":00")) : "",
+                ToolsBrand: tool.ToolsBrand,
+                ToolsType: tool.ToolsType,
+                ToolsCategory: "",
+                ToolsSize: tool.ToolsSize,
+                ToolsNoPO: "",
+                ToolsSerialNo: tool.ToolsSerialNo,
+                ToolsNrpMekanik: "",
+                ToolsPicPerson: "",
+                StatusCapex: "",
+                ToolsGroupType: tool.ToolsGroupType || "TOOL",
+                ToolsWeight: "0",
+                ToolsPartNo: "",
+                ToolsPICToolBox: "",
+                ToolsIDToolBox: "",
+                ToolsExpKalibrasi: "",
+                ToolsImage: null,
+                ToolsDocument: null,
+                ToolsDocumentKalibrasi: null,
+              })
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.length > 0 && data[0]?.Status == 1) {
+                successCount++;
+              } else {
+                failCount++;
+                console.error(`Failed to import tool ${tool.ToolsId}: ${data[0]?.Message ?? 'Unknown error'}`);
+              }
+            } else {
+              failCount++;
+            }
+          } catch (error) {
+            failCount++;
+            console.error(`Error importing tool ${tool.ToolsId}:`, error);
+          }
+        }
+
+        if (successCount > 0) {
+          toast.success(`Successfully imported ${successCount} tools`);
+          ReloadMaster();
+        }
+
+        if (failCount > 0) {
+          toast.error(`Failed to import ${failCount} tools. Check console for details.`);
+        }
       } catch (error) {
         toast.error('Failed to import Excel file. Please check the format.');
+        console.error(error);
       }
     };
     reader.readAsArrayBuffer(file);

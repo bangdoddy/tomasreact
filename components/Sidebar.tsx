@@ -148,7 +148,7 @@ export default function Sidebar({
       subItems: [
         { id: 'inspection-scheduling', label: 'Inspection Scheduling' },
         { id: 'toolbox-inspection', label: 'Tool Box Inspection' },
-        { id: 'toolroom-inspection', label: 'Tool Room Inspection' },
+        // { id: 'toolroom-inspection', label: 'Tool Room Inspection' },
         { id: 'tool-certification', label: 'Certification and Calibration' },
         { id: 'facility-inspection', label: 'Facility Inspection' },
       ],
@@ -175,7 +175,7 @@ export default function Sidebar({
         { id: 'activation-report', label: 'Activation Report' },
         { id: 'bakt-report', label: 'Damage & Loss Report' },
         { id: 'disposed-tool-report', label: 'Disposed Report' },
-        { id: 'toolroom-inspection-report', label: 'Tool Room Inspection Report' },
+        // { id: 'toolroom-inspection-report', label: 'Tool Room Inspection Report' },
         { id: 'toolbox-inspection-report', label: 'Tool Box Inspection Report' },
         { id: 'certification-calibration-report', label: 'Certification and Calibration Report' },
         { id: 'facility-inspection-report', label: 'Facility Inspection Report' },

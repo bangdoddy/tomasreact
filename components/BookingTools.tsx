@@ -30,6 +30,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 interface BookingItem {
+  GroupId: string;
   toolId: string;
   toolName: string;
   toolType: string;
@@ -295,7 +296,7 @@ export default function BookingTools() {
           }, 100);
         }
       } else {
-        toast.error('Tool not found');
+        toast.error('Tool not avalaible');
       }
     }
   };
@@ -339,7 +340,7 @@ export default function BookingTools() {
 
     try {
       var datetimeBooking = startDate + " " + bookingTime;
-      var toDateBooking = endDate + " " + toTime;
+      var toDateBooking = toDate + " " + toTime;
       const toolIds = bookingItems.map(b => b.toolId).join(',');
       const response = await fetch(API.BOOKING(), {
         method: "POST",
@@ -394,7 +395,8 @@ export default function BookingTools() {
         },
         body: JSON.stringify({
           action: "DELETE",
-          ToolsId: id,
+          // ToolsId: id,
+          groupid: id,
           jobsite: currentUser?.Jobsite
         })
       });
@@ -480,7 +482,7 @@ export default function BookingTools() {
 
       if (!map.has(groupId)) {
         map.set(groupId, {
-          id: groupId,                              // <= json.GroupId -> bookings[].id
+          id: normalize(r.GroupId),               // <= json.GroupId -> bookings[].id
           employeeNRP: normalize(r.NRP),
           employeeName: normalize(r.Nama),
           StartBookingDate: normalize(r.StartBookDate),
@@ -497,6 +499,7 @@ export default function BookingTools() {
 
       // Add one BookingItem per row
       booking.items.push({
+        GroupId: normalize(r.GroupId),
         toolId: normalize(r.ToolsId),
         toolName: normalize(r.ToolsName),
         toolType: '', // Not available in BookingMaster; fill if you have it elsewhere
@@ -682,7 +685,7 @@ export default function BookingTools() {
                             className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
                             title="Delete"
                             onClick={() => {
-                              setDeleteTargetId(booking.items.map(item => item.toolId).join(','));
+                              setDeleteTargetId(booking.id);
                               setIsDeleteDialogOpen(true);
                             }}
                           >
@@ -863,10 +866,16 @@ export default function BookingTools() {
                           const month = String(date.getMonth() + 1).padStart(2, '0');
                           const day = String(date.getDate()).padStart(2, '0');
                           setToDate(`${year}-${month}-${day}`);
+
+                          const refTime = selectedEndTime || new Date();
+                          const timeStr = `${String(refTime.getHours()).padStart(2, '0')}:${String(refTime.getMinutes()).padStart(2, '0')}`;
+                          setToTime(timeStr);
+
+                          const dateWithTime = new Date(date);
+                          dateWithTime.setHours(refTime.getHours(), refTime.getMinutes());
+                          setSelectedEndTime(dateWithTime);
+                          console.log("Time To", date);
                         }
-                        const now = new Date();
-                        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                        setToTime(timeStr);
                         toTimeInputRef.current?.focus();
                         toTimeInputRef.current?.click?.();
                       }}
@@ -884,15 +893,18 @@ export default function BookingTools() {
                     <DatePicker
                       selected={selectedEndTime}
                       onChange={(date: any) => {
-                        setSelectedEndTime(date);
                         if (date) {
+                          const dateWithTime = new Date(endDate || new Date());
+                          dateWithTime.setHours(date.getHours(), date.getMinutes());
+                          setSelectedEndTime(dateWithTime);
+
                           const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
                           setToTime(timeStr);
+                          console.log("Time To", timeStr);
 
                           setTimeout(() => {
                             toolInputRef?.current?.focus();
                           }, 100);
-
                         }
                       }}
                       showTimeSelect
