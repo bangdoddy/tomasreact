@@ -161,7 +161,19 @@ export default function ToolCertification() {
     },
   ]);
   */
+
+  const formatDate = (dateString: string) => {
+    if (!dateString || dateString === "" || dateString.startsWith("0001-01-01")) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   const filteredCertifications = certifications.filter((cert) => {
+
     const matchesSearch =
       cert.ToolsName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cert.ToolsId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -350,11 +362,11 @@ export default function ToolCertification() {
         'Tool Name': tool.ToolsName,
         'Type': tool.CertType,
         'Cert. Number': tool.CertNumber,
-        'Cert. Date': tool.CertDate,
-        'Expiry Date': tool.CertExpiredDate,
+        'Cert. Date': formatDate(tool.CertDate),
+        'Expiry Date': formatDate(tool.CertExpiredDate),
         'Certified By': tool.CertBy,
         'Status': tool.CertStatus,
-        'Next Due': tool.nextDueDate,
+        'Next Due': formatDate(tool.nextDueDate),
       }))
     );
 
@@ -587,11 +599,11 @@ export default function ToolCertification() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          {new Date(cert.CertDate).toLocaleDateString()}
+                          {formatDate(cert.CertDate)}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {new Date(cert.CertExpiredDate).toLocaleDateString()}
+                        {formatDate(cert.CertExpiredDate)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
