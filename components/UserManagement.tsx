@@ -505,7 +505,7 @@ export default function UserManagement() {
           {/* Table */}
           <div className="border rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="text-xs">
                 <TableHeader>
                   <TableRow className="bg-gray-300 hover:bg-gray-300">
                     <TableHead colSpan={2} className="text-center border-r border-gray-400 text-gray-900 h-12">

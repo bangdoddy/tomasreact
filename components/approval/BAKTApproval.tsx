@@ -14,6 +14,8 @@ import {
   FileText,
   Currency,
   DollarSign,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   Table,
@@ -98,6 +100,11 @@ export default function BAKTApproval() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [baktTools, setBaktTools] = useState<BaktResult[]>([])
 
+  // Pagination Items
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+
   const [requests, setRequests] = useState<BAKTRequest[]>([]);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
@@ -117,6 +124,13 @@ export default function BAKTApproval() {
 
     return matchesSearch && matchesStatus;
   });
+
+  /*Pagination Items (fallback to client-side if total is not set) */
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = filteredRequests.slice(startIndex, endIndex);
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -404,12 +418,14 @@ export default function BAKTApproval() {
               <Input
                 placeholder="Search by BAKT number, project, requester, or department..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+
                 className="pl-10"
               />
             </div>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterStatus} onValueChange={(value) => { setFilterStatus(value); setCurrentPage(1); }}>
+
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by Status" />
               </SelectTrigger>
@@ -429,7 +445,8 @@ export default function BAKTApproval() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="text-xs">
+
               <TableHeader>
                 <TableRow className="bg-gray-50">
                   <TableHead>BAKT Number</TableHead>
@@ -444,17 +461,17 @@ export default function BAKTApproval() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRequests.length === 0 ? (
+                {currentData.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                       No BAKT requests found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredRequests.map((request) => (
+                  currentData.map((request) => (
                     <TableRow key={request.BA_No} className="hover:bg-gray-50">
                       <TableCell>
-                        <span className="text-gray-600 text-[#009999]">{request.BA_No}</span>
+                        <span className="text-[#009999]">{request.BA_No}</span>
                       </TableCell>
                       <TableCell>
                         <div className="text-gray-600 flex items-center gap-2">
@@ -533,12 +550,55 @@ export default function BAKTApproval() {
               </TableBody>
             </Table>
           </div>
+          {/* Pagination */}
+          <div className="flex items-center justify-between mt-4 p-4 border-t">
+            <div className="flex items-center">
+              <span className="text-sm text-gray-600 mr-2">Items per page:</span>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages || 1}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Footer */}
       <div className="text-sm text-gray-600">
-        Showing {filteredRequests.length} of {requests.length} BAKT requests
+        Showing {startIndex + 1} to {Math.min(endIndex, filteredRequests.length)} of {filteredRequests.length} BAKT requests
       </div>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>

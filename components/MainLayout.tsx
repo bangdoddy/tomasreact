@@ -5,6 +5,7 @@ import Footer from './Footer';
 import UserManagement from './UserManagement';
 import ToolsManagement from './ToolsManagement';
 import Dashboard from './Dashboard';
+import Location from './Location';
 import RolesManagement from './RolesManagement';
 import PermissionsManagement from './PermissionsManagement';
 import StandardQuantity from './StandardQuantity';
@@ -141,6 +142,8 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
         return <GeneralSetting />
       case 'jobsite':
         return <GeneralSetting kategori="Jobsite" />
+      case 'location':
+        return <Location />
       case 'toolstype':
         return <ToolsType />
       default:

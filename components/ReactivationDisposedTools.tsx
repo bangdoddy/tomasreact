@@ -229,6 +229,8 @@ export default function ReactivationDisposedTools() {
         return 'bg-green-100 text-green-700 border-green-300';
       case 'R2':
         return 'bg-red-100 text-red-700 border-red-300';
+      case 'Lost':
+        return 'bg-red-100 text-red-700 border-red-300';
       case 'Repairing':
         return 'bg-blue-100 text-blue-700 border-blue-300';
       default:
@@ -467,9 +469,9 @@ export default function ReactivationDisposedTools() {
   const stats = {
     total: disposedTools.length,
     pendingDisposal: disposedTools.filter((t) => t.status === 'Pending Disposal').length,
-    disposed: disposedTools.filter((t) => t.status === 'Disposed').length,
+    disposed: disposedTools.filter((t) => t.status === 'R2').length,
     reactivated: disposedTools.filter((t) => t.status === 'Reactivated').length,
-    damaged: disposedTools.filter((t) => t.status === 'R2').length,
+    damaged: disposedTools.filter((t) => t.status === 'Lost').length,
     totalValue: disposedTools.reduce((sum, t) => sum + t.estimatedValue, 0),
   };
 
@@ -576,7 +578,7 @@ export default function ReactivationDisposedTools() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="border-gray-300 hover:bg-gray-50"
+            className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10"
             onClick={() => saveToExcel(disposedTools)}
           >
             <Download className="h-4 w-4 mr-2" />
@@ -608,7 +610,7 @@ export default function ReactivationDisposedTools() {
 
         <Card className="border-yellow-200 p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-500 font-bold">R2</CardTitle>
+            <CardTitle className="text-sm text-gray-500 font-bold">Lost Tools</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -651,7 +653,7 @@ export default function ReactivationDisposedTools() {
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200 p-1">
+        <Card className="border-blue-200 p-1 hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-500">Under Review</CardTitle>
           </CardHeader>
@@ -700,6 +702,7 @@ export default function ReactivationDisposedTools() {
               <SelectContent>
                 <SelectItem value="All">All Status</SelectItem>
                 <SelectItem value="R2">Damaged</SelectItem>
+                <SelectItem value="Lost">Lost</SelectItem>
                 <SelectItem value="Repairing">Repairing</SelectItem>
                 <SelectItem value="Reactivated">Reactivated</SelectItem>
               </SelectContent>

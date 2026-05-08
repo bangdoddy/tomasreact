@@ -527,7 +527,7 @@ export default function StandardQuantity() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto rounded-lg">
-            <Table>
+            <Table className="text-xs">
               <TableHeader>
                 <TableRow>
                   <TableHead className="bg-gray-100">ToolsId</TableHead>

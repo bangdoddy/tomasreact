@@ -1460,6 +1460,7 @@ export default function RentTools() {
                     <SelectContent>
                       <SelectItem value="Con1" className="focus:bg-green-50 focus:text-green-700">Good</SelectItem>
                       <SelectItem value="Con2" className="focus:bg-red-50 focus:text-red-700">R1</SelectItem>
+                      <SelectItem value="Con5" className="focus:bg-red-50 focus:text-red-700">R2</SelectItem>
                       <SelectItem value="Con3" className="focus:bg-red-50 focus:text-red-700">TA</SelectItem>
                     </SelectContent>
                   </Select>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import  Autocomplete  from '../ui/Autocomplete'
+import Autocomplete from '../ui/Autocomplete'
 import {
   Search,
   Plus,
@@ -51,7 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'; 
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel } from "../../model/Models";
@@ -69,12 +69,12 @@ interface Certification {
   CertStartDate: string;
   CertExpiredDate: string;
   CertDate: string;
-  CertStatus: string; 
+  CertStatus: string;
   nextDueDate: string;
 }
 
 export default function ToolCertification() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -82,20 +82,20 @@ export default function ToolCertification() {
   /*Pagination Items */
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
- 
+
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Certification | null>(null);
   const [formData, setFormData] = useState({
     Kode: '',
     ToolsId: '',
-    ToolsName:'',
+    ToolsName: '',
     CertType: '',
     CertNumber: '',
     CertExpired: '',
     CertStart: '',
     CertBy: '',
-    CertFile: '',  
+    CertFile: '',
   });
   const [regtools, setRegTools] = useState<GlobalModel[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -226,13 +226,13 @@ export default function ToolCertification() {
     setFormData({
       Kode: '',
       ToolsId: '',
-      ToolsName:'',
+      ToolsName: '',
       CertType: '',
       CertNumber: '',
       CertExpired: '',
       CertStart: '',
       CertBy: '',
-      CertFile: '',  
+      CertFile: '',
     });
     setIsDialogOpen(true);
   }
@@ -248,7 +248,7 @@ export default function ToolCertification() {
       CertExpired: item.CertExpiredDate,
       CertStart: item.CertStartDate,
       CertBy: item.CertBy,
-      CertFile: '',  
+      CertFile: '',
     });
     setIsDialogOpen(true);
   }
@@ -272,14 +272,14 @@ export default function ToolCertification() {
         body: JSON.stringify({
           action: (editingItem ? "UPDATE" : "INSERT"),
           Jobsite: currentUser.Jobsite,
-          NrpUser: currentUser.Nrp, 
+          NrpUser: currentUser.Nrp,
           Kode: formData.Kode,
           ToolsId: formData.ToolsId,
           CertType: formData.CertType,
           CertNumber: formData.CertNumber,
           CertExpired: formData.CertExpired,
           CertStart: formData.CertStart,
-          CertBy: formData.CertBy,   
+          CertBy: formData.CertBy,
         })
       });
 
@@ -341,7 +341,7 @@ export default function ToolCertification() {
       toast.error("Failed. Message: " + ex.Message);
     }
   }
-   
+
   const saveToExcel = (data: Certification[]) => {
     const worksheet = XLSX.utils.json_to_sheet(
       data.map((tool) => ({
@@ -364,7 +364,7 @@ export default function ToolCertification() {
     XLSX.writeFile(workbook, `Tools_Certification_${new Date().toISOString().split('T')[0]}.xlsx`);
     toast.success('Data exported successfully');
   }
-   
+
 
   /*Load Server */
   const ReloadMaster = () => {
@@ -394,14 +394,14 @@ export default function ToolCertification() {
   }
 
   useEffect(() => {
-    ReloadMaster(); 
+    ReloadMaster();
     GetToolsList();
   }, []);
 
 
   const toolOptions = regtools?.map(p => ({
     id: p.Kode,
-    label: p.Kode+'-'+p.Nama,
+    label: p.Kode + '-' + p.Nama,
   }));
 
   const titlePage = "Certification"
@@ -420,10 +420,11 @@ export default function ToolCertification() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="border-gray-300 hover:bg-gray-50"
+          <Button variant="outline"
+            className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10"
             onClick={() => saveToExcel(certifications)}>
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export to Excel
           </Button>
           <Button className="bg-[#009999] hover:bg-[#008080] text-white"
             onClick={() => handleAdd()}>
@@ -435,9 +436,9 @@ export default function ToolCertification() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Total Records</CardTitle>
+            <CardTitle className="font-bold text-gray-600">Total Records</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -449,9 +450,9 @@ export default function ToolCertification() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Valid</CardTitle>
+            <CardTitle className="font-bold text-gray-600">Valid</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -463,9 +464,9 @@ export default function ToolCertification() {
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Expiring Soon</CardTitle>
+            <CardTitle className="font-bold text-gray-600">Expiring Soon</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -477,9 +478,9 @@ export default function ToolCertification() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Expired</CardTitle>
+            <CardTitle className="font-bold text-gray-600">Expired</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -493,50 +494,46 @@ export default function ToolCertification() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by tool name, ID, or certification number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search by tool name, ID, or certification number..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-white border-[#003366] pl-10"
+          />
+        </div>
 
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Certification">Certification</SelectItem>
-                <SelectItem value="Calibration">Calibration</SelectItem>
-              </SelectContent>
-            </Select>
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="bg-white border-[#003366] w-full sm:w-48">
+            <SelectValue placeholder="Filter by Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="Certification">Certification</SelectItem>
+            <SelectItem value="Calibration">Calibration</SelectItem>
+          </SelectContent>
+        </Select>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Valid">Valid</SelectItem>
-                <SelectItem value="Expiring Soon">Expiring Soon</SelectItem>
-                <SelectItem value="Expired">Expired</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="bg-white border-[#003366] w-full sm:w-48">
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="Valid">Valid</SelectItem>
+            <SelectItem value="Expiring Soon">Expiring Soon</SelectItem>
+            <SelectItem value="Expired">Expired</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Certification Table */}
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="text-xs">
               <TableHeader>
                 <TableRow className="bg-gray-50">
                   <TableHead>Record ID</TableHead>
@@ -548,7 +545,7 @@ export default function ToolCertification() {
                   <TableHead>Expiry Date</TableHead>
                   <TableHead>Certified By</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Next Due</TableHead>
+                  {/* <TableHead>Next Due</TableHead> */}
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -612,19 +609,19 @@ export default function ToolCertification() {
                           {cert.CertStatus}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         {new Date(cert.nextDueDate).toLocaleDateString()}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -652,7 +649,7 @@ export default function ToolCertification() {
             </Table>
           </div>
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-4 p-2">
             <div className="flex items-center">
               <Label htmlFor="itemsPerPage" className="mr-2">
                 Items per page:
@@ -700,7 +697,7 @@ export default function ToolCertification() {
       <div className="text-sm text-gray-600">
         Showing {filteredCertifications.length} of {certifications.length} certification records
       </div>
-        
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -708,7 +705,7 @@ export default function ToolCertification() {
               {(editingItem ? 'Edit ' : 'Add ') + titlePage}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">   
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="CertType">Cert Type *</Label>
               <Select
@@ -728,14 +725,14 @@ export default function ToolCertification() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ToolsId">Tools *</Label> 
+              <Label htmlFor="ToolsId">Tools *</Label>
               <Autocomplete
                 value={formData.ToolsName}
                 disabled={editingItem != null}
                 options={toolOptions}
                 onSelect={(s) => {
-                setFormData({ ...formData, ToolsId: s.id, ToolsName:s.label })
-              }} />
+                  setFormData({ ...formData, ToolsId: s.id, ToolsName: s.label })
+                }} />
               {/*<Select*/}
               {/*  value={formData.ToolsId}*/}
               {/*  disabled={editingItem != null}*/}
@@ -755,7 +752,7 @@ export default function ToolCertification() {
               {/*  </SelectContent>*/}
               {/*</Select>*/}
             </div>
-            <div className="grid grid-cols-2 gap-4"> 
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="CertNumber">Cert Number *</Label>
                 <Input
@@ -771,7 +768,7 @@ export default function ToolCertification() {
                   id="CertExpired"
                   type="date"
                   value={formData.CertExpired}
-                  onChange={(e) => setFormData({ ...formData, CertExpired: e.target.value })} 
+                  onChange={(e) => setFormData({ ...formData, CertExpired: e.target.value })}
                   placeholder="e.g., JB001"
                 />
               </div>

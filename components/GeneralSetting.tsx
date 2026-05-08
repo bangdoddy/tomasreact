@@ -214,7 +214,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredList.slice(startIndex, endIndex);
 
-  const titlePage = kategori ?? "General Setting"
+  const titlePage = kategori ?? "Parameters Setting"
 
   return (
     <div className="space-y-6">
@@ -257,7 +257,7 @@ export default function GeneralSetting({ kategori }: { kategori?: string }) {
       </div>
       <Card className="p-2">
         <CardHeader>
-          <CardTitle className="text-[#003366]">{titlePage} List</CardTitle>
+          <CardTitle className="text-[#003366]">{titlePage}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">

@@ -45,6 +45,17 @@ import { RegisterTools, GlobalModel } from "../model/Models";
 import { API } from '../config';
 import ToolCertification from './inspection/ToolCertification';
 
+const formatDate = (dateStr: string | undefined | null) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const d = date.getDate().toString().padStart(2, "0");
+  const m = (date.getMonth() + 1).toString().padStart(2, "0");
+  const y = date.getFullYear();
+  return `${d}-${m}-${y}`;
+};
+
+
 export default function ToolsManagement() {
   const { currentUser } = useAuth();
   const [itemList, setItemList] = useState<RegisterTools[]>([]);
@@ -378,7 +389,7 @@ export default function ToolsManagement() {
         'Tools Location': tool.ToolsLocation,
         'Tools Serial No': tool.ToolsSerialNo,
         'Tools Category': tool.ToolsType,
-        'Tools Date In': tool.ToolsDateIn,
+        'Tools Date In': formatDate(tool.ToolsDateIn),
         'Tools Brand': tool.ToolsBrand,
         'Tools Type': tool.ToolsGroupType,
         'Tools Size': tool.ToolsSize,
@@ -837,23 +848,23 @@ export default function ToolsManagement() {
           {/* Table */}
           <div className="border rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="text-xs">
                 <TableHeader>
                   <TableRow className="bg-gray-300 hover:bg-gray-300">
-                    <TableHead className="border-r border-gray-400 text-gray-900">Jobsite</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Tools ID</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Description</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Location</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Serial No</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Qty</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Category</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Date In</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Brand</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Type</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Size</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Condition</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900">Cost</TableHead>
                     <TableHead className="text-right text-gray-900">Actions</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Jobsite</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Tools ID</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center max-w-[50px]">Description</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Condition</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Location</TableHead>
+                    {/* <TableHead className="border-r border-gray-400 text-gray-900 text-center">Serial No</TableHead> */}
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Qty</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Category</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Date In</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Brand</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Type</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Size</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Cost</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -866,32 +877,8 @@ export default function ToolsManagement() {
                   ) : (
                     itemList.map((tool) => (
                       <TableRow key={tool.ToolsId} className="hover:bg-gray-50">
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsJobsite}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsId}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsDesc}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsLocation}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSerialNo}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsQty}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsType}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsDateIn}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsBrand}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsGroupType}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSize}</TableCell>
-                        <TableCell className="border-r border-gray-200 text-gray-600">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs ${tool.StTools === 'Good'
-                              ? 'bg-green-100 text-green-800'
-                              : tool.StTools === 'R1'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                              }`}
-                          >
-                            {tool.StTools}
-                          </span>
-                        </TableCell>
-                        <TableCell className="border-r border-gray-200">{tool.ToolsCostDefault}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -910,6 +897,30 @@ export default function ToolsManagement() {
                             </Button>
                           </div>
                         </TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsJobsite}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsId}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsDesc}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs p-1 ${tool.StTools === 'Good'
+                              ? 'bg-green-100 text-green-800'
+                              : tool.StTools === 'R1'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                              }`}
+                          >
+                            {tool.StTools}
+                          </span>
+                        </TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsLocation}</TableCell>
+                        {/* <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSerialNo}</TableCell> */}
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsQty}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsType}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{formatDate(tool.ToolsDateIn)}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsBrand}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsGroupType}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSize}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-right">{tool.ToolsCostDefault}</TableCell>
                       </TableRow>
                     ))
                   )}

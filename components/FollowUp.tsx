@@ -480,7 +480,7 @@ export default function FollowUp() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Con2">R1</SelectItem>
-                    <SelectItem value="Con3">R2</SelectItem>
+                    <SelectItem value="Con5">R2</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
