@@ -441,7 +441,7 @@ export default function ToolCertification() {
           <Button className="bg-[#009999] hover:bg-[#008080] text-white"
             onClick={() => handleAdd()}>
             <Plus className="h-4 w-4 mr-2" />
-            New Record
+            New Certificate
           </Button>
         </div>
       </div>
@@ -815,7 +815,7 @@ export default function ToolCertification() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the "{editingItem?.ToolsName}" (Id: {editingItem?.ToolsId}). This action cannot be undone.
+              This will permanently delete this certification? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

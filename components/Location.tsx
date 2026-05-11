@@ -37,6 +37,19 @@ export default function Location() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<LocationItem | null>(null);
   const [formData, setFormData] = useState({ location: '', jobsite: '', description: '' });
+  const [jobsites, setJobsites] = useState<GlobalModel[]>([]);
+
+  const ReloadJobsites = () => {
+    const params = new URLSearchParams({
+      kategori: "Jobsite"
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: GlobalModel[]) => { setJobsites(json); console.log(json); })
+      .catch((error) => console.error("Error:", error));
+  }
 
   const GetToolsLocation = () => {
     const params = new URLSearchParams({
@@ -247,6 +260,7 @@ export default function Location() {
             <div className="space-y-2">
               <Label htmlFor="jobsite">Jobsite *</Label>
               <Input
+                disabled={true}
                 id="jobsite"
                 value={formData.jobsite}
                 onChange={(e) => setFormData({ ...formData, jobsite: e.target.value })}
