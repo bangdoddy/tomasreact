@@ -14,6 +14,7 @@ export const API = {
   TYPETOOLS: () => `${CONFIG.apiBaseUrl}/api/ToolType`,
   BOOKING: () => `${CONFIG.apiBaseUrl}/api/Booking`,
   RENTTOOLS: () => `${CONFIG.apiBaseUrl}/api/RentTools`,
+  RENTTOOLSREPORT: () => `${CONFIG.apiBaseUrl}/api/RentTools/Report`,
   RETURNTOOLS: () => `${CONFIG.apiBaseUrl}/api/RentTools/Return`,
   ACTIVATIONTOOLS: () => `${CONFIG.apiBaseUrl}/api/ActivationTools`,
   ACTIVATIONTOOLSDETAIL: () => `${CONFIG.apiBaseUrl}/api/ActivationTools/Detail`,

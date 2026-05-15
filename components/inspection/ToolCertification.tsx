@@ -63,12 +63,14 @@ interface Certification {
   Jobsite: string;
   ToolsId: string;
   ToolsName: string;
+  SapNo: string;
   CertType: string;
   CertNumber: string;
   CertBy: string;
   CertStartDate: string;
   CertExpiredDate: string;
   CertDate: string;
+  RemindDate: string;
   CertStatus: string;
   nextDueDate: string;
 }
@@ -94,6 +96,7 @@ export default function ToolCertification() {
     CertNumber: '',
     CertExpired: '',
     CertStart: '',
+    RemindDate: '',
     CertBy: '',
     CertFile: '',
   });
@@ -243,6 +246,7 @@ export default function ToolCertification() {
       CertNumber: '',
       CertExpired: '',
       CertStart: '',
+      RemindDate: '',
       CertBy: '',
       CertFile: '',
     });
@@ -260,6 +264,7 @@ export default function ToolCertification() {
       CertExpired: item.CertExpiredDate,
       CertStart: item.CertStartDate,
       CertBy: item.CertBy,
+      RemindDate: item.RemindDate,
       CertFile: '',
     });
     setIsDialogOpen(true);
@@ -389,6 +394,7 @@ export default function ToolCertification() {
       .then((response) => response.json())
       .then((json: Certification[]) => {
         setCertifications(json);
+        console.log(json);
       })
       .catch((error) => console.error("Error:", error));
   };
@@ -438,7 +444,7 @@ export default function ToolCertification() {
             <Download className="h-4 w-4 mr-2" />
             Export to Excel
           </Button>
-          <Button className="bg-[#009999] hover:bg-[#008080] text-white"
+          <Button className="bg-[#009999] hover:bg-[#008080] text-white hidden"
             onClick={() => handleAdd()}>
             <Plus className="h-4 w-4 mr-2" />
             New Certificate
@@ -518,7 +524,7 @@ export default function ToolCertification() {
         </div>
 
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="bg-white border-[#003366] w-full sm:w-48">
+          <SelectTrigger className="bg-white border-[#003366] w-full sm:w-48 hidden">
             <SelectValue placeholder="Filter by Type" />
           </SelectTrigger>
           <SelectContent>
@@ -551,11 +557,11 @@ export default function ToolCertification() {
                   <TableHead>Record ID</TableHead>
                   <TableHead>Tool ID</TableHead>
                   <TableHead>Tool Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Cert. Number</TableHead>
+                  <TableHead>SAP No.</TableHead>
                   <TableHead>Cert. Date</TableHead>
                   <TableHead>Expiry Date</TableHead>
-                  <TableHead>Certified By</TableHead>
+                  <TableHead>Next Due</TableHead>
+                  <TableHead>Frekwensi</TableHead>
                   <TableHead>Status</TableHead>
                   {/* <TableHead>Next Due</TableHead> */}
                   <TableHead className="text-center">Actions</TableHead>
@@ -582,20 +588,9 @@ export default function ToolCertification() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={
-                            cert.CertType === 'Certification'
-                              ? 'bg-purple-50 text-purple-700 border-purple-300'
-                              : 'bg-blue-50 text-blue-700 border-blue-300'
-                          }
-                        >
-                          {cert.CertType}
-                        </Badge>
+                        {cert.SapNo}
                       </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">{cert.CertNumber}</span>
-                      </TableCell>
+
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
@@ -607,10 +602,10 @@ export default function ToolCertification() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
-                          {cert.CertBy}
+                          {formatDate(cert.RemindDate)}
                         </div>
                       </TableCell>
+                      <TableCell className="text-center">12</TableCell>
                       <TableCell>
                         <Badge
                           className={`flex items-center gap-1 w-fit ${getStatusColor(

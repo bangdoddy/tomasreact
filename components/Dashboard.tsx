@@ -147,6 +147,7 @@ export default function Dashboard() {
         setToolReport(json);
         const resume = sumToolReport(json)
         setToolResume(resume);
+
         setToolChartReport([
           { name: 'Good', value: resume.Good, color: '#22c55e' },
           { name: 'R1', value: resume.R1, color: '#f59e0b' },
@@ -182,9 +183,9 @@ export default function Dashboard() {
     const params = new URLSearchParams({
       act: "REPORT",
       jobsite: currentUser.Jobsite,
-      qty: "7"
+      qty: "6"
     });
-    fetch(API.RENTTOOLS() + `?${params.toString()}`, {
+    fetch(API.RENTTOOLSREPORT() + `?${params.toString()}`, {
       method: "GET"
     })
       .then((response) => response.json())
@@ -227,7 +228,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#003366] to-[#009999] rounded-xl p-8 text-white shadow-lg">
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
               <BarChart3 className="h-7 w-7 text-white" />
@@ -236,9 +237,6 @@ export default function Dashboard() {
               <h2 className="text-lg text-white mb-1">Transaction Summary Dashboard</h2>
               <p className="text-sm text-white/80">Real-time tools inventory and usage analytics</p>
             </div>
-          </div>
-          <div className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
-            <Wrench className="h-5 w-5 text-white" />
           </div>
         </div>
 
@@ -336,7 +334,7 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(2)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
@@ -345,7 +343,7 @@ export default function Dashboard() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value: number) => value.toLocaleString()} />
               </RechartsPie>
             </ResponsiveContainer>
             <div className="mt-4 grid grid-cols-4 gap-4 text-center">
@@ -372,9 +370,9 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={locationData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="location" />
-                <YAxis />
-                <Tooltip />
+                <XAxis dataKey="location" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => val.toLocaleString()} />
+                <Tooltip formatter={(value: number) => value.toLocaleString()} />
                 <Legend />
                 <Bar dataKey="good" fill="#22c55e" name="Good" />
                 <Bar dataKey="damaged" fill="#f59e0b" name="R1" />
@@ -397,9 +395,9 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={reportRentSortedDesc}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="PeriodeReport" />
-                <YAxis />
-                <Tooltip />
+                <XAxis dataKey="PeriodeReport" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => val.toLocaleString()} />
+                <Tooltip formatter={(value: number) => value.toLocaleString()} />
                 <Legend />
                 <Line type="monotone" dataKey="Total" stroke="#003366" strokeWidth={2} name="Total" />
                 <Line type="monotone" dataKey="Returned" stroke="#009999" strokeWidth={2} name="Returned" />
@@ -418,9 +416,9 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={rentedByType} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
+                <XAxis type="number" tickFormatter={(value) => value.toLocaleString()} />
                 <YAxis dataKey="TypeName" type="category" width={130} />
-                <Tooltip />
+                <Tooltip formatter={(value: number) => value.toLocaleString()} />
                 <Bar dataKey="Total" fill="#009999">
                   {rentedByType.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -444,9 +442,9 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={toolByWorkGroup}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Kode" />
-                <YAxis />
-                <Tooltip />
+                <XAxis dataKey="Kode" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => val.toLocaleString()} />
+                <Tooltip formatter={(value: number) => value.toLocaleString()} />
                 <Legend />
                 <Bar dataKey="Good" fill="#22c55e" name="Good" stackId="a" />
                 <Bar dataKey="R1" fill="#f59e0b" name="R1" stackId="a" />
@@ -456,9 +454,9 @@ export default function Dashboard() {
             </ResponsiveContainer>
 
             {/* Workshop Statistics Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
+            <div className="overflow-x-auto p-3">
+              <table className="w-full text-xs">
+                <thead className="text-lg">
                   <tr className="border-b-2 border-gray-300 bg-gray-50">
                     <th className="text-left p-3 text-gray-700">Workshop</th>
                     <th className="text-center p-3 text-gray-700">Good</th>
@@ -481,47 +479,47 @@ export default function Dashboard() {
                       </td>
                       <td className="p-3 text-center">
                         <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-green-100 text-green-700">
-                          {ws.Good}
+                          {ws.Good.toLocaleString()}
                         </span>
                       </td>
                       <td className="p-3 text-center">
                         <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-orange-100 text-orange-700">
-                          {ws.R1}
+                          {ws.R1.toLocaleString()}
                         </span>
                       </td>
                       <td className="p-3 text-center">
                         <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-red-100 text-red-700">
-                          {ws.R2}
+                          {ws.R2.toLocaleString()}
                         </span>
                       </td>
                       <td className="p-3 text-center">
                         <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-red-100 text-red-700">
-                          {ws.TA}
+                          {ws.TA.toLocaleString()}
                         </span>
                       </td>
                       <td className="p-3 text-center">
-                        <span>{ws.Total}</span>
+                        <span>{ws.Total.toLocaleString()}</span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot>
+                <tfoot className="text-md font-semibold text-gray-900">
                   <tr className="border-t-2 border-gray-300 bg-gray-50">
                     <td className="p-3">Total</td>
                     <td className="p-3 text-center text-green-700">
-                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.Good, 0)}
+                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.Good, 0).toLocaleString()}
                     </td>
                     <td className="p-3 text-center text-orange-700">
-                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.R1, 0)}
+                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.R1, 0).toLocaleString()}
                     </td>
                     <td className="p-3 text-center text-red-700">
-                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.R2, 0)}
+                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.R2, 0).toLocaleString()}
                     </td>
                     <td className="p-3 text-center text-red-700">
-                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.TA, 0)}
+                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.TA, 0).toLocaleString()}
                     </td>
                     <td className="p-3 text-center">
-                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.Total, 0)}
+                      {toolByWorkGroup.reduce((sum, ws) => sum + ws.Total, 0).toLocaleString()}
                     </td>
                   </tr>
                 </tfoot>
@@ -560,7 +558,7 @@ export default function Dashboard() {
                         <span>{tool.TypeName}</span>
                       </div>
                     </td>
-                    <td className="p-3 text-right">{tool.Total}</td>
+                    <td className="p-3 text-right">{tool.Total.toLocaleString()}</td>
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <div className="w-24 bg-gray-200 rounded-full h-2">

@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import {
   Table,
   TableBody,
@@ -247,6 +249,7 @@ export default function ToolsManagement() {
       FileNameDocumentKalibrasi: '',
     });
     setIsDialogOpen(true);
+    console.log(tool);
   };
 
   const openDeleteDialog = (tool: RegisterTools) => {
@@ -282,7 +285,7 @@ export default function ToolsManagement() {
           ToolsDesc: formData.ToolsDesc,
           ToolsLocation: formData.ToolsLocation,
           ToolsCostDefault: String(formData.ToolsCostDefault),
-          ToolsDateIn: (formData.ToolsDateIn?.replace("T", " ") + ":00" ?? ""),
+          ToolsDateIn: (formData.ToolsDateIn ? (formData.ToolsDateIn.includes("T") ? formData.ToolsDateIn.replace("T", " ") + ":00" : formData.ToolsDateIn + " 00:00:00") : ""),
           ToolsBrand: formData.ToolsBrand,
           ToolsType: formData.ToolsType,
           ToolsCategory: formData.ToolsCategory,
@@ -535,7 +538,6 @@ export default function ToolsManagement() {
       .then((data) => {
         setTotalPages(data.total ?? -1);
         setItemList(data.data ?? data);
-        console.log(data);
       })
       .catch((error) => console.error("Error:", error));
   };
@@ -1163,12 +1165,19 @@ export default function ToolsManagement() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-datein">Date In *</Label>
-                <Input
-                  id="add-datein"
-                  type="datetime-local"
-                  value={formData.ToolsDateIn}
-                  onChange={(e) => setFormData({ ...formData, ToolsDateIn: e.target.value })}
-                  placeholder="e.g., 1-Jan-2020"
+                <DatePicker
+                  selected={formData.ToolsDateIn ? new Date(formData.ToolsDateIn) : null}
+                  onChange={(date) => {
+                    if (date) {
+                      const formatted = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                      setFormData({ ...formData, ToolsDateIn: formatted });
+                    } else {
+                      setFormData({ ...formData, ToolsDateIn: '' });
+                    }
+                  }}
+                  dateFormat="dd-MM-yyyy"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholderText="dd-MM-yyyy"
                 />
               </div>
               <div className="grid gap-2">
@@ -1246,12 +1255,19 @@ export default function ToolsManagement() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="add-lastCalDate">Date Last Calibration *</Label>
-                <Input
-                  id="add-lastCalDate"
-                  type="date"
-                  value={formData.ToolsExpKalibrasi}
-                  onChange={(e) => setFormData({ ...formData, ToolsExpKalibrasi: e.target.value })}
-                  placeholder="exp date"
+                <DatePicker
+                  selected={formData.ToolsExpKalibrasi ? new Date(formData.ToolsExpKalibrasi) : null}
+                  onChange={(date) => {
+                    if (date) {
+                      const formatted = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                      setFormData({ ...formData, ToolsExpKalibrasi: formatted });
+                    } else {
+                      setFormData({ ...formData, ToolsExpKalibrasi: '' });
+                    }
+                  }}
+                  dateFormat="dd-MM-yyyy"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholderText="dd-MM-yyyy"
                 />
               </div>
             </div>
