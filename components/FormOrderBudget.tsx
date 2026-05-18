@@ -24,6 +24,15 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from './ui/dialog';
 import { Badge } from './ui/badge';
 import {
   Select,
@@ -53,6 +62,7 @@ export default function FormOrderBudget() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterCategory, setFilterCategory] = useState('All');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const [orders, setOrders] = useState<OrderBudget[]>([
     {
@@ -248,13 +258,16 @@ export default function FormOrderBudget() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="border-gray-300 hover:bg-gray-50"
+            className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10"
             onClick={() => toast.success('Report exported successfully!')}
           >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export to Excel
           </Button>
-          <Button className="bg-[#009999] hover:bg-[#008080] text-white">
+          <Button
+            className="bg-[#009999] hover:bg-[#008080] text-white"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             New Order
           </Button>
@@ -548,6 +561,79 @@ export default function FormOrderBudget() {
       <div className="text-sm text-gray-600">
         Showing {filteredOrders.length} of {orders.length} order budgets
       </div>
+
+      {/* Dialog add new order */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-full">
+          <DialogHeader>
+            <DialogTitle>New Request Order</DialogTitle>
+            <DialogDescription>
+              Add a new order budget
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+            <div>
+              <p className="text-xs text-gray-500 uppercase font-semibold">Record No.</p>
+              <p className="text-sm font-medium text-[#009999]">{ }</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase font-semibold">Request Date</p>
+              <p className="text-sm font-medium font-bold">{ }</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase font-semibold">Jobsite</p>
+              <p className="text-sm font-medium font-bold">{ }</p>
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <Table className="text-xs">
+                  <TableHeader className="sticky top-0 bg-gray-50 z-10 shadow-sm">
+                    <TableRow>
+                      <TableHead className="bg-gray-50">Tools ID</TableHead>
+                      <TableHead className="bg-gray-50">Description</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Size</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Qty</TableHead>
+                      <TableHead className="bg-gray-50">Remark</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {/* {toolDetail.length > 0 ? (
+                                  toolDetail.map((item, idx) => (
+                                    console.log(item), */}
+                    <TableRow>
+                      <TableCell>{ }</TableCell>
+                      <TableCell>{ }</TableCell>
+                      <TableCell className="text-center">{ }</TableCell>
+                      <TableCell className="text-center">{ }</TableCell>
+                      <TableCell>{ }</TableCell>
+                    </TableRow>
+                    {/* ))
+                                ) : ( */}
+                    {/* <TableRow>
+                                    <TableCell colSpan={5} className="text-center">
+                                      No details found
+                                    </TableCell>
+                                  </TableRow> */}
+                    {/* )} */}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

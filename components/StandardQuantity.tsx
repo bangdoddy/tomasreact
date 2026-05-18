@@ -311,7 +311,7 @@ export default function StandardQuantity() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: StdQuantity[]) => setItemList(json))
+      .then((json: StdQuantity[]) => { setItemList(json); console.table(json); })
       .catch((error) => console.error("Error:", error));
   };
 
@@ -400,19 +400,19 @@ export default function StandardQuantity() {
     ReloadCategory()
   }, []);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(itemList.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentItems = itemList.slice(startIndex, endIndex);
-
-  const filteredTransactions = currentItems.filter((transaction) => {
+  // Filter items first
+  const filteredItems = itemList.filter((transaction) => {
     const query = searchQuery.toLowerCase();
     return (
-      transaction.ToolsDesc?.toLowerCase().includes(query) ||
-      transaction.ToolsCategory?.toLowerCase().includes(query)
+      transaction.ToolsDesc?.toLowerCase().includes(query)
     );
   });
+
+  // Pagination calculations based on filtered items
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const filteredTransactions = filteredItems.slice(startIndex, endIndex);
 
   //dashboard
   const totalItems = itemList.length;
