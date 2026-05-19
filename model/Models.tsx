@@ -7,8 +7,8 @@ export interface GlobalModel {
   Status: string;
   ToolsType: string;
 }
- 
-export interface StdQuantity { 
+
+export interface StdQuantity {
   ToolsId: string;
   Jobsite: string;
   ToolsCategory: string;
@@ -18,10 +18,10 @@ export interface StdQuantity {
   ActualQuantity: string;
   RiskCategory: string;
   Sertification: string;
-  Status: string; 
+  Status: string;
 }
 
-export interface GenSetting { 
+export interface GenSetting {
   Kode: string;
   Keterangan: string;
   Detail: string;
@@ -32,9 +32,9 @@ export interface ToolsTypeModel {
   Kode: string;
   Keterangan: string;
   MaxId: string;
-  PartCode: string; 
+  PartCode: string;
 }
- 
+
 export interface RegisterTools {
   ToolsJobsite: string;
   ToolsId: string;
@@ -71,7 +71,7 @@ export interface RegisterTools {
   StatusStd: string;
   ToolsNrpMekanik: string,
   ToolsPicPerson: string,
-  ToolsQty:string
+  ToolsQty: string
 }
 
 export interface AuditRequest {
@@ -85,5 +85,16 @@ export interface AuditRequest {
   Total: string;
   Audited: string;
   RemarkAudit: string;
-  StAudit: string;  
+  StAudit: string;
+}
+
+export interface OrderBudget {
+  orderNo: string;
+  orderDate: string;
+  jobsite: string;
+  location: string;
+  PicTool: string;
+  allocated: string;
+  UsedAmount: string;
+  stOrder: string;
 }

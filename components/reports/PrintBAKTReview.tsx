@@ -35,6 +35,10 @@ interface BaktResult {
     ApprovedByToolsKeeper: string;
     ApprovedBySectionHead: string;
     CreatedDate: string;
+    ApprovalDate1: string;
+    ApprovalDate2: string;
+    ApprovalDate3: string;
+
 }
 
 interface PrintBAKTReviewProps {
@@ -234,6 +238,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                         )}
                         <div>
                             <div className="text-sm font-bold text-gray-900 inline-block px-4">{baktDetails.Nama}</div>
+                            <span className="block text-xs font-bold text-gray-500 uppercase">{formatDate(baktDetails.ApprovalDate1)}</span>
                         </div>
                     </div>
                     <div className="space-y-12">
@@ -249,6 +254,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                         )}
                         <div>
                             <div className="text-sm font-bold text-gray-900 inline-block px-4">{baktDetails.NamaToolKeeper}</div>
+                            <span className="block text-xs font-bold text-gray-500 uppercase">{formatDate(baktDetails.ApprovalDate2)}</span>
                         </div>
                     </div>
                     <div className="space-y-12">
@@ -264,6 +270,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                         )}
                         <div>
                             <div className="text-sm font-bold text-gray-900 inline-block px-4">Plant Section Head</div>
+                            <span className="block text-xs font-bold text-gray-500 uppercase">{formatDate(baktDetails.ApprovalDate3)}</span>
                         </div>
                     </div>
                 </div><br /><br /><br />

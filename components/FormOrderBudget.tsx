@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -43,94 +43,62 @@ import {
 } from './ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { toast } from 'sonner@2.0.3';
+import { useAuth, AuthUsers } from "../service/AuthContext";
+import { GlobalModel, OrderBudget } from "../model/Models";
+import { API } from '../config';
 
-interface OrderBudget {
-  id: string;
-  orderNumber: string;
-  orderDate: string;
-  department: string;
-  requestedBy: string;
-  description: string;
-  category: 'Tools' | 'Equipment' | 'Materials' | 'Services';
-  budgetAllocated: number;
-  budgetUsed: number;
-  status: 'Pending' | 'Approved' | 'Processing' | 'Completed' | 'Rejected';
-  priority: 'High' | 'Medium' | 'Low';
+// interface OrderBudget {
+//   id: string;
+//   orderNumber: string;
+//   orderDate: string;
+//   department: string;
+//   requestedBy: string;
+//   description: string;
+//   category: 'Tools' | 'Equipment' | 'Materials' | 'Services';
+//   budgetAllocated: number;
+//   budgetUsed: number;
+//   status: 'Pending' | 'Approved' | 'Processing' | 'Completed' | 'Rejected';
+//   priority: 'High' | 'Medium' | 'Low';
+// }
+
+interface OrderItem {
+  ToolId: string;
+  Qty: string;
+  Brand: string;
+  StatusCapex: string;
+  Reason: string;
+  Spesifikasi: string;
 }
 
 export default function FormOrderBudget() {
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterCategory, setFilterCategory] = useState('All');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const [orders, setOrders] = useState<OrderBudget[]>([
-    {
-      id: 'ORD-001',
-      orderNumber: 'ORD/2024/12/001',
-      orderDate: '2024-12-10',
-      department: 'Operations',
-      requestedBy: 'John Doe',
-      description: 'Heavy equipment purchase',
-      category: 'Equipment',
-      budgetAllocated: 500000000,
-      budgetUsed: 450000000,
-      status: 'Processing',
-      priority: 'High',
-    },
-    {
-      id: 'ORD-002',
-      orderNumber: 'ORD/2024/12/002',
-      orderDate: '2024-12-09',
-      department: 'Maintenance',
-      requestedBy: 'Jane Smith',
-      description: 'Replacement tools and spare parts',
-      category: 'Tools',
-      budgetAllocated: 150000000,
-      budgetUsed: 150000000,
-      status: 'Completed',
-      priority: 'Medium',
-    },
-    {
-      id: 'ORD-003',
-      orderNumber: 'ORD/2024/12/003',
-      orderDate: '2024-12-11',
-      department: 'Engineering',
-      requestedBy: 'Bob Johnson',
-      description: 'Construction materials for site expansion',
-      category: 'Materials',
-      budgetAllocated: 800000000,
-      budgetUsed: 0,
-      status: 'Pending',
-      priority: 'High',
-    },
-    {
-      id: 'ORD-004',
-      orderNumber: 'ORD/2024/12/004',
-      orderDate: '2024-12-08',
-      department: 'Safety',
-      requestedBy: 'Sarah Wilson',
-      description: 'Safety equipment maintenance services',
-      category: 'Services',
-      budgetAllocated: 75000000,
-      budgetUsed: 0,
-      status: 'Approved',
-      priority: 'Medium',
-    },
-    {
-      id: 'ORD-005',
-      orderNumber: 'ORD/2024/12/005',
-      orderDate: '2024-12-07',
-      department: 'Operations',
-      requestedBy: 'Mike Brown',
-      description: 'Fuel storage equipment upgrade',
-      category: 'Equipment',
-      budgetAllocated: 300000000,
-      budgetUsed: 0,
-      status: 'Rejected',
-      priority: 'Low',
-    },
-  ]);
+  const [orders, setOrders] = useState<OrderBudget[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [editingItem, setEditingItem] = useState<OrderBudget | null>(null);
+  const [formData, setFormData] = useState({
+    OrderNo: 'Auto Generated',
+    Jobsite: '',
+    Location: '',
+    Allocated: '0',
+    UsedAmount: '0'
+  });
+
+  const ReloadOrders = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+    });
+    fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: OrderBudget[]) => { setOrders(json); console.log(json); })
+      .catch((error) => console.error("Error:", error));
+  };
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -227,6 +195,16 @@ export default function FormOrderBudget() {
     toast.success('Order budget deleted successfully!');
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   const stats = {
     totalOrders: orders.length,
     totalBudgetAllocated: orders.reduce((sum, o) => sum + o.budgetAllocated, 0),
@@ -240,6 +218,58 @@ export default function FormOrderBudget() {
   const percentageUsed = stats.totalBudgetAllocated > 0
     ? ((stats.totalBudgetUsed / stats.totalBudgetAllocated) * 100).toFixed(1)
     : '0.0';
+
+  const handleSave = async () => {
+    // if (!formData.OrderNo || !formData.Jobsite || !formData.Allocated) {
+    //   toast.error('Please fill in all required fields');
+    //   return;
+    // }
+    setFormData({ ...formData, Jobsite: currentUser?.Jobsite ?? "", Location: currentUser?.Workgroup ?? "", Allocated: "10000", UsedAmount: "5000" });
+    try {
+      const response = await fetch(API.ORDERTOOLS(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: (editingItem ? "UPDATE" : "INSERT"),
+          jobsite: currentUser?.Jobsite,
+          nrpUser: currentUser?.Nrp,
+          orderNo: formData.OrderNo,
+          location: formData.Location,
+          Allocated: formData.Allocated,
+          UsedAmount: formData.UsedAmount
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadOrders();
+          setEditingItem(null);
+          setIsAddDialogOpen(false);
+          toast.success(resData?.Message ?? 'successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
+  };
+
+  useEffect(() => {
+    ReloadOrders();
+  }, []);
+
+  const currentDate = new Date();
+  const formattedDate = `${String(currentDate.getDate()).padStart(2, '0')}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
 
   return (
     <div className="space-y-6">
@@ -266,7 +296,10 @@ export default function FormOrderBudget() {
           </Button>
           <Button
             className="bg-[#009999] hover:bg-[#008080] text-white"
-            onClick={() => setIsAddDialogOpen(true)}
+            onClick={() => {
+              setIsAddDialogOpen(true);
+            }
+            }
           >
             <Plus className="h-4 w-4 mr-2" />
             New Order
@@ -276,7 +309,7 @@ export default function FormOrderBudget() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="border-[#009999]/20 p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Orders</CardTitle>
           </CardHeader>
@@ -298,8 +331,8 @@ export default function FormOrderBudget() {
             <div className="flex flex-col">
               <div className="text-lg text-gray-900">
                 {formatCurrency(stats.totalBudgetAllocated).replace('Rp', '').trim()}
+                <span className="text-xs text-gray-500 mt-1 ml-2">IDR</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">IDR</p>
             </div>
           </CardContent>
         </Card>
@@ -312,8 +345,8 @@ export default function FormOrderBudget() {
             <div className="flex flex-col">
               <div className="text-lg text-purple-600">
                 {formatCurrency(stats.totalBudgetUsed).replace('Rp', '').trim()}
+                <span className="text-xs text-gray-500 mt-1 ml-2">{percentageUsed}% utilized</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">{percentageUsed}% utilized</p>
             </div>
           </CardContent>
         </Card>
@@ -326,8 +359,8 @@ export default function FormOrderBudget() {
             <div className="flex flex-col">
               <div className="text-lg text-green-600">
                 {formatCurrency(budgetRemaining).replace('Rp', '').trim()}
+                <span className="text-xs text-gray-500 mt-1 ml-2">IDR</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">IDR</p>
             </div>
           </CardContent>
         </Card>
@@ -427,14 +460,11 @@ export default function FormOrderBudget() {
                 <TableRow className="bg-gray-50">
                   <TableHead>Order Number</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Department</TableHead>
                   <TableHead>Requested By</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
                   <TableHead>Budget Allocated</TableHead>
                   <TableHead>Budget Used</TableHead>
                   <TableHead>Remaining</TableHead>
-                  <TableHead>Priority</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
@@ -449,18 +479,18 @@ export default function FormOrderBudget() {
                 ) : (
                   filteredOrders.map((order) => {
                     const remaining = calculateBudgetRemaining(
-                      order.budgetAllocated,
-                      order.budgetUsed
+                      Number(order.allocated),
+                      Number(order.UsedAmount)
                     );
                     const percentUsed = calculatePercentageUsed(
-                      order.budgetAllocated,
-                      order.budgetUsed
+                      Number(order.allocated),
+                      Number(order.UsedAmount)
                     );
 
                     return (
-                      <TableRow key={order.id} className="hover:bg-gray-50">
+                      <TableRow key={order.orderNo} className="hover:bg-gray-50">
                         <TableCell>
-                          <span className="text-[#009999]">{order.orderNumber}</span>
+                          <span className="text-[#009999]">{order.orderNo}</span>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -468,32 +498,28 @@ export default function FormOrderBudget() {
                             {new Date(order.orderDate).toLocaleDateString()}
                           </div>
                         </TableCell>
-                        <TableCell>{order.department}</TableCell>
+
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-gray-400" />
-                            {order.requestedBy}
+                            {order.PicTool}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="max-w-xs truncate" title={order.description}>
-                            {order.description}
+                          <div className="max-w-xs truncate" title="Description">
+                            { }
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge className={`w-fit ${getCategoryColor(order.category)}`}>
-                            {order.category}
-                          </Badge>
-                        </TableCell>
+
                         <TableCell>
                           <span className="text-sm">
-                            {formatCurrency(order.budgetAllocated)}
+                            {formatCurrency(Number(order.allocated))}
                           </span>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="text-sm">
-                              {formatCurrency(order.budgetUsed)}
+                              {formatCurrency(Number(order.UsedAmount))}
                             </span>
                             <span className="text-xs text-gray-500">{percentUsed}%</span>
                           </div>
@@ -503,19 +529,15 @@ export default function FormOrderBudget() {
                             {formatCurrency(remaining)}
                           </span>
                         </TableCell>
-                        <TableCell>
-                          <Badge className={`w-fit ${getPriorityColor(order.priority)}`}>
-                            {order.priority}
-                          </Badge>
-                        </TableCell>
+
                         <TableCell>
                           <Badge
                             className={`flex items-center gap-1 w-fit ${getStatusColor(
-                              order.status
+                              order.stOrder
                             )}`}
                           >
-                            {getStatusIcon(order.status)}
-                            {order.status}
+                            {getStatusIcon(order.stOrder)}
+                            {order.stOrder}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -541,7 +563,7 @@ export default function FormOrderBudget() {
                               size="icon"
                               className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                               title="Delete"
-                              onClick={() => handleDelete(order.id)}
+                              onClick={() => handleDelete(order.orderNo)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -564,29 +586,40 @@ export default function FormOrderBudget() {
 
       {/* Dialog add new order */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-full">
+        <DialogContent className="sm:max-w-[750px]">
           <DialogHeader>
             <DialogTitle>New Request Order</DialogTitle>
             <DialogDescription>
-              Add a new order budget
+              This order generate from CAPEX / OPEX budgeting
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
             <div>
               <p className="text-xs text-gray-500 uppercase font-semibold">Record No.</p>
-              <p className="text-sm font-medium text-[#009999]">{ }</p>
+              <p className="text-sm font-medium text-[#009999]">{formData.OrderNo}</p>
             </div>
 
             <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Request Date</p>
-              <p className="text-sm font-medium font-bold">{ }</p>
+              <p className="text-xs text-gray-500 uppercase font-semibold">Create Date</p>
+              <p className="text-sm font-medium font-bold">{formattedDate}</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase font-semibold">Budget</p>
+              <p className="text-sm font-medium font-bold">{0}</p>
             </div>
 
             <div>
               <p className="text-xs text-gray-500 uppercase font-semibold">Jobsite</p>
-              <p className="text-sm font-medium font-bold">{ }</p>
+              <p className="text-sm font-medium font-bold">{currentUser?.Jobsite}</p>
             </div>
+
+            <div>
+              <p className="text-xs text-gray-500 uppercase font-semibold">Location</p>
+              <p className="text-sm font-medium font-bold">{currentUser?.Workgroup}</p>
+            </div>
+
           </div>
 
           <Card>
@@ -595,10 +628,14 @@ export default function FormOrderBudget() {
                 <Table className="text-xs">
                   <TableHeader className="sticky top-0 bg-gray-50 z-10 shadow-sm">
                     <TableRow>
-                      <TableHead className="bg-gray-50">Tools ID</TableHead>
+                      {/* <TableHead className="bg-gray-50">Tools ID</TableHead> */}
                       <TableHead className="bg-gray-50">Description</TableHead>
-                      <TableHead className="bg-gray-50 text-center">Size</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Part No</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Brand</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Specification</TableHead>
+                      <TableHead className="bg-gray-50 text-center">OPEX/CAPEX</TableHead>
                       <TableHead className="bg-gray-50 text-center">Qty</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Reason</TableHead>
                       <TableHead className="bg-gray-50">Remark</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -611,6 +648,9 @@ export default function FormOrderBudget() {
                       <TableCell>{ }</TableCell>
                       <TableCell className="text-center">{ }</TableCell>
                       <TableCell className="text-center">{ }</TableCell>
+                      <TableCell>{ }</TableCell>
+                      <TableCell>{ }</TableCell>
+                      <TableCell>{ }</TableCell>
                       <TableCell>{ }</TableCell>
                     </TableRow>
                     {/* ))
@@ -630,6 +670,11 @@ export default function FormOrderBudget() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-[#009999] hover:bg-[#007777] text-white" onClick={handleSave}>
+              Submit
             </Button>
           </DialogFooter>
         </DialogContent>
