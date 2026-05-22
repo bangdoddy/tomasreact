@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -57,6 +57,22 @@ import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel } from "../../model/Models";
 import { API } from '../../config';
 import * as XLSX from 'xlsx';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+const CustomDateInput = forwardRef(({ value, onClick, className }: any, ref: any) => (
+  <div className="relative w-full">
+    <Input
+      value={value}
+      onClick={onClick}
+      ref={ref}
+      className={className}
+      readOnly
+      placeholder="dd-MM-yyyy"
+    />
+    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+  </div>
+));
 
 interface Certification {
   Kode: string;
@@ -230,7 +246,7 @@ export default function ToolCertification() {
   const stats = {
     total: certifications.length,
     valid: certifications.filter((c) => c.CertStatus === 'Valid').length,
-    expiringSoon: certifications.filter((c) => c.CertStatus === 'Expiring Soon').length,
+    expiringSoon: certifications.filter((c) => c.CertStatus === 'Soon').length,
     expired: certifications.filter((c) => c.CertStatus === 'Expired').length,
   };
 
@@ -275,7 +291,7 @@ export default function ToolCertification() {
   }
 
   const handleSave = async () => {
-    if (!formData.ToolsId || !formData.CertNumber || !formData.CertBy) {
+    if (!formData.ToolsId) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -714,22 +730,13 @@ export default function ToolCertification() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="CertType">Cert Type *</Label>
-              <Select
-                value={formData.CertType}
-                disabled={editingItem != null}
-                onValueChange={(value) => {
-                  setFormData({ ...formData, CertType: value })
-                }}
-              >
-                <SelectTrigger id="CertType">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem key="Certification" value="Certification">Certification</SelectItem>
-                  <SelectItem key="Calibration" value="Calibration">Calibration</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="Kode">Kode *</Label>
+              <Input
+                id="Kode"
+                disabled={true}
+                value={formData.Kode}
+                onChange={(e) => setFormData({ ...formData, Kode: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="ToolsId">Tools *</Label>
@@ -760,35 +767,35 @@ export default function ToolCertification() {
               {/*</Select>*/}
             </div>
             <div className="grid grid-cols-2 gap-4">
+
               <div className="space-y-2">
-                <Label htmlFor="CertNumber">Cert Number *</Label>
-                <Input
-                  id="CertNumber"
-                  value={formData.CertNumber}
-                  onChange={(e) => setFormData({ ...formData, CertNumber: e.target.value })}
-                  placeholder="e.g., JB001"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="CertExpired">Cert Expired *</Label>
-                <Input
-                  id="CertExpired"
-                  type="date"
-                  value={formData.CertExpired}
-                  onChange={(e) => setFormData({ ...formData, CertExpired: e.target.value })}
-                  placeholder="e.g., JB001"
+                <Label htmlFor="CertStart">Cert Date *</Label>
+                <DatePicker
+                  selected={formData.CertStart ? new Date(formData.CertStart) : null}
+                  onChange={(date: Date | null) => {
+                    if (date) {
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      setFormData(prev => ({ ...prev, CertStart: `${year}-${month}-${day}` }));
+                    } else {
+                      setFormData(prev => ({ ...prev, CertStart: '' }));
+                    }
+                  }}
+                  dateFormat="dd-MM-yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
+                  customInput={
+                    <CustomDateInput
+                      className="w-full pl-10 h-10 border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                    />
+                  }
+                  wrapperClassName="w-full"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="CertBy">Cert By *</Label>
-              <Input
-                id="CertBy"
-                value={formData.CertBy}
-                onChange={(e) => setFormData({ ...formData, CertBy: e.target.value })}
-                placeholder="e.g., JB001"
-              />
-            </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>

@@ -1,23 +1,66 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { DollarSign, TrendingUp, Package, Calendar, FileText } from 'lucide-react';
 import { Button } from './ui/button';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import BudgetingCapex from './budgeting/BudgetingCapex';
-import { initialBudgetCapexData, getBudgetCategories } from '../data/budgetCapexData';
+// (removed unused import)
+import { API } from '../config';
+import { useAuth } from '../service/AuthContext';
+import * as XLSX from 'xlsx';
+
+interface CapexData {
+  Id: string;
+  ToolsJobsite: string;
+  ToolsId: string;
+  ToolsDescription: string;
+  ToolsBrand: string;
+  ToolsSize: string;
+  ToolsQty: string;
+  ToolsExisting: string;
+  ToolsCost: string;
+  StatusCapex: string;
+  Category: string;
+  ToolsPN: string;
+  ToolsKlasifikasi: string;
+  ToolsYear: string;
+  Remarks: string;
+  IsFinal: string;
+}
 
 export default function Capex() {
+  const { currentUser } = useAuth();
   const [showBudgeting, setShowBudgeting] = useState(false);
+  const [capexData, setCapexData] = useState<CapexData[]>([]);
 
-  // Calculate dynamic data from budgeting items
-  const budgetCategories = useMemo(() => getBudgetCategories(initialBudgetCapexData), []);
+  // Calculate budget categories dynamically from fetched Capex data
+  const budgetCategories = useMemo(() => {
+    const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
+    const categoryMap: { [key: string]: { allocated: number; total: number; color: string } } = {};
+    capexData.forEach((item, index) => {
+      const cat = item.Category || 'Uncategorized';
+      if (!categoryMap[cat]) {
+        categoryMap[cat] = { allocated: 0, total: 0, color: colors[Object.keys(categoryMap).length % colors.length] };
+      }
+      const cost = Number(item.ToolsCost) * Number(item.ToolsQty);
+      categoryMap[cat].allocated += cost;
+      // Assuming total budget for category is sum of costs (could be adjusted later)
+      categoryMap[cat].total += cost;
+    });
+    return Object.entries(categoryMap).map(([category, data]) => ({
+      category,
+      allocated: data.allocated,
+      total: data.total,
+      color: data.color,
+    }));
+  }, [capexData]);
 
   const totalBudget = useMemo(() =>
-    initialBudgetCapexData.reduce((sum, item) => sum + (item.cost * item.requirement), 0),
+    capexData.reduce((sum, item) => sum + (Number(item.ToolsCost) * Number(item.ToolsQty)), 0),
     []
   );
 
   const allocated = useMemo(() =>
-    initialBudgetCapexData.reduce((sum, item) => sum + item.totalCost, 0),
+    capexData.reduce((sum, item) => sum + (Number(item.ToolsCost) * Number(item.ToolsQty)), 0),
     []
   );
 
@@ -36,6 +79,26 @@ export default function Capex() {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  const ReloadCapexData = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+      nrp: currentUser.NRP,
+    });
+    fetch(API.CAPEX() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: CapexData[]) => {
+        setCapexData(json);
+        console.log(json);
+      })
+      .catch((error) => console.error("Error:", error));
+  };
+
+  useEffect(() => {
+    ReloadCapexData();
+  }, []);
 
   if (showBudgeting) {
     return (

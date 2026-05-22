@@ -651,14 +651,15 @@ export default function StandardQuantity() {
               <Input
                 id="category"
                 disabled={editingItem != null}
+                maxLength={7}
                 value={formData.ToolsId}
                 onChange={(e) => setFormData({ ...formData, ToolsId: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleToolSearch(formData.ToolsId);
-                  }
-                }}
-                placeholder="Enter Tools ID then press ENTER..."
+                // onKeyDown={(e) => {
+                //   if (e.key === 'Enter') {
+                //     handleToolSearch(formData.ToolsId);
+                //   }
+                // }}
+                placeholder="Enter Tools ID..."
               />
             </div>
             <div className="space-y-2">

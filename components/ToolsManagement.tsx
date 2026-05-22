@@ -538,6 +538,7 @@ export default function ToolsManagement() {
       .then((data) => {
         setTotalPages(data.total ?? -1);
         setItemList(data.data ?? data);
+        console.table(data.data ?? data);
       })
       .catch((error) => console.error("Error:", error));
   };
@@ -1440,10 +1441,10 @@ export default function ToolsManagement() {
               <div className={`grid gap-2 lg:col-span-2 ${(formData.ToolsGroupType !== "TOOL") ? "hidden" : "block"}`}>
                 <Label htmlFor="add-picTools">Pic Tools *</Label>
                 <Select
-                  value={formData.ToolsNrpMekanik}
+                  value={formData.ToolsPicPerson}
                   onValueChange={(value) => {
                     const selected = picTools.find(j => j.Kode === value);
-                    setFormData({ ...formData, ToolsNrpMekanik: value, ToolsPicPerson: selected.Nama, PicTools: selected.Keterangan })
+                    setFormData({ ...formData, ToolsPicPerson: value, PicTools: selected?.Keterangan || '' })
                   }}
                 >
                   <SelectTrigger id="add-picTools">
@@ -1470,7 +1471,7 @@ export default function ToolsManagement() {
                   value={formData.ToolsIDToolBox}
                   onValueChange={(value) => {
                     const selected = toolBoxList.find(j => j.Kode === value);
-                    setFormData({ ...formData, ToolsIDToolBox: value, ToolsPICToolBox: selected.KategoriId })
+                    setFormData({ ...formData, ToolsIDToolBox: value, ToolsPICToolBox: selected?.KategoriId || '' })
                   }}
                 >
                   <SelectTrigger id="add-toolboxid">

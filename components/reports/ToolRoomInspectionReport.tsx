@@ -1,32 +1,226 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import AutoComplete from '../ui/AutoComplete';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Search, Download, ClipboardCheck } from 'lucide-react';
+import { Search, Download, Package, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Label } from '../ui/label';
+import { API } from '../../config';
+import { useAuth } from '../../service/AuthContext';
+import * as XLSX from 'xlsx';
+
+interface ToolRoomData {
+  ToolsBoxId: string;
+  ToolsId: string;
+  ToolsDesc: string;
+  ToolsBrand: string;
+  ToolsSize: string;
+  ToolsPartNumber: string;
+  ToolsCondition: string;
+  ToolsLocation: string;
+  Jan?: string | null;
+  Feb?: string | null;
+  Mar?: string | null;
+  Apr?: string | null;
+  May?: string | null;
+  Jun?: string | null;
+  Jul?: string | null;
+  Aug?: string | null;
+  Sep?: string | null;
+  Oct?: string | null;
+  Nov?: string | null;
+  Dec?: string | null;
+  AuditMonth: { month: string; status: string | null }[];
+}
+
+interface ToolBoxData {
+  Idx: string;
+  ToolsBoxType: string;
+  ToolsBoxBrand: string;
+  ToolsPICToolBox: string;
+  ToolsIDToolBox: string;
+  ToolsSize: string;
+}
+
+const monthsList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function ToolRoomInspectionReport() {
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const stats = { total: 124, passed: 112, failed: 8, pending: 4 };
+  const [searchToolbox, setSearchToolbox] = useState('ALL');
+  const [toolBox, setToolBox] = useState<ToolBoxData[]>([]);
+  const [reportData, setReportData] = useState<ToolRoomData[]>([]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return reportData;
+
+    return reportData.filter(row => {
+      const matchesSearch =
+        row.ToolsId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        row.ToolsDesc.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        row.ToolsBrand.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return matchesSearch;
+    });
+  }, [reportData, searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const toolBoxOptions = toolBox.map(box => ({
+    id: box.ToolsIDToolBox,
+    label: box.ToolsIDToolBox + ' - ' + box.ToolsPICToolBox
+  }));
+
+  const handleSelectToolBox = (option: { id: string, label: string }) => {
+    setSearchToolbox(option.id);
+    setCurrentPage(1);
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    setSearchToolbox('ALL');
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentItems = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+
+  const stats = useMemo(() => {
+    let totalInspections = 0;
+    let passed = 0;
+    let failed = 0;
+    let missing = 0
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    reportData.forEach(tool => {
+      months.forEach(month => {
+        const status = (tool as any)[month];
+        if (status && status.trim() !== '') {
+          totalInspections++;
+          if (status === 'Good') {
+            passed++;
+          } else if (status === 'R1' || status === 'R2') {
+            failed++;
+          } else if (status === 'TA') {
+            missing++;
+          }
+        }
+      });
+    });
+
+    return {
+      total: totalInspections,
+      passed: passed,
+      failed: failed,
+      missing: missing,
+      // pending: reportData.length // Total tools tracked in report view
+    };
+  }, [reportData]);
+
+  const ReloadAuditData = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+      act: "AUDITTOOLSROOM"
+    });
+    fetch(API.AUDITTOOLS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: ToolRoomData[]) => {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const mapped = (json || []).map(item => ({
+          ...item,
+          AuditMonth: months.map(m => ({
+            month: m,
+            status: (item as any)[m] || null
+          }))
+        }));
+
+        setReportData(mapped);
+        console.log(mapped);
+      })
+      .catch((error) => console.error("Error:", error));
+  };
+
+  const handleExportExcel = () => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const filename = `Toolbox_items_Audit_${currentYear}.xlsx`;
+
+      const exportData = reportData.map((item, index) => {
+        const row: any = {
+          'NO': index + 1,
+          'TOOLS LOCATION': item.ToolsLocation,
+          'TOOLSID': item.ToolsId,
+          'DESCRIPTION': item.ToolsDesc,
+          'BRAND': item.ToolsBrand,
+          'SIZE': item.ToolsSize,
+        };
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        months.forEach(m => {
+          row[m.toUpperCase()] = (item as any)[m] || '';
+        });
+
+        return row;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Audit Report");
+
+      XLSX.writeFile(workbook, filename);
+      toast.success('Excel report exported successfully!');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export Excel report.');
+    }
+  };
+
+  const GetToolBox = () => {
+    const params = new URLSearchParams({
+      showdata: "TOOLBOX",
+      jobsite: currentUser.Jobsite
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: ToolBoxData[]) => setToolBox(json))
+      .catch((error) => console.error("Error:", error));
+  }
+
+  useEffect(() => {
+    ReloadAuditData();
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl text-gray-900 flex items-center gap-2">
-            <ClipboardCheck className="h-7 w-7 text-[#009999]" />
+            <Package className="h-7 w-7 text-[#009999]" />
             Tool Room Inspection Report
           </h1>
           <p className="text-sm text-gray-600 mt-1">Tool room inspection results and compliance</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast.success('Report exported!')}>
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10" onClick={() => toast.success('Report exported!')}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
           </Button>
-          <Button className="bg-[#009999] hover:bg-[#008080] text-white" onClick={() => toast.success('Excel exported!')}>
+          <Button variant="outline" className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10" onClick={handleExportExcel}>
             <Download className="h-4 w-4 mr-2" />
             Export Excel
           </Button>
@@ -34,37 +228,37 @@ export default function ToolRoomInspectionReport() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="border-[#009999]/20">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Total Inspections</CardTitle>
           </CardHeader>
           <CardContent><div className="text-2xl text-gray-900">{stats.total}</div></CardContent>
         </Card>
-        <Card className="border-green-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Passed</CardTitle>
           </CardHeader>
           <CardContent><div className="text-2xl text-green-600">{stats.passed}</div></CardContent>
         </Card>
-        <Card className="border-red-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Failed</CardTitle>
+            <CardTitle className="text-sm text-gray-600">Damage</CardTitle>
           </CardHeader>
           <CardContent><div className="text-2xl text-red-600">{stats.failed}</div></CardContent>
         </Card>
-        <Card className="border-yellow-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Pending</CardTitle>
+            <CardTitle className="text-sm text-gray-600">Missing</CardTitle>
           </CardHeader>
-          <CardContent><div className="text-2xl text-yellow-600">{stats.pending}</div></CardContent>
+          <CardContent><div className="text-2xl text-yellow-600">{stats.missing}</div></CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
+        <CardContent className="pt-4 flex gap-2 p-2">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search inspections..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+            <Input placeholder="Search by Tool ID, Tool Name or Brand..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
         </CardContent>
       </Card>
@@ -72,37 +266,108 @@ export default function ToolRoomInspectionReport() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="border border-gray-200">
               <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead>Inspection ID</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Inspection Date</TableHead>
-                  <TableHead>Inspector</TableHead>
-                  <TableHead className="text-center">Result</TableHead>
+                <TableRow className="border-b-0 divide-x divide-gray-300">
+                  {['NO', 'TOOLS LOCATION', 'TOOLSID', 'DESCRIPTION', 'BRAND', 'SIZE'].map((col, i) => (
+                    <TableHead key={i} className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">
+                      {col}
+                    </TableHead>
+                  ))}
+                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                    <TableHead key={i} className="bg-yellow-100 font-bold py-3 text-center whitespace-nowrap px-4 border-b-2 text-gray-700 text-xs">
+                      {month}
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="text-[#009999]">TR-INS-001</TableCell>
-                  <TableCell>Tool Room A</TableCell>
-                  <TableCell>2024-12-10</TableCell>
-                  <TableCell>John Inspector</TableCell>
-                  <TableCell className="text-center">
-                    <Badge className="bg-green-100 text-green-700 border-green-300">Passed</Badge>
-                  </TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="text-[#009999]">TR-INS-002</TableCell>
-                  <TableCell>Tool Room B</TableCell>
-                  <TableCell>2024-12-08</TableCell>
-                  <TableCell>Jane Inspector</TableCell>
-                  <TableCell className="text-center">
-                    <Badge className="bg-red-100 text-red-700 border-red-300">Failed</Badge>
-                  </TableCell>
-                </TableRow>
+                {currentItems.map((row, index) => (
+                  <TableRow key={row.ToolsId} className="hover:bg-gray-50 divide-x divide-gray-100">
+                    <TableCell className="text-center text-xs py-2">{startIndex + index + 1}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{row.ToolsLocation}</TableCell>
+                    <TableCell className="text-xs font-mono whitespace-nowrap">{row.ToolsId}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{row.ToolsDesc}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{row.ToolsBrand}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap text-center">{row.ToolsSize}</TableCell>
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => {
+                      const status = (row as any)[month] || null;
+                      return (
+                        <TableCell key={i} className="text-center text-[10px] py-2 border-l border-gray-100">
+                          {status ? (
+                            <span className={
+                              status === 'Good' ? "text-green-600 font-bold" :
+                                status === 'R1' || status === 'R2' ? "text-red-600 font-bold" :
+                                  status === 'TA' ? "text-yellow-600 font-bold" : "text-gray-600"
+                            }>
+                              {status}
+                            </span>
+                          ) : '-'}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+                {currentItems.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={18} className="h-32 text-center text-gray-500 italic">
+                      No records found.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between p-4 bg-gray-50/30 border-t border-gray-100">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="itemsPerPage" className="text-xs text-gray-500">
+                Items per page:
+              </Label>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger id="itemsPerPage" className="h-8 w-20 text-xs bg-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-gray-500">
+                Page {currentPage} of {totalPages || 1}
+              </span>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 bg-white"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 bg-white"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

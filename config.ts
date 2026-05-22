@@ -21,5 +21,7 @@ export const API = {
   BAKT: () => `${CONFIG.apiBaseUrl}/api/Bakt`,
   AUDITTOOLS: () => `${CONFIG.apiBaseUrl}/api/AuditTools`,
   CERTIFICATION: () => `${CONFIG.apiBaseUrl}/api/Certification`,
+  CAPEX: () => `${CONFIG.apiBaseUrl}/api/Budget/Capex`,
   ORDERTOOLS: () => `${CONFIG.apiBaseUrl}/api/Order`,
+  SENDMAIL: () => `${CONFIG.apiBaseUrl}/api/Mail`
 };

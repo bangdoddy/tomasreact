@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -39,10 +39,33 @@ import {
 import { Plus, Edit, Trash2, Download, Send } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { BudgetCapexItem, initialBudgetCapexData } from '../../data/budgetCapexData';
+import { API } from '../../config';
+import { useAuth } from '../../service/AuthContext';
+import * as XLSX from 'xlsx';
+
+interface CapexData {
+  Id: string;
+  ToolsJobsite: string;
+  ToolsId: string;
+  ToolsDescription: string;
+  ToolsBrand: string;
+  ToolsSize: string;
+  ToolsQty: string;
+  ToolsExisting: string;
+  ToolsCost: string;
+  StatusCapex: string;
+  Category: string;
+  ToolsPN: string;
+  ToolsKlasifikasi: string;
+  ToolsYear: string;
+  Remarks: string;
+  IsFinal: string;
+}
 
 export default function BudgetingCapex() {
-  const [items, setItems] = useState<BudgetCapexItem[]>(initialBudgetCapexData);
+  const { currentUser } = useAuth();
   const [yearFilter, setYearFilter] = useState<string>('All');
+  const [capexData, setCapexData] = useState<CapexData[]>([]);
 
   // Simulating user role - in real app, this would come from auth context
   const [userRole] = useState<string>('Super User'); // Can be 'Super User' or 'PIC Tools'
@@ -72,31 +95,47 @@ export default function BudgetingCapex() {
     finalBudget: 'No',
   });
 
+  const ReloadCapexData = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+      nrp: currentUser.NRP,
+    });
+    fetch(API.CAPEX() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: CapexData[]) => {
+        setCapexData(json);
+        console.log(json);
+      })
+      .catch((error) => console.error("Error:", error));
+  };
+
   // Filter items by year
   const filteredItems = useMemo(() => {
-    if (yearFilter === 'All') return items;
-    return items.filter(item => item.year === yearFilter);
-  }, [items, yearFilter]);
+    if (yearFilter === 'All') return capexData;
+    return capexData.filter(item => item.ToolsYear === yearFilter);
+  }, [capexData, yearFilter]);
 
   // Get unique years from items
   const availableYears = useMemo(() => {
-    const years = new Set(items.map(item => item.year));
+    const years = new Set(capexData.map(item => item.ToolsYear));
     return ['All', ...Array.from(years).sort()];
-  }, [items]);
+  }, [capexData]);
 
   const handleInputChange = (field: keyof BudgetCapexItem, value: string | number) => {
     const updatedData = { ...formData, [field]: value };
-    
+
     // Auto-calculate deviasi and totalCost
     if (field === 'requirement' || field === 'existing' || field === 'cost') {
       const req = Number(field === 'requirement' ? value : updatedData.requirement || 0);
       const exist = Number(field === 'existing' ? value : updatedData.existing || 0);
       const costValue = Number(field === 'cost' ? value : updatedData.cost || 0);
-      
+
       updatedData.deviasi = req - exist;
       updatedData.totalCost = updatedData.deviasi * costValue;
     }
-    
+
     setFormData(updatedData);
   };
 
@@ -163,7 +202,7 @@ export default function BudgetingCapex() {
 
   const handleSubmit = () => {
     const itemsToSubmit = items.filter(item => item.finalBudget === 'Yes');
-    
+
     if (itemsToSubmit.length === 0) {
       toast.error('No items with Final Budget = "Yes" to submit');
       return;
@@ -182,10 +221,10 @@ export default function BudgetingCapex() {
   };
 
   // Calculate totals
-  const totalRequirement = filteredItems.reduce((sum, item) => sum + item.requirement, 0);
-  const totalExisting = filteredItems.reduce((sum, item) => sum + item.existing, 0);
-  const totalDeviasi = filteredItems.reduce((sum, item) => sum + item.deviasi, 0);
-  const totalCost = filteredItems.reduce((sum, item) => sum + item.totalCost, 0);
+  const totalRequirement = filteredItems.reduce((sum, item) => sum + Number(item.ToolsQty), 0);
+  const totalExisting = filteredItems.reduce((sum, item) => sum + Number(item.ToolsExisting), 0);
+  const totalDeviasi = filteredItems.reduce((sum, item) => sum + (Number(item.ToolsQty) - Number(item.ToolsExisting)), 0);
+  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.ToolsCost), 0);
 
   const handleDownloadExcel = () => {
     // Create CSV content for Excel
@@ -274,6 +313,10 @@ export default function BudgetingCapex() {
     toast.success('Excel file downloaded successfully!');
   };
 
+  useEffect(() => {
+    ReloadCapexData();
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -346,73 +389,71 @@ export default function BudgetingCapex() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="border border-gray-200">
               <TableHeader>
-                <TableRow className="bg-[#003366]">
-                  <TableHead className="text-white">ToolsId</TableHead>
-                  <TableHead className="text-white">ToolsCategory</TableHead>
-                  <TableHead className="text-white">Tools Description</TableHead>
-                  <TableHead className="text-white">Year</TableHead>
-                  <TableHead className="text-white">StatusCapex</TableHead>
-                  <TableHead className="text-white">Cost</TableHead>
-                  <TableHead className="text-white">Brand</TableHead>
-                  <TableHead className="text-white">Size</TableHead>
-                  <TableHead className="text-white">PN</TableHead>
-                  <TableHead className="text-white">Klasifikasi Tool</TableHead>
-                  <TableHead className="text-white">Requirement</TableHead>
-                  <TableHead className="text-white">Existing</TableHead>
-                  <TableHead className="text-white">Deviasi</TableHead>
-                  <TableHead className="text-white">Total Cost</TableHead>
-                  <TableHead className="text-white">Remarks</TableHead>
-                  <TableHead className="text-white">Final Budget</TableHead>
-                  <TableHead className="text-white text-center">Actions</TableHead>
+                <TableRow className="border-b-0 divide-x divide-gray-300">
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">ToolsId</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">ToolsCategory</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Tools Description</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Year</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">StatusCapex</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Cost</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Brand</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Size</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">PN</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Klasifikasi Tool</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Requirement</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Existing</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Deviasi</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Total Cost</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Remarks</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Final Budget</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredItems.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium">{item.toolsId}</TableCell>
-                    <TableCell>{item.toolsCategory}</TableCell>
-                    <TableCell>{item.toolsDescription}</TableCell>
-                    <TableCell>{item.year}</TableCell>
+                  <TableRow key={item.Id} className="hover:bg-gray-50 text-xs">
+                    <TableCell className="font-medium">{item.ToolsId}</TableCell>
+                    <TableCell>{item.Category}</TableCell>
+                    <TableCell>{item.ToolsDescription}</TableCell>
+                    <TableCell>{item.ToolsYear}</TableCell>
                     <TableCell>
                       <span className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-700">
-                        {item.statusCapex}
+                        {item.StatusCapex}
                       </span>
                     </TableCell>
-                    <TableCell>{formatIDR(item.cost)}</TableCell>
-                    <TableCell>{item.brand}</TableCell>
-                    <TableCell>{item.size}</TableCell>
-                    <TableCell>{item.pn}</TableCell>
-                    <TableCell>{item.klasifikasiTool}</TableCell>
-                    <TableCell className="text-center">{item.requirement}</TableCell>
-                    <TableCell className="text-center">{item.existing}</TableCell>
+                    <TableCell>{formatIDR(Number(item.ToolsCost))}</TableCell>
+                    <TableCell>{item.ToolsBrand}</TableCell>
+                    <TableCell>{item.ToolsSize}</TableCell>
+                    <TableCell>{item.ToolsPN}</TableCell>
+                    <TableCell>{item.ToolsKlasifikasi}</TableCell>
+                    <TableCell className="text-center">{item.ToolsQty}</TableCell>
+                    <TableCell className="text-center">{item.ToolsExisting}</TableCell>
                     <TableCell className="text-center">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          item.deviasi > 0
-                            ? 'bg-red-100 text-red-700'
-                            : item.deviasi === 0
+                        className={`px-2 py-1 rounded text-xs ${Number(item.ToolsQty) - Number(item.ToolsExisting) > 0
+                          ? 'bg-red-100 text-red-700'
+                          : Number(item.ToolsQty) - Number(item.ToolsExisting) === 0
                             ? 'bg-green-100 text-green-700'
                             : 'bg-gray-100 text-gray-700'
-                        }`}
+                          }`}
                       >
-                        {item.deviasi}
+                        {Number(item.ToolsQty) - 1}
                       </span>
                     </TableCell>
-                    <TableCell className="font-medium">{formatIDR(item.totalCost)}</TableCell>
-                    <TableCell className="max-w-xs truncate" title={item.remarks}>
-                      {item.remarks}
+                    <TableCell className="font-medium">{formatIDR(Number(item.ToolsCost))}</TableCell>
+                    <TableCell className="max-w-xs truncate" title={item.Remarks}>
+                      {item.Remarks}
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          item.finalBudget === 'Yes'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
+                        className={`px-2 py-1 rounded text-xs ${item.IsFinal === 'Yes'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                          }`}
                       >
-                        {item.finalBudget}
+                        {item.IsFinal}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -452,13 +493,12 @@ export default function BudgetingCapex() {
                     <strong>{totalExisting}</strong>
                   </TableCell>
                   <TableCell className="text-center">
-                    <strong className={`px-2 py-1 rounded text-xs ${
-                      totalDeviasi > 0
-                        ? 'bg-red-100 text-red-700'
-                        : totalDeviasi === 0
+                    <strong className={`px-2 py-1 rounded text-xs ${totalDeviasi > 0
+                      ? 'bg-red-100 text-red-700'
+                      : totalDeviasi === 0
                         ? 'bg-green-100 text-green-700'
                         : 'bg-gray-100 text-gray-700'
-                    }`}>
+                      }`}>
                       {totalDeviasi}
                     </strong>
                   </TableCell>

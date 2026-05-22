@@ -102,8 +102,8 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
         return <InspectionScheduling />;
       case 'toolbox-inspection':
         return <ToolBoxInspection />;
-      // case 'toolroom-inspection':
-      //   return <ToolRoomInspection />;
+      case 'toolroom-inspection':
+        return <ToolRoomInspection />;
       case 'tool-certification':
         return <ToolCertification />;
       case 'user-population':
@@ -118,8 +118,8 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
         return <BAKTReport />;
       case 'disposed-tool-report':
         return <DisposedToolReport />;
-      // case 'toolroom-inspection-report':
-      //   return <ToolRoomInspectionReport />;
+      case 'toolroom-inspection-report':
+        return <ToolRoomInspectionReport />;
       case 'toolbox-inspection-report':
         return <ToolBoxInspectionReport />;
       case 'certification-calibration-report':

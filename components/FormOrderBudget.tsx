@@ -102,15 +102,12 @@ export default function FormOrderBudget() {
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.department.toLowerCase().includes(searchTerm.toLowerCase());
+      order.orderno.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = filterStatus === 'All' || order.status === filterStatus;
-    const matchesCategory = filterCategory === 'All' || order.category === filterCategory;
+    const matchesStatus = filterStatus === 'All' || order.StOrder === filterStatus;
+    // const matchesCategory = filterCategory === 'All' || order.category === filterCategory;
 
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus;// && matchesCategory;
   });
 
   const getStatusColor = (status: string) => {
@@ -207,11 +204,11 @@ export default function FormOrderBudget() {
 
   const stats = {
     totalOrders: orders.length,
-    totalBudgetAllocated: orders.reduce((sum, o) => sum + o.budgetAllocated, 0),
-    totalBudgetUsed: orders.reduce((sum, o) => sum + o.budgetUsed, 0),
-    pending: orders.filter((o) => o.status === 'Pending').length,
-    processing: orders.filter((o) => o.status === 'Processing').length,
-    completed: orders.filter((o) => o.status === 'Completed').length,
+    totalBudgetAllocated: orders.reduce((sum, o) => sum + Number(o.Allocated), 0),
+    totalBudgetUsed: orders.reduce((sum, o) => sum + Number(o.UsedAmount), 0),
+    pending: orders.filter((o) => o.StOrder === 'Pending').length,
+    processing: orders.filter((o) => o.StOrder === 'Processing').length,
+    completed: orders.filter((o) => o.StOrder === 'Completed').length,
   };
 
   const budgetRemaining = stats.totalBudgetAllocated - stats.totalBudgetUsed;
@@ -224,7 +221,7 @@ export default function FormOrderBudget() {
     //   toast.error('Please fill in all required fields');
     //   return;
     // }
-    setFormData({ ...formData, Jobsite: currentUser?.Jobsite ?? "", Location: currentUser?.Workgroup ?? "", Allocated: "10000", UsedAmount: "5000" });
+    setFormData({ ...formData, Allocated: "10000", UsedAmount: "5000" });
     try {
       const response = await fetch(API.ORDERTOOLS(), {
         method: "POST",
@@ -236,7 +233,7 @@ export default function FormOrderBudget() {
           jobsite: currentUser?.Jobsite,
           nrpUser: currentUser?.Nrp,
           orderNo: formData.OrderNo,
-          location: formData.Location,
+          location: currentUser?.Workgroup,
           Allocated: formData.Allocated,
           UsedAmount: formData.UsedAmount
         })
@@ -416,7 +413,7 @@ export default function FormOrderBudget() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Search by order number, description, or department..."
+            placeholder="Search by requestor or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-white border-gray-400"
@@ -424,7 +421,7 @@ export default function FormOrderBudget() {
         </div>
 
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
+          <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400 hidden">
             <SelectValue placeholder="Filter by Category" />
           </SelectTrigger>
           <SelectContent>
@@ -479,23 +476,22 @@ export default function FormOrderBudget() {
                 ) : (
                   filteredOrders.map((order) => {
                     const remaining = calculateBudgetRemaining(
-                      Number(order.allocated),
+                      Number(order.Allocated),
                       Number(order.UsedAmount)
                     );
                     const percentUsed = calculatePercentageUsed(
-                      Number(order.allocated),
+                      Number(order.Allocated),
                       Number(order.UsedAmount)
                     );
 
                     return (
-                      <TableRow key={order.orderNo} className="hover:bg-gray-50">
+                      <TableRow key={order.orderno} className="text-xs hover:bg-gray-50">
                         <TableCell>
-                          <span className="text-[#009999]">{order.orderNo}</span>
+                          <span className="text-[#009999]">{order.orderno}</span>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {new Date(order.orderDate).toLocaleDateString()}
+                            {formatDate(order.orderdate)}
                           </div>
                         </TableCell>
 
@@ -507,13 +503,13 @@ export default function FormOrderBudget() {
                         </TableCell>
                         <TableCell>
                           <div className="max-w-xs truncate" title="Description">
-                            { }
+                            {order.remark}
                           </div>
                         </TableCell>
 
                         <TableCell>
                           <span className="text-sm">
-                            {formatCurrency(Number(order.allocated))}
+                            {formatCurrency(Number(order.Allocated))}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -533,11 +529,11 @@ export default function FormOrderBudget() {
                         <TableCell>
                           <Badge
                             className={`flex items-center gap-1 w-fit ${getStatusColor(
-                              order.stOrder
+                              order.StOrder
                             )}`}
                           >
-                            {getStatusIcon(order.stOrder)}
-                            {order.stOrder}
+                            {getStatusIcon(order.StOrder)}
+                            {order.StOrder}
                           </Badge>
                         </TableCell>
                         <TableCell>

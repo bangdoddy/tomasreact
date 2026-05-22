@@ -89,12 +89,13 @@ export interface AuditRequest {
 }
 
 export interface OrderBudget {
-  orderNo: string;
-  orderDate: string;
+  orderno: string;
+  orderdate: string;
   jobsite: string;
   location: string;
   PicTool: string;
-  allocated: string;
+  Allocated: string;
   UsedAmount: string;
-  stOrder: string;
+  remark: string;
+  StOrder: string;
 }
