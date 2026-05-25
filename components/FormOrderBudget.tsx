@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Label } from './ui/label';
 import {
   Search,
   Plus,
@@ -590,18 +591,28 @@ export default function FormOrderBudget() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <div className="grid gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
             <div>
               <p className="text-xs text-gray-500 uppercase font-semibold">Record No.</p>
               <p className="text-sm font-medium text-[#009999]">{formData.OrderNo}</p>
             </div>
 
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Create Date</p>
-              <p className="text-sm font-medium font-bold">{formattedDate}</p>
+            <div className="space-y-2">
+              <Label>Select Source</Label>
+              <Select
+                value={"CAPEX"}
+              >
+                <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CAPEX">CAPEX</SelectItem>
+                  <SelectItem value="OPEX">OPEX</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
+            {/* <div>
               <p className="text-xs text-gray-500 uppercase font-semibold">Budget</p>
               <p className="text-sm font-medium font-bold">{0}</p>
             </div>
@@ -614,7 +625,7 @@ export default function FormOrderBudget() {
             <div>
               <p className="text-xs text-gray-500 uppercase font-semibold">Location</p>
               <p className="text-sm font-medium font-bold">{currentUser?.Workgroup}</p>
-            </div>
+            </div> */}
 
           </div>
 
@@ -629,7 +640,7 @@ export default function FormOrderBudget() {
                       <TableHead className="bg-gray-50 text-center">Part No</TableHead>
                       <TableHead className="bg-gray-50 text-center">Brand</TableHead>
                       <TableHead className="bg-gray-50 text-center">Specification</TableHead>
-                      <TableHead className="bg-gray-50 text-center">OPEX/CAPEX</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Cost</TableHead>
                       <TableHead className="bg-gray-50 text-center">Qty</TableHead>
                       <TableHead className="bg-gray-50 text-center">Reason</TableHead>
                       <TableHead className="bg-gray-50">Remark</TableHead>

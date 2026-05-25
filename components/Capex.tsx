@@ -56,12 +56,12 @@ export default function Capex() {
 
   const totalBudget = useMemo(() =>
     capexData.reduce((sum, item) => sum + (Number(item.ToolsCost) * Number(item.ToolsQty)), 0),
-    []
+    [capexData]
   );
 
   const allocated = useMemo(() =>
     capexData.reduce((sum, item) => sum + (Number(item.ToolsCost) * Number(item.ToolsQty)), 0),
-    []
+    [capexData]
   );
 
   const remaining = totalBudget - allocated;
@@ -83,7 +83,7 @@ export default function Capex() {
   const ReloadCapexData = () => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
-      nrp: currentUser.NRP,
+      nrp: currentUser.Nrp,
     });
     fetch(API.CAPEX() + `?${params.toString()}`, {
       method: "GET"

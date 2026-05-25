@@ -152,8 +152,6 @@ export default function ActivationToolApproval() {
         return 'bg-green-100 text-green-700 border-green-300';
       case 'Approved LV2':
         return 'bg-green-100 text-green-700 border-green-300';
-      case 'Approved LV2':
-        return 'bg-green-100 text-green-700 border-green-300';
       case 'Rejected':
         return 'bg-red-100 text-red-700 border-red-300';
       default:

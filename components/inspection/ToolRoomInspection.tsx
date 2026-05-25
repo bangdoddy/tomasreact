@@ -79,56 +79,6 @@ export default function ToolRoomInspection() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // const [inspections, setInspections] = useState<ToolRoomInspectionData[]>([
-  //   {
-  //     id: 'TRI-001',
-  //     roomId: 'ROOM-A1',
-  //     roomName: 'Main Tool Room',
-  //     inspectionDate: '2024-12-10',
-  //     inspector: 'John Doe',
-  //     toolsCount: 450,
-  //     status: 'Excellent',
-  //     cleanliness: 'Clean',
-  //     issues: 'None',
-  //     nextInspection: '2025-01-10',
-  //   },
-  //   {
-  //     id: 'TRI-002',
-  //     roomId: 'ROOM-B2',
-  //     roomName: 'Workshop Storage',
-  //     inspectionDate: '2024-12-09',
-  //     inspector: 'Jane Smith',
-  //     toolsCount: 320,
-  //     status: 'Good',
-  //     cleanliness: 'Acceptable',
-  //     issues: 'Minor dust accumulation',
-  //     nextInspection: '2025-01-09',
-  //   },
-  //   {
-  //     id: 'TRI-003',
-  //     roomId: 'ROOM-C3',
-  //     roomName: 'Heavy Equipment Room',
-  //     inspectionDate: '2024-12-08',
-  //     inspector: 'Bob Johnson',
-  //     toolsCount: 180,
-  //     status: 'Fair',
-  //     cleanliness: 'Needs Cleaning',
-  //     issues: 'Oil spills, poor organization',
-  //     nextInspection: '2024-12-15',
-  //   },
-  //   {
-  //     id: 'TRI-004',
-  //     roomId: 'ROOM-D4',
-  //     roomName: 'Site Tool Storage',
-  //     inspectionDate: '2024-12-11',
-  //     inspector: 'Sarah Wilson',
-  //     toolsCount: 280,
-  //     status: 'Good',
-  //     cleanliness: 'Clean',
-  //     issues: 'None',
-  //     nextInspection: '2025-01-11',
-  //   },
-  // ]);
 
   const filteredInspections = toolsList.filter((inspection) => {
     return (
@@ -144,9 +94,12 @@ export default function ToolRoomInspection() {
   const isPagingShow = filteredInspections.length > itemsPerPage;
 
   /* Todo List Pagination Logic */
-  const totalTodoPages = Math.ceil(toolsList.length / todoItemsPerPage);
+  const filteredTools = toolsList.filter((tool) =>
+    tool.Nama.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const totalTodoPages = Math.ceil(filteredTools.length / todoItemsPerPage);
   const startTodoIndex = (todoCurrentPage - 1) * todoItemsPerPage;
-  const currentTodoItems = toolsList.slice(startTodoIndex, startTodoIndex + todoItemsPerPage);
+  const currentTodoItems = filteredTools.slice(startTodoIndex, startTodoIndex + todoItemsPerPage);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -207,7 +160,7 @@ export default function ToolRoomInspection() {
         // const filtered = (json || []).filter(t => t.ToolsIDToolBox === targetBoxId);
         const filtered = (json);
         setToolsList(filtered);
-        setSearchTerm(filtered[0].Nama);
+        // setSearchTerm(filtered[0].Nama);
 
         // Initialize conditions
         const initialConditions: Record<string, string> = {};
@@ -345,26 +298,23 @@ export default function ToolRoomInspection() {
         </div>
       </div>
 
-      {/* Header Tool Box */}
-      <Card className="border-none shadow-sm bg-gray-50/50">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tool Box Information</span>
-                <div className="flex items-center gap-2">
-                  <span className="uppercase font-medium text-gray-600 tracking-wider">
-                    {toolsList.length > 0 ? toolsList[0].ToolsIDToolBox : '---'}
-                  </span>
 
-                  <span className="text-gray-600 font-medium">
-                    {toolsList.length > 0 ? toolsList[0].Nama : 'No Toolbox Selected'}
-                  </span>
-                </div>
-              </div>
-            </div>
+      <div className="flex flex-col sm:flex-row gap-4 p-1">
+        {/* Filters */}
+        <div className="relative flex-1 p-2">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search by tools description..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setTodoCurrentPage(1);
+            }}
+            className="pl-10 bg-white border-gray-400"
+          />
+        </div>
 
-            {/* <Button
+        {/* <Button
               variant="outline"
               onClick={handleReset}
               className="h-10 px-4 flex items-center gap-2 border-gray-200 hover:bg-gray-100 text-gray-600"
@@ -373,9 +323,8 @@ export default function ToolRoomInspection() {
               <RefreshCcw className="h-4 w-4" />
               Reset
             </Button> */}
-          </div>
-        </CardContent>
-      </Card>
+      </div>
+
 
       {/* Tool Todo List */}
       {toolsList.length > 0 ? (
@@ -401,66 +350,73 @@ export default function ToolRoomInspection() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(currentTodoItems.map((tool, index) => (
-                    <TableRow
-                      key={tool.Kode}
-                      className={`hover:bg-[#009999]/5 transition-all duration-200 ${toolConditions[tool.Kode] ? 'bg-green-50/30' : ''}`}
-                    >
-                      <TableCell className="text-center text-gray-400 font-medium">
-                        {String(startTodoIndex + index + 1).padStart(2, '0')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col py-1">
-                          <span className={`font-semibold transition-all ${toolConditions[tool.Kode] ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                            {tool.Nama}
-                          </span>
-                          <span className="text-xs font-mono text-gray-400 mt-0.5 tracking-wider">
-                            {tool.Kode}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center items-center h-full">
-                          <RadioGroup
-                            value={toolConditions[tool.Kode] || ""}
-                            onValueChange={(value) => {
-                              setToolConditions(prev => ({
-                                ...prev,
-                                [tool.Kode]: value
-                              }));
-
-                              // setToolsList(prev => prev.map(t =>
-                              //   t.Kode === tool.Kode ? { ...t, ToolsCondition: value } : t
-                              // ));
-                            }}
-
-                            className="flex items-center gap-2 justify-center"
-                          >
-                            {[
-                              { value: 'Con1', label: 'Good' },
-                              { value: 'Con2', label: 'R1' },
-                              { value: 'Con3', label: 'TA' },
-                            ].map((opt) => (
-                              <div key={opt.value} className="flex items-center">
-                                <RadioGroupItem
-                                  value={opt.value}
-                                  id={`${opt.value}-${tool.Kode}`}
-                                  className="h-5 w-5 border-black text-black"
-                                />
-                                <Label
-                                  htmlFor={`${opt.value}-${tool.Kode}`}
-                                  className="text-sm font-medium cursor-pointer text-gray-700 p-1"
-                                >
-                                  {opt.label}
-                                </Label>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                        </div>
+                  {currentTodoItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                        No matching tools found
                       </TableCell>
                     </TableRow>
-                  )))}
+                  ) : (
+                    currentTodoItems.map((tool, index) => (
+                      <TableRow
+                        key={tool.Kode}
+                        className={`hover:bg-[#009999]/5 transition-all duration-200 ${toolConditions[tool.Kode] ? 'bg-green-50/30' : ''}`}
+                      >
+                        <TableCell className="text-center text-gray-400 font-medium">
+                          {String(startTodoIndex + index + 1).padStart(2, '0')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col py-1">
+                            <span className={`font-semibold transition-all ${toolConditions[tool.Kode] ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                              {tool.Nama}
+                            </span>
+                            <span className="text-xs font-mono text-gray-400 mt-0.5 tracking-wider">
+                              {tool.Kode}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center items-center h-full">
+                            <RadioGroup
+                              value={toolConditions[tool.Kode] || ""}
+                              onValueChange={(value) => {
+                                setToolConditions(prev => ({
+                                  ...prev,
+                                  [tool.Kode]: value
+                                }));
 
+                                // setToolsList(prev => prev.map(t =>
+                                //   t.Kode === tool.Kode ? { ...t, ToolsCondition: value } : t
+                                // ));
+                              }}
+
+                              className="flex items-center gap-2 justify-center"
+                            >
+                              {[
+                                { value: 'Con1', label: 'Good' },
+                                { value: 'Con2', label: 'R1' },
+                                { value: 'Con3', label: 'TA' },
+                              ].map((opt) => (
+                                <div key={opt.value} className="flex items-center">
+                                  <RadioGroupItem
+                                    value={opt.value}
+                                    id={`${opt.value}-${tool.Kode}`}
+                                    className="h-5 w-5 border-black text-black"
+                                  />
+                                  <Label
+                                    htmlFor={`${opt.value}-${tool.Kode}`}
+                                    className="text-sm font-medium cursor-pointer text-gray-700 p-1"
+                                  >
+                                    {opt.label}
+                                  </Label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

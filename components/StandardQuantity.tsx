@@ -404,7 +404,8 @@ export default function StandardQuantity() {
   const filteredItems = itemList.filter((transaction) => {
     const query = searchQuery.toLowerCase();
     return (
-      transaction.ToolsDesc?.toLowerCase().includes(query)
+      transaction.ToolsDesc?.toLowerCase().includes(query) ||
+      transaction.ToolsId?.toLowerCase().includes(query)
     );
   });
 
@@ -518,7 +519,7 @@ export default function StandardQuantity() {
           <div className="relative w-full max-w-[100px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#009999]/50" />
             <Input
-              placeholder="Search by tools desc or category..."
+              placeholder="Search by tools desc or IDs..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 h-10 border-[#009999]/30 focus:border-[#009999] focus:ring-[#009999]/20"

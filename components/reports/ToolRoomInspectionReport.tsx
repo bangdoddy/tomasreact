@@ -63,9 +63,7 @@ export default function ToolRoomInspectionReport() {
 
     return reportData.filter(row => {
       const matchesSearch =
-        row.ToolsId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.ToolsDesc.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.ToolsBrand.toLowerCase().includes(searchTerm.toLowerCase());
+        row.ToolsDesc.toLowerCase().includes(searchTerm.toLowerCase());
 
       return matchesSearch;
     });

@@ -39,12 +39,13 @@ import {
 import { Plus, Edit, Trash2, Download, Send } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { BudgetCapexItem, initialBudgetCapexData } from '../../data/budgetCapexData';
+import { GlobalModel } from "../../model/Models";
 import { API } from '../../config';
 import { useAuth } from '../../service/AuthContext';
 import * as XLSX from 'xlsx';
 
 interface CapexData {
-  Id: string;
+  IdKey: string;
   ToolsJobsite: string;
   ToolsId: string;
   ToolsDescription: string;
@@ -52,6 +53,7 @@ interface CapexData {
   ToolsSize: string;
   ToolsQty: string;
   ToolsExisting: string;
+  ToolsDeviasi: string;
   ToolsCost: string;
   StatusCapex: string;
   Category: string;
@@ -60,12 +62,15 @@ interface CapexData {
   ToolsYear: string;
   Remarks: string;
   IsFinal: string;
+  StOrder: string;
 }
 
 export default function BudgetingCapex() {
   const { currentUser } = useAuth();
   const [yearFilter, setYearFilter] = useState<string>('All');
   const [capexData, setCapexData] = useState<CapexData[]>([]);
+  const [categories, setCategories] = useState<GlobalModel[]>([]);
+  const [stdQuantities, setStdQuantities] = useState<GlobalModel[]>([]);
 
   // Simulating user role - in real app, this would come from auth context
   const [userRole] = useState<string>('Super User'); // Can be 'Super User' or 'PIC Tools'
@@ -73,14 +78,17 @@ export default function BudgetingCapex() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentItem, setCurrentItem] = useState<BudgetCapexItem | null>(null);
+  const [editingItem, setEditingItem] = useState<CapexData | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<Partial<BudgetCapexItem>>({
+  const [formData, setFormData] = useState({
+    id: '',
     toolsId: '',
+    jobsite: '',
     toolsCategory: '',
     toolsDescription: '',
-    year: '2025',
+    year: '',
     statusCapex: 'CAPEX',
     cost: 0,
     brand: '',
@@ -92,13 +100,25 @@ export default function BudgetingCapex() {
     deviasi: 0,
     totalCost: 0,
     remarks: '',
-    finalBudget: 'No',
+    finalBudget: '',
   });
+
+  const ReloadCategory = () => {
+    const params = new URLSearchParams({
+      showdata: "TOOLTYPE"
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: GlobalModel[]) => setCategories(json))
+      .catch((error) => console.error("Error:", error));
+  }
 
   const ReloadCapexData = () => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
-      nrp: currentUser.NRP,
+      nrp: currentUser.Nrp,
     });
     fetch(API.CAPEX() + `?${params.toString()}`, {
       method: "GET"
@@ -141,12 +161,15 @@ export default function BudgetingCapex() {
 
   const handleAdd = () => {
     setIsEditMode(false);
+    setEditingItem(null);
     setCurrentItem(null);
     setFormData({
+      id: '',
       toolsId: '',
+      jobsite: currentUser?.Jobsite || '',
       toolsCategory: '',
       toolsDescription: '',
-      year: '2025',
+      year: '',
       statusCapex: 'CAPEX',
       cost: 0,
       brand: '',
@@ -158,50 +181,166 @@ export default function BudgetingCapex() {
       deviasi: 0,
       totalCost: 0,
       remarks: '',
-      finalBudget: 'No',
+      finalBudget: '',
     });
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (item: BudgetCapexItem) => {
+  const handleEdit = (item: CapexData) => {
+    // Enter edit mode and populate form with selected item data
     setIsEditMode(true);
-    setCurrentItem(item);
-    setFormData(item);
+    setEditingItem(item);
+    // Store a minimal currentItem with id for update logic
+    // setCurrentItem({ id: item.Id } as any);
+
+    setFormData({
+      id: item.IdKey.toString(),
+      toolsId: item.ToolsId,
+      jobsite: currentUser?.Jobsite || '',
+      toolsCategory: item.Category.charAt(0).toUpperCase(),
+      toolsDescription: item.ToolsDescription,
+      year: item.ToolsYear,
+      statusCapex: item.StatusCapex,
+      cost: Number(item.ToolsCost),
+      brand: item.ToolsBrand,
+      size: item.ToolsSize,
+      pn: item.ToolsPN,
+      klasifikasiTool: item.ToolsKlasifikasi,
+      requirement: Number(item.ToolsQty),
+      existing: Number(item.ToolsExisting),
+      deviasi: Number(item.ToolsQty) - Number(item.ToolsExisting),
+      totalCost: Number(item.ToolsCost) * (Number(item.ToolsQty) - Number(item.ToolsExisting)),
+      remarks: item.Remarks,
+      finalBudget: item.IsFinal
+    });
+    console.table(formData);
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
-    toast.success('Budget item deleted successfully');
+
+
+  const handleDelete = async (Id: string) => {
+    setCapexData(capexData.filter((item) => item.IdKey !== Id));
+
+    try {
+      const response = await fetch(API.CAPEX(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "DELETE",
+          nrpUser: currentUser?.Nrp,
+          IdKey: Id.toString(),
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadCapexData();
+          setEditingItem(null);
+          setIsDialogOpen(false);
+          toast.success(resData?.Message ?? 'successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
   };
 
-  const handleSave = () => {
-    if (!formData.toolsDescription) {
-      toast.error('Please enter Tools Description');
+  const handleSave = async () => {
+    if (!formData.finalBudget) {
+      toast.error('Please enter Status Final Budget');
       return;
     }
 
-    if (isEditMode && currentItem) {
-      setItems(
-        items.map((item) =>
-          item.id === currentItem.id ? { ...item, ...formData } : item
-        )
-      );
-      toast.success('Budget item updated successfully');
-    } else {
-      const newItem: BudgetCapexItem = {
-        id: Date.now().toString(),
-        ...formData,
-      } as BudgetCapexItem;
-      setItems([...items, newItem]);
-      toast.success('Budget item added successfully');
+    if (!formData.year) {
+      toast.error('Please enter Year');
+      return;
     }
 
-    setIsDialogOpen(false);
+    try {
+      const response = await fetch(API.CAPEX(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: (isEditMode ? "UPDATE" : "INSERT"),
+          nrpUser: currentUser?.Nrp,
+          IdKey: formData.id,
+          ToolsId: formData.toolsId,
+          Category: formData.toolsCategory,
+          ToolsDesc: formData.toolsDescription,
+          StatusCapex: formData.statusCapex,
+          Year: formData.year,
+          Brand: formData.brand,
+          Size: formData.size,
+          PN: formData.pn,
+          Klasifikasi: formData.klasifikasiTool,
+          Qty: String(formData.requirement),
+          Existing: String(formData.existing),
+          Cost: String(formData.cost),
+          jobsite: currentUser?.Jobsite,
+          Remark: formData.remarks,
+          IsFinal: formData.finalBudget,
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadCapexData();
+          setEditingItem(null);
+          setIsDialogOpen(false);
+          toast.success(resData?.Message ?? 'successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
+
+
+    // if (isEditMode && currentItem) {
+    //   setCapexData(
+    //     capexData.map((item) =>
+    //       item.Id === currentItem.id ? { ...item, ...mappedItem } : item
+    //     )
+    //   );
+    //   toast.success('Budget item updated successfully');
+    // } else {
+    //   const newItem: CapexData = {
+    //     Id: Date.now().toString(),
+    //     ToolsJobsite: currentUser?.Jobsite || '',
+    //     StOrder: '',
+    //     ...mappedItem,
+    //   } as CapexData;
+    //   setCapexData([...capexData, newItem]);
+    //   toast.success('Budget item added successfully');
+    // }
+
+    // setIsDialogOpen(false);
   };
 
   const handleSubmit = () => {
-    const itemsToSubmit = items.filter(item => item.finalBudget === 'Yes');
+    const itemsToSubmit = capexData.filter(item => item.IsFinal === 'Yes');
 
     if (itemsToSubmit.length === 0) {
       toast.error('No items with Final Budget = "Yes" to submit');
@@ -223,8 +362,54 @@ export default function BudgetingCapex() {
   // Calculate totals
   const totalRequirement = filteredItems.reduce((sum, item) => sum + Number(item.ToolsQty), 0);
   const totalExisting = filteredItems.reduce((sum, item) => sum + Number(item.ToolsExisting), 0);
-  const totalDeviasi = filteredItems.reduce((sum, item) => sum + (Number(item.ToolsQty) - Number(item.ToolsExisting)), 0);
+  const totalDeviasi = filteredItems.reduce((sum, item) => sum + (Number(item.ToolsDeviasi)), 0);
   const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.ToolsCost), 0);
+
+  const handleToolSearch = async (toolId: string) => {
+    if (!toolId) return;
+
+    try {
+      const params = new URLSearchParams({
+        ShowData: "STDQUANTITY",
+        Jobsite: currentUser.Jobsite,
+        Keyword: toolId,
+      });
+
+      const response = await fetch(API.FILTERS() + `?${params.toString()}`, {
+        method: "GET"
+      });
+
+      if (!response.ok) {
+        toast.error(`Error searching tool: ${response.statusText}`);
+        return;
+      }
+
+      const data = await response.json();
+      const tools = data.data ?? data;
+
+      if (Array.isArray(tools) && tools.length > 0) {
+        const tool = tools.find((t: any) => t.Kode.toLowerCase() === toolId.toLowerCase()) || tools[0];
+
+        if (tool.Kode.toLowerCase() === toolId.toLowerCase()) {
+          setFormData(prev => ({
+            ...prev,
+            toolsDescription: tool.Nama || '',
+            toolsCategory: tool.KategoriId || tool.Kategori || '',
+            statusCapex: tool.Status || '',
+            requirement: tool.Qty || '0',
+          }));
+          // toast.success("Tool data found and populated");
+        } else {
+          toast.error("Tool ID not found");
+        }
+      } else {
+        toast.error("Tool ID not found");
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      toast.error("Failed to search tool data");
+    }
+  };
 
   const handleDownloadExcel = () => {
     // Create CSV content for Excel
@@ -252,29 +437,31 @@ export default function BudgetingCapex() {
 
     const csvContent = [
       headers.join(','),
-      ...filteredItems.map((item) =>
-        [
-          `"${item.toolsId}"`,
-          `"${item.toolsCategory}"`,
-          `"${item.toolsDescription}"`,
-          `"${item.year}"`,
-          `"${item.statusCapex}"`,
-          item.cost,
-          `"${item.brand}"`,
-          `"${item.size}"`,
-          `"${item.pn}"`,
-          `"${item.klasifikasiTool}"`,
-          item.requirement,
-          item.existing,
-          item.deviasi,
-          item.totalCost,
-          `"${item.remarks}"`,
-          `"${item.finalBudget}"`,
+      ...filteredItems.map((item) => {
+        const deviasi = Number(item.ToolsQty) - Number(item.ToolsExisting);
+        const totalItemCost = Number(item.ToolsCost) * deviasi;
+        return [
+          `"${item.ToolsId}"`,
+          `"${item.Category}"`,
+          `"${item.ToolsDescription}"`,
+          `"${item.ToolsYear}"`,
+          `"${item.StatusCapex}"`,
+          item.ToolsCost,
+          `"${item.ToolsBrand}"`,
+          `"${item.ToolsSize}"`,
+          `"${item.ToolsPN}"`,
+          `"${item.ToolsKlasifikasi}"`,
+          item.ToolsQty,
+          item.ToolsExisting,
+          deviasi,
+          totalItemCost,
+          `"${item.Remarks}"`,
+          `"${item.IsFinal}"`,
           '""', // Placeholder for PIC Tool signature
           '""', // Placeholder for Unit Head signature
           '""', // Placeholder for Section/Dept Head signature
-        ].join(',')
-      ),
+        ].join(',');
+      }),
       // Total row
       [
         '""',
@@ -315,6 +502,7 @@ export default function BudgetingCapex() {
 
   useEffect(() => {
     ReloadCapexData();
+    ReloadCategory();
   }, []);
 
   return (
@@ -408,12 +596,13 @@ export default function BudgetingCapex() {
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Total Cost</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Remarks</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Final Budget</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Status</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredItems.map((item) => (
-                  <TableRow key={item.Id} className="hover:bg-gray-50 text-xs">
+                  <TableRow key={item.IdKey} className="hover:bg-gray-50 text-xs">
                     <TableCell className="font-medium">{item.ToolsId}</TableCell>
                     <TableCell>{item.Category}</TableCell>
                     <TableCell>{item.ToolsDescription}</TableCell>
@@ -432,14 +621,14 @@ export default function BudgetingCapex() {
                     <TableCell className="text-center">{item.ToolsExisting}</TableCell>
                     <TableCell className="text-center">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${Number(item.ToolsQty) - Number(item.ToolsExisting) > 0
+                        className={`px-2 py-1 rounded text-xs ${Number(item.ToolsDeviasi) > 0
                           ? 'bg-red-100 text-red-700'
-                          : Number(item.ToolsQty) - Number(item.ToolsExisting) === 0
+                          : Number(item.ToolsDeviasi) === 0
                             ? 'bg-green-100 text-green-700'
                             : 'bg-gray-100 text-gray-700'
                           }`}
                       >
-                        {Number(item.ToolsQty) - 1}
+                        {Number(item.ToolsDeviasi)}
                       </span>
                     </TableCell>
                     <TableCell className="font-medium">{formatIDR(Number(item.ToolsCost))}</TableCell>
@@ -457,6 +646,16 @@ export default function BudgetingCapex() {
                       </span>
                     </TableCell>
                     <TableCell>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${item.StOrder === 'Submitted'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                          }`}
+                      >
+                        {item.StOrder}
+                      </span>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           variant="ghost"
@@ -470,7 +669,7 @@ export default function BudgetingCapex() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setItemToDelete(item.id);
+                            setItemToDelete(item.IdKey);
                             setIsDeleteDialogOpen(true);
                           }}
                           className="hover:bg-red-50 hover:text-red-600"
@@ -493,19 +692,14 @@ export default function BudgetingCapex() {
                     <strong>{totalExisting}</strong>
                   </TableCell>
                   <TableCell className="text-center">
-                    <strong className={`px-2 py-1 rounded text-xs ${totalDeviasi > 0
-                      ? 'bg-red-100 text-red-700'
-                      : totalDeviasi === 0
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-700'
-                      }`}>
+                    <strong>
                       {totalDeviasi}
                     </strong>
                   </TableCell>
                   <TableCell>
                     <strong>{formatIDR(totalCost)}</strong>
                   </TableCell>
-                  <TableCell colSpan={3}></TableCell>
+                  <TableCell colSpan={4}></TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -529,10 +723,17 @@ export default function BudgetingCapex() {
             <div className="space-y-2">
               <Label htmlFor="toolsId">Tools ID</Label>
               <Input
+                className="bg-white border-gray-300"
                 id="toolsId"
+                disabled={isEditMode}
                 value={formData.toolsId}
-                onChange={(e) => handleInputChange('toolsId', e.target.value)}
-                placeholder="e.g., CDMSA"
+                onChange={(e) => setFormData({ ...formData, toolsId: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleToolSearch(formData.toolsId);
+                  }
+                }}
+                placeholder="PRESS ENTER to verify"
               />
             </div>
 
@@ -540,17 +741,20 @@ export default function BudgetingCapex() {
               <Label htmlFor="toolsCategory">Tools Category</Label>
               <Select
                 value={formData.toolsCategory}
-                onValueChange={(value) => handleInputChange('toolsCategory', value)}
+                onValueChange={(value) => {
+                  setFormData({ ...formData, toolsCategory: value })
+                }
+                }
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-300">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="COMMON TOOL">COMMON TOOL</SelectItem>
-                  <SelectItem value="DRILLING TOOL">DRILLING TOOL</SelectItem>
-                  <SelectItem value="LIFTING TOOL">LIFTING TOOL</SelectItem>
-                  <SelectItem value="ADDITIONAL TOOL">ADDITIONAL TOOL</SelectItem>
-                  <SelectItem value="MEASURING TOOL">MEASURING TOOL</SelectItem>
+                  {categories.map((pos) => (
+                    <SelectItem key={pos.Kode} value={pos.Kode}>
+                      {pos.Keterangan}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -558,9 +762,10 @@ export default function BudgetingCapex() {
             <div className="space-y-2">
               <Label htmlFor="toolsDescription">Tools Description *</Label>
               <Input
+                className="bg-white border-gray-300"
                 id="toolsDescription"
                 value={formData.toolsDescription}
-                onChange={(e) => handleInputChange('toolsDescription', e.target.value)}
+                onChange={(e) => setFormData({ ...formData, toolsDescription: e.target.value })}
                 placeholder="e.g., AIR PLASMA CUTTER 45 AMPERE"
               />
             </div>
@@ -569,9 +774,10 @@ export default function BudgetingCapex() {
               <Label htmlFor="year">Year</Label>
               <Select
                 value={formData.year}
-                onValueChange={(value) => handleInputChange('year', value)}
+                disabled={isEditMode}
+                onValueChange={(value) => setFormData({ ...formData, year: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-300">
                   <SelectValue placeholder="Select year" />
                 </SelectTrigger>
                 <SelectContent>
@@ -587,9 +793,9 @@ export default function BudgetingCapex() {
               <Label htmlFor="statusCapex">Status Capex</Label>
               <Select
                 value={formData.statusCapex}
-                onValueChange={(value) => handleInputChange('statusCapex', value)}
+                onValueChange={(value) => setFormData({ ...formData, statusCapex: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-300">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -605,19 +811,20 @@ export default function BudgetingCapex() {
                 id="cost"
                 type="number"
                 value={formData.cost}
-                onChange={(e) => handleInputChange('cost', Number(e.target.value))}
+                onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
                 placeholder="0"
                 disabled={userRole !== 'Super User'}
-                className={userRole !== 'Super User' ? 'bg-gray-100' : ''}
+                className={userRole !== 'Super User' ? 'bg-white border-gray-300' : 'bg-white border-gray-300'}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="brand">Brand</Label>
               <Input
+                className="bg-white border-gray-300"
                 id="brand"
                 value={formData.brand}
-                onChange={(e) => handleInputChange('brand', e.target.value)}
+                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="e.g., ENERPAC"
               />
             </div>
@@ -625,9 +832,10 @@ export default function BudgetingCapex() {
             <div className="space-y-2">
               <Label htmlFor="size">Size</Label>
               <Input
+                className="bg-white border-gray-300"
                 id="size"
                 value={formData.size}
-                onChange={(e) => handleInputChange('size', e.target.value)}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                 placeholder="e.g., 80 TON"
               />
             </div>
@@ -635,9 +843,10 @@ export default function BudgetingCapex() {
             <div className="space-y-2">
               <Label htmlFor="pn">PN</Label>
               <Input
+                className="bg-white border-gray-300"
                 id="pn"
                 value={formData.pn}
-                onChange={(e) => handleInputChange('pn', e.target.value)}
+                onChange={(e) => setFormData({ ...formData, pn: e.target.value })}
                 placeholder="e.g., STD"
               />
             </div>
@@ -645,9 +854,10 @@ export default function BudgetingCapex() {
             <div className="space-y-2">
               <Label htmlFor="klasifikasiTool">Klasifikasi Tool</Label>
               <Input
+                className="bg-white border-gray-300"
                 id="klasifikasiTool"
                 value={formData.klasifikasiTool}
-                onChange={(e) => handleInputChange('klasifikasiTool', e.target.value)}
+                onChange={(e) => setFormData({ ...formData, klasifikasiTool: e.target.value })}
                 placeholder="e.g., STD"
               />
             </div>
@@ -655,10 +865,12 @@ export default function BudgetingCapex() {
             <div className="space-y-2">
               <Label htmlFor="requirement">Requirement</Label>
               <Input
+                className="bg-white border-gray-300"
                 id="requirement"
                 type="number"
+                min={0}
                 value={formData.requirement}
-                onChange={(e) => handleInputChange('requirement', Number(e.target.value))}
+                onChange={(e) => setFormData({ ...formData, requirement: Number(e.target.value) })}
                 placeholder="0"
               />
             </div>
@@ -666,32 +878,24 @@ export default function BudgetingCapex() {
             <div className="space-y-2">
               <Label htmlFor="existing">Existing</Label>
               <Input
+                className="bg-white border-gray-300"
                 id="existing"
                 type="number"
+                min={0}
                 value={formData.existing}
-                onChange={(e) => handleInputChange('existing', Number(e.target.value))}
+                onChange={(e) => setFormData({ ...formData, existing: Number(e.target.value) })}
                 placeholder="0"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 hidden">
               <Label htmlFor="deviasi">Deviasi (Auto-calculated)</Label>
               <Input
                 id="deviasi"
                 type="number"
                 value={formData.deviasi}
                 disabled
-                className="bg-gray-100"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="totalCost">Total Cost (Auto-calculated)</Label>
-              <Input
-                id="totalCost"
-                value={formatIDR(formData.totalCost || 0)}
-                disabled
-                className="bg-gray-100"
+                className="bg-white border-gray-300"
               />
             </div>
 
@@ -700,10 +904,10 @@ export default function BudgetingCapex() {
               <Input
                 id="remarks"
                 value={formData.remarks}
-                onChange={(e) => handleInputChange('remarks', e.target.value)}
-                placeholder="Additional notes or comments"
+                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                placeholder="Additional notes..."
                 disabled={userRole !== 'PIC Tools' && userRole !== 'Super User'}
-                className={userRole !== 'PIC Tools' && userRole !== 'Super User' ? 'bg-gray-100' : ''}
+                className={userRole !== 'PIC Tools' && userRole !== 'Super User' ? 'bg-white border-gray-300' : 'bg-white border-gray-300'}
               />
             </div>
 
@@ -711,11 +915,11 @@ export default function BudgetingCapex() {
               <Label htmlFor="finalBudget">Final Budget {userRole !== 'Super User' && '(Read Only)'}</Label>
               <Select
                 value={formData.finalBudget}
-                onValueChange={(value) => handleInputChange('finalBudget', value)}
+                onValueChange={(value) => setFormData({ ...formData, finalBudget: value })}
                 disabled={userRole !== 'Super User'}
               >
-                <SelectTrigger className={userRole !== 'Super User' ? 'bg-gray-100' : ''}>
-                  <SelectValue placeholder="Select final budget status" />
+                <SelectTrigger className={userRole !== 'Super User' ? 'bg-white border-gray-300' : 'bg-white border-gray-300'}>
+                  <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Yes">Yes</SelectItem>
@@ -757,7 +961,7 @@ export default function BudgetingCapex() {
                 if (itemToDelete) {
                   handleDelete(itemToDelete);
                 }
-                setIsDeleteDialogOpen(false);
+                //setIsDeleteDialogOpen(false);
               }}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
