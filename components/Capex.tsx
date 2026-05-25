@@ -220,7 +220,7 @@ export default function Capex() {
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                       <div
                         className={`h-2.5 rounded-full ${item.color}`}
-                        style={{ width: `${(item.allocated / item.total) * 100}%` }}
+                        style={{ width: `${(item.allocated / totalBudget) * 100}%` }}
                       ></div>
                     </div>
                   </div>

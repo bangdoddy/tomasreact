@@ -143,6 +143,10 @@ export default function BudgetingCapex() {
     return ['All', ...Array.from(years).sort()];
   }, [capexData]);
 
+  const ScanFinalBudget = () => {
+    return capexData.filter(item => item.IsFinal === 'Yes');
+  };
+
   const handleInputChange = (field: keyof BudgetCapexItem, value: string | number) => {
     const updatedData = { ...formData, [field]: value };
 
@@ -515,6 +519,7 @@ export default function BudgetingCapex() {
         </div>
         <div className="flex gap-3">
           <Button
+            disabled={ScanFinalBudget().length === 0}
             onClick={handleSubmit}
             className="bg-gradient-to-r from-[#003366] to-[#009999] hover:opacity-90 text-white"
           >

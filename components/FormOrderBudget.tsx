@@ -71,6 +71,27 @@ interface OrderItem {
   Spesifikasi: string;
 }
 
+interface CapexItem {
+  IdKey: string;
+  ToolsJobsite: string;
+  ToolsId: string;
+  ToolsDescription: string;
+  ToolsBrand: string;
+  ToolsSize: string;
+  ToolsQty: string;
+  ToolsExisting: string;
+  ToolsDeviasi: string;
+  ToolsCost: string;
+  StatusCapex: string;
+  Category: string;
+  ToolsPN: string;
+  ToolsKlasifikasi: string;
+  ToolsYear: string;
+  Remarks: string;
+  IsFinal: string;
+  StOrder: string;
+}
+
 export default function FormOrderBudget() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,7 +100,7 @@ export default function FormOrderBudget() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const [orders, setOrders] = useState<OrderBudget[]>([]);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [capexList, setCapexList] = useState<CapexItem[]>([]);
   const [editingItem, setEditingItem] = useState<OrderBudget | null>(null);
   const [formData, setFormData] = useState({
     OrderNo: 'Auto Generated',
@@ -98,6 +119,19 @@ export default function FormOrderBudget() {
     })
       .then((response) => response.json())
       .then((json: OrderBudget[]) => { setOrders(json); console.log(json); })
+      .catch((error) => console.error("Error:", error));
+  };
+
+  const ReloadCapex = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+      act: "GETCAPEX"
+    });
+    fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: CapexItem[]) => { setCapexList(json); console.log(json); })
       .catch((error) => console.error("Error:", error));
   };
 
@@ -600,7 +634,7 @@ export default function FormOrderBudget() {
             <div className="space-y-2">
               <Label>Select Source</Label>
               <Select
-                value={"CAPEX"}
+              // value={editingItem.}
               >
                 <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
                   <SelectValue placeholder="Select" />
