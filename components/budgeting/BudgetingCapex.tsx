@@ -144,7 +144,7 @@ export default function BudgetingCapex() {
   }, [capexData]);
 
   const ScanFinalBudget = () => {
-    return capexData.filter(item => item.IsFinal === 'Yes');
+    return capexData.filter(item => item.IsFinal === 'Yes' && item.StOrder === 'New');
   };
 
   const handleInputChange = (field: keyof BudgetCapexItem, value: string | number) => {
@@ -343,7 +343,7 @@ export default function BudgetingCapex() {
     // setIsDialogOpen(false);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const itemsToSubmit = capexData.filter(item => item.IsFinal === 'Yes');
 
     if (itemsToSubmit.length === 0) {
@@ -351,8 +351,40 @@ export default function BudgetingCapex() {
       return;
     }
 
-    // Simulate submission to superior
-    toast.success(`Successfully submitted ${itemsToSubmit.length} item(s) to superior for approval`);
+    try {
+      const response = await fetch(API.CAPEX(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "SUBMITREQUEST",
+          nrpUser: currentUser?.Nrp,
+          jobsite: currentUser?.Jobsite,
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadCapexData();
+          setEditingItem(null);
+          setIsDialogOpen(false);
+          // toast.success(resData?.Message ?? 'successfully');
+          toast.success(`Successfully submitted ${itemsToSubmit.length} item(s) to superior for approval`);
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
   };
 
   const formatIDR = (amount: number) => {

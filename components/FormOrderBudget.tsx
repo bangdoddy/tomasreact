@@ -90,6 +90,7 @@ interface CapexItem {
   Remarks: string;
   IsFinal: string;
   StOrder: string;
+  Allocated: string;
 }
 
 export default function FormOrderBudget() {
@@ -100,14 +101,17 @@ export default function FormOrderBudget() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const [orders, setOrders] = useState<OrderBudget[]>([]);
+  const [hasil, setHasil] = useState({ table1: [], table2: [] });
   const [capexList, setCapexList] = useState<CapexItem[]>([]);
   const [editingItem, setEditingItem] = useState<OrderBudget | null>(null);
   const [formData, setFormData] = useState({
-    OrderNo: 'Auto Generated',
+    OrderNo: '',
     Jobsite: '',
     Location: '',
     Allocated: '0',
-    UsedAmount: '0'
+    UsedAmount: '0',
+    Source: '',
+    Year: ''
   });
 
   const ReloadOrders = () => {
@@ -122,18 +126,26 @@ export default function FormOrderBudget() {
       .catch((error) => console.error("Error:", error));
   };
 
-  const ReloadCapex = () => {
+  const ReloadCapex = (yearVal?: string) => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
-      act: "GETCAPEX"
+      act: "GETCAPEX",
+      year: yearVal || formData.Year,
     });
-    fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
+    fetch(API.CAPEX() + `?${params.toString()}`, {
       method: "GET"
     })
       .then((response) => response.json())
       .then((json: CapexItem[]) => { setCapexList(json); console.log(json); })
       .catch((error) => console.error("Error:", error));
   };
+
+  // Calculate totals
+  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsQty), 0);
+  const totalExisting = capexList.reduce((sum, item) => sum + Number(item.ToolsExisting), 0);
+  const totalDeviasi = capexList.reduce((sum, item) => sum + (Number(item.ToolsDeviasi)), 0);
+  const totalCost = capexList.reduce((sum, item) => sum + Number(item.ToolsCost), 0);
+
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -300,6 +312,14 @@ export default function FormOrderBudget() {
     ReloadOrders();
   }, []);
 
+  const formatIDR = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   const currentDate = new Date();
   const formattedDate = `${String(currentDate.getDate()).padStart(2, '0')}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
 
@@ -330,6 +350,17 @@ export default function FormOrderBudget() {
             className="bg-[#009999] hover:bg-[#008080] text-white"
             onClick={() => {
               setIsAddDialogOpen(true);
+              setCapexList([]);
+
+              setFormData({
+                OrderNo: 'Auto Generated',
+                Jobsite: '',
+                Location: '',
+                Allocated: '0',
+                UsedAmount: '0',
+                Source: '',
+                Year: ''
+              })
             }
             }
           >
@@ -594,7 +625,7 @@ export default function FormOrderBudget() {
                               size="icon"
                               className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                               title="Delete"
-                              onClick={() => handleDelete(order.orderNo)}
+                              onClick={() => handleDelete(order.orderno)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -616,7 +647,12 @@ export default function FormOrderBudget() {
       </div>
 
       {/* Dialog add new order */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog open={isAddDialogOpen} onOpenChange={(open: any) => {
+        setIsAddDialogOpen(open);
+        if (!open) {
+          setCapexList([]);
+        }
+      }}>
         <DialogContent className="sm:max-w-[750px]">
           <DialogHeader>
             <DialogTitle>New Request Order</DialogTitle>
@@ -625,42 +661,80 @@ export default function FormOrderBudget() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Record No.</p>
-              <p className="text-sm font-medium text-[#009999]">{formData.OrderNo}</p>
+          <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+            {/* Column 1 */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 uppercase font-semibold">Record No.</p>
+                <p className="text-sm font-medium text-[#009999]">{formData.OrderNo}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Select Source</Label>
+                <Select
+                  value={formData.Source}
+                  onValueChange={(value) => {
+                    setFormData(formData => ({ ...formData, Source: value }));
+                    if (value === "CAPEX") {
+                      ReloadCapex(formData.Year);
+                    } else {
+                      setCapexList([]);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CAPEX">CAPEX</SelectItem>
+                    <SelectItem value="OPEX">OPEX</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Select Year</Label>
+                <Select
+                  value={formData.Year}
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ ...prev, Year: value }));
+
+                    if (formData.Source === "CAPEX") {
+                      ReloadCapex(value);
+                    } else {
+                      setCapexList([]);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2025">2025</SelectItem>
+                    <SelectItem value="2026">2026</SelectItem>
+                    <SelectItem value="2027">2027</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Select Source</Label>
-              <Select
-              // value={editingItem.}
-              >
-                <SelectTrigger className="w-full sm:w-48 bg-white border-gray-400">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CAPEX">CAPEX</SelectItem>
-                  <SelectItem value="OPEX">OPEX</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Column 2 */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 uppercase font-semibold">Total Allocated</p>
+                <p className="text-lg font-large font-bold text-[#009999]">{formatIDR(Number(capexList.map(p => p.Allocated.replace(/,/g, ''))[0]) || 0)}</p>
+              </div>
+
+              {/* <div className="space-y-2">
+                <p className="text-xs text-gray-500 uppercase font-semibold">Jobsite</p>
+                <p className="text-sm font-medium font-bold">{currentUser?.Jobsite}</p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 uppercase font-semibold">Location</p>
+                <p className="text-sm font-medium font-bold">{currentUser?.Workgroup}</p>
+              </div> */}
             </div>
-
-            {/* <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Budget</p>
-              <p className="text-sm font-medium font-bold">{0}</p>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Jobsite</p>
-              <p className="text-sm font-medium font-bold">{currentUser?.Jobsite}</p>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Location</p>
-              <p className="text-sm font-medium font-bold">{currentUser?.Workgroup}</p>
-            </div> */}
-
           </div>
 
           <Card>
@@ -681,27 +755,39 @@ export default function FormOrderBudget() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {/* {toolDetail.length > 0 ? (
-                                  toolDetail.map((item, idx) => (
-                                    console.log(item), */}
-                    <TableRow>
-                      <TableCell>{ }</TableCell>
-                      <TableCell>{ }</TableCell>
-                      <TableCell className="text-center">{ }</TableCell>
-                      <TableCell className="text-center">{ }</TableCell>
-                      <TableCell>{ }</TableCell>
-                      <TableCell>{ }</TableCell>
-                      <TableCell>{ }</TableCell>
-                      <TableCell>{ }</TableCell>
+                    {capexList.length > 0 ? (
+                      capexList.map((item, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>{item.ToolsDescription}</TableCell>
+                          <TableCell className="text-center">{item.ToolsPN}</TableCell>
+                          <TableCell className="text-center">{item.ToolsBrand}</TableCell>
+                          <TableCell className="text-center">{item.ToolsSize}</TableCell>
+                          <TableCell className="text-right">{formatIDR(Number(item.ToolsCost))}</TableCell>
+                          <TableCell className="text-center">{item.ToolsQty}</TableCell>
+                          <TableCell className="text-center">{/* Reason */}</TableCell>
+                          <TableCell>{item.Remarks}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-4 text-gray-500">
+                          No details found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    <TableRow className="bg-[#009999]/10 hover:bg-[#009999]/10">
+                      <TableCell colSpan={4} className="text-right">
+                        <strong>TOTAL:</strong>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <strong>{formatIDR(totalCost)}</strong>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <strong>{totalRequirement}</strong>
+                      </TableCell>
+
+                      <TableCell colSpan={5}></TableCell>
                     </TableRow>
-                    {/* ))
-                                ) : ( */}
-                    {/* <TableRow>
-                                    <TableCell colSpan={5} className="text-center">
-                                      No details found
-                                    </TableCell>
-                                  </TableRow> */}
-                    {/* )} */}
                   </TableBody>
                 </Table>
               </div>

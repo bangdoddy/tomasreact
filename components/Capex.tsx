@@ -98,7 +98,7 @@ export default function Capex() {
 
   useEffect(() => {
     ReloadCapexData();
-  }, []);
+  }, [showBudgeting]);
 
   if (showBudgeting) {
     return (
