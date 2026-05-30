@@ -89,13 +89,20 @@ export interface AuditRequest {
 }
 
 export interface OrderBudget {
-  orderno: string;
-  orderdate: string;
+  ToolsId: string;
+  ToolsDescription: string;
   jobsite: string;
-  location: string;
-  PicTool: string;
-  Allocated: string;
-  UsedAmount: string;
-  remark: string;
+  ToolsCost: string;
+  ToolsYear: string;
   StOrder: string;
+  Category: string;
+  IsFinal: string;
+  StatusCapex: string;
+  ToolsBrand: string;
+  ToolsDeviasi: string;
+  ToolsExisting: string;
+  ToolsKlasifikasi: string;
+  ToolsPN: string;
+  ToolsQty: string;
+  ToolsSize: string;
 }

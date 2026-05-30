@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import {
@@ -32,6 +32,37 @@ import {
 } from '../ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { toast } from 'sonner@2.0.3';
+import { useAuth, AuthUsers } from "../../service/AuthContext";
+import { GlobalModel, OrderBudget } from "../../model/Models";
+import { API } from '../../config';
+
+interface OrderItem {
+  orderno: string;
+  OrderDate: string;
+  jobsite: string;
+  ToolsId: string;
+  PicTool: string;
+  ToolsDescription: string;
+  Brand: string;
+  Spesifikasi: string;
+  Qty: string;
+  Category: string;
+  ToolsCost: string;
+  statusCapex: string;
+  Reason: string;
+  StOrder: string;
+  PR_date?: string;
+  PR_no?: string;
+  StApprove?: string;
+  PO_date?: string;
+  PO_no?: string;
+  Supplier?: string;
+  Est_date?: string;
+  Note?: string;
+  Act_date?: string;
+  IsClose?: string;
+
+}
 
 interface TRFRequest {
   id: string;
@@ -50,100 +81,52 @@ interface TRFRequest {
 }
 
 export default function TRFApproval() {
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('Pending');
   const [filterType, setFilterType] = useState('All');
 
-  const [requests, setRequests] = useState<TRFRequest[]>([
-    {
-      id: 'TRF-001',
-      trfNumber: 'TRF/2024/12/001',
-      requestedBy: 'John Doe',
-      requestDate: '2024-12-10',
-      transferType: 'Inter-Location',
-      fromLocation: 'Warehouse A',
-      toLocation: 'Site B',
-      toolId: 'TL-0156',
-      toolName: 'Hydraulic Jack',
-      quantity: 3,
-      reason: 'Required for maintenance at Site B',
-      status: 'Pending',
-      urgency: 'Urgent',
-    },
-    {
-      id: 'TRF-002',
-      trfNumber: 'TRF/2024/12/002',
-      requestedBy: 'Jane Smith',
-      requestDate: '2024-12-09',
-      transferType: 'Inter-Department',
-      fromLocation: 'Operations',
-      toLocation: 'Maintenance',
-      toolId: 'TL-0178',
-      toolName: 'Digital Multimeter',
-      quantity: 5,
-      reason: 'Equipment testing requirements',
-      status: 'Pending',
-      urgency: 'Normal',
-    },
-    {
-      id: 'TRF-003',
-      trfNumber: 'TRF/2024/12/003',
-      requestedBy: 'Bob Johnson',
-      requestDate: '2024-12-08',
-      transferType: 'Return',
-      fromLocation: 'Site C',
-      toLocation: 'Warehouse A',
-      toolId: 'TL-0189',
-      toolName: 'Welding Machine',
-      quantity: 2,
-      reason: 'Project completed',
-      status: 'Pending',
-      urgency: 'Low',
-    },
-    {
-      id: 'TRF-004',
-      trfNumber: 'TRF/2024/12/004',
-      requestedBy: 'Sarah Wilson',
-      requestDate: '2024-12-07',
-      transferType: 'Inter-Location',
-      fromLocation: 'Workshop B',
-      toLocation: 'Site A',
-      toolId: 'TL-0145',
-      toolName: 'Impact Driver Set',
-      quantity: 4,
-      reason: 'New project requirements',
-      status: 'Approved',
-      urgency: 'Normal',
-    },
-    {
-      id: 'TRF-005',
-      trfNumber: 'TRF/2024/12/005',
-      requestedBy: 'Mike Brown',
-      requestDate: '2024-12-06',
-      transferType: 'Inter-Department',
-      fromLocation: 'Engineering',
-      toLocation: 'Quality Control',
-      toolId: 'TL-0167',
-      toolName: 'Laser Level',
-      quantity: 2,
-      reason: 'Quality inspection tasks',
-      status: 'Rejected',
-      urgency: 'Low',
-    },
-  ]);
+  const [requests, setRequests] = useState<OrderItem[]>([]);
 
-  const filteredRequests = requests.filter((req) => {
+  const ReloadOrders = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+
+    });
+    fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: OrderItem[]) => { setRequests(json); console.log('Order items: ', json); })
+      .catch((error) => console.error("Error:", error));
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(value);
+  };
+
+  const filteredRequests = requests.filter((order) => {
     const matchesSearch =
-      req.trfNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.toolName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.fromLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.toLocation.toLowerCase().includes(searchTerm.toLowerCase());
+      order.orderno.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = filterStatus === 'All' || req.status === filterStatus;
-    const matchesType = filterType === 'All' || req.transferType === filterType;
+    const matchesStatus = filterStatus === 'All' || order.StApprove === filterStatus;
+    // const matchesCategory = filterCategory === 'All' || order.category === filterCategory;
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus;// && matchesCategory;
   });
 
   const getStatusColor = (status: string) => {
@@ -185,25 +168,43 @@ export default function TRFApproval() {
     }
   };
 
-  const handleApprove = (id: string) => {
+  const handleApprove = (orderno: string) => {
     setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: 'Approved' as const } : r))
+      requests.map((r) => (r.orderno === orderno ? { ...r, StOrder: 'Approved' } : r))
     );
     toast.success('TRF request approved!');
   };
 
-  const handleReject = (id: string) => {
+  const handleReject = (orderno: string) => {
     setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: 'Rejected' as const } : r))
+      requests.map((r) => (r.orderno === orderno ? { ...r, StOrder: 'Rejected' } : r))
     );
     toast.error('TRF request rejected');
   };
 
   const stats = {
-    pending: requests.filter((r) => r.status === 'Pending').length,
-    approved: requests.filter((r) => r.status === 'Approved').length,
-    rejected: requests.filter((r) => r.status === 'Rejected').length,
+    pending: requests.filter((r) => r.StOrder === 'Pending').length,
+    approved: requests.filter((r) => r.StOrder === 'Approved').length,
+    rejected: requests.filter((r) => r.StOrder === 'Rejected').length,
     total: requests.length,
+  };
+
+  useEffect(() => {
+    ReloadOrders();
+  }, []);
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'Pending':
+        return <Clock className="h-4 w-4" />;
+      case 'PR':
+      case 'PO':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'Delivered':
+        return <CheckCircle className="h-4 w-4" />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -246,7 +247,7 @@ export default function TRFApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Pending</CardTitle>
           </CardHeader>
@@ -260,7 +261,7 @@ export default function TRFApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Approved</CardTitle>
           </CardHeader>
@@ -274,7 +275,7 @@ export default function TRFApproval() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="shadow-md p-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-gray-600">Rejected</CardTitle>
           </CardHeader>
@@ -290,62 +291,61 @@ export default function TRFApproval() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by TRF number, tool, requester, or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
 
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Types</SelectItem>
-                <SelectItem value="Inter-Location">Inter-Location</SelectItem>
-                <SelectItem value="Inter-Department">Inter-Department</SelectItem>
-                <SelectItem value="Return">Return</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search by TRF number, tool, requester, or location..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-white border-gray-300 focus:border-primary focus:ring-0"
+          />
+        </div>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Status</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Approved">Approved</SelectItem>
-                <SelectItem value="Rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-full sm:w-48 bg-white border-gray-300 focus:border-primary">
+            <SelectValue placeholder="Filter by Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Types</SelectItem>
+            <SelectItem value="Inter-Location">Inter-Location</SelectItem>
+            <SelectItem value="Inter-Department">Inter-Department</SelectItem>
+            <SelectItem value="Return">Return</SelectItem>
+          </SelectContent>
+        </Select>
 
-      {/* TRF Table */}
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-full sm:w-48 bg-white border-gray-300 focus:border-primary">
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Status</SelectItem>
+            <SelectItem value="Pending">Pending</SelectItem>
+            <SelectItem value="Approved">Approved</SelectItem>
+            <SelectItem value="Rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+
+      {/* Order Budget Table */}
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead>TRF Number</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Tool</TableHead>
-                  <TableHead>From</TableHead>
-                  <TableHead>To</TableHead>
-                  <TableHead>Qty</TableHead>
+                  <TableHead>Order Number</TableHead>
+                  <TableHead>Order Date</TableHead>
                   <TableHead>Requested By</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Urgency</TableHead>
+                  <TableHead>Jobsite</TableHead>
+                  <TableHead>Tools ID</TableHead>
+                  <TableHead>Tools Desc</TableHead>
+                  <TableHead>Specification</TableHead>
+                  <TableHead>Cost</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Reason</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
@@ -353,81 +353,84 @@ export default function TRFApproval() {
               <TableBody>
                 {filteredRequests.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center py-8 text-gray-500">
-                      No TRF requests found
+                    <TableCell colSpan={13} className="text-center py-8 text-gray-500">
+                      No order budgets found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredRequests.map((request) => (
-                    <TableRow key={request.id} className="hover:bg-gray-50">
+                  filteredRequests.map((order) => (
+                    <TableRow key={order.ToolsId} className="text-xs hover:bg-gray-50">
                       <TableCell>
-                        <span className="text-[#009999]">{request.trfNumber}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={`w-fit ${getTypeColor(request.transferType)}`}>
-                          {request.transferType}
-                        </Badge>
+                        <span className="text-[#009999]">{order.orderno}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Wrench className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <div className="text-sm">{request.toolName}</div>
-                            <div className="text-xs text-gray-500">{request.toolId}</div>
-                          </div>
+                          {formatDate(order.OrderDate)}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">{request.fromLocation}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">{request.toLocation}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
-                          {request.quantity}
-                        </Badge>
-                      </TableCell>
+
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-gray-400" />
-                          {request.requestedBy}
+                          {order.PicTool}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          {new Date(request.requestDate).toLocaleDateString()}
+                        <div className="max-w-xs truncate" title="Jobsite">
+                          {order.jobsite}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`w-fit ${getUrgencyColor(request.urgency)}`}>
-                          {request.urgency}
-                        </Badge>
+                        <div className="max-w-xs truncate" title="Tools ID">
+                          {order.ToolsId}
+                        </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`w-fit ${getStatusColor(request.status)}`}>
-                          {request.status}
+                        <div className="max-w-xs truncate" title="Tools Desc">
+                          {order.ToolsDescription}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate" title="Specification">
+                          {order.Spesifikasi}
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="max-w-xs truncate" title="Cost">
+                          {formatCurrency(Number(order.ToolsCost))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate" title="Quantity">
+                          {order.Qty}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate" title="Reason">
+                          {order.Reason}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={`flex items-center gap-1 w-fit ${getStatusColor(
+                            order.StApprove
+                          )}`}
+                        >
+                          {getStatusIcon(order.StApprove)}
+                          {order.StApprove}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {request.status === 'Pending' && (
+                          {order.StOrder === 'Pending' && (
                             <>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
                                 title="Approve"
-                                onClick={() => handleApprove(request.id)}
+                                onClick={() => handleApprove(order.orderno)}
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
@@ -436,7 +439,7 @@ export default function TRFApproval() {
                                 size="icon"
                                 className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                                 title="Reject"
-                                onClick={() => handleReject(request.id)}
+                                onClick={() => handleReject(order.orderno)}
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>

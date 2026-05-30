@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import {
   Search,
   Plus,
@@ -16,6 +18,7 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  Truck
 } from 'lucide-react';
 import {
   Table,
@@ -63,12 +66,31 @@ import { API } from '../config';
 // }
 
 interface OrderItem {
-  ToolId: string;
-  Qty: string;
+  orderno: string;
+  OrderDate: string;
+  jobsite: string;
+  ToolsId: string;
+  PicTool: string;
+  ToolsDescription: string;
   Brand: string;
-  StatusCapex: string;
-  Reason: string;
   Spesifikasi: string;
+  Qty: string;
+  Category: string;
+  ToolsCost: string;
+  statusCapex: string;
+  Reason: string;
+  StOrder: string;
+  PR_date?: string;
+  PR_no?: string;
+  StApprove?: string;
+  PO_date?: string;
+  PO_no?: string;
+  Supplier?: string;
+  Est_date?: string;
+  Note?: string;
+  Act_date?: string;
+  IsClose?: string;
+
 }
 
 interface CapexItem {
@@ -91,7 +113,36 @@ interface CapexItem {
   IsFinal: string;
   StOrder: string;
   Allocated: string;
+  Reason?: string;
 }
+
+const CustomDateInput = forwardRef(({ value, onClick, className }: any, ref: any) => (
+  <div className="relative w-full">
+    <Input
+      value={value}
+      onClick={onClick}
+      ref={ref}
+      className={className}
+      readOnly
+      placeholder="dd-MM-yyyy"
+    />
+    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+  </div>
+));
+
+const parseDate = (dateStr: string | undefined | null): Date | null => {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const formatDateToYMD = (date: Date | null): string => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 export default function FormOrderBudget() {
   const { currentUser } = useAuth();
@@ -101,28 +152,82 @@ export default function FormOrderBudget() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const [orders, setOrders] = useState<OrderBudget[]>([]);
-  const [hasil, setHasil] = useState({ table1: [], table2: [] });
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [capexList, setCapexList] = useState<CapexItem[]>([]);
+  const [Budget, setBudget] = useState<OrderBudget[]>([]);
   const [editingItem, setEditingItem] = useState<OrderBudget | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
+  const [orderDetailList, setOrderDetailList] = useState<any[]>([]);
+  const [isEditItemDialogOpen, setIsEditItemDialogOpen] = useState(false);
+  // const [editingOrderItem, setEditingOrderItem] = useState<any | null>(null);
+  const [statusPO, setStatusPO] = useState<GlobalModel[]>([]);
+  const [newItem, setNewItem] = useState<CapexItem[]>([]);
   const [formData, setFormData] = useState({
     OrderNo: '',
+    ToolsId: '',
     Jobsite: '',
-    Location: '',
-    Allocated: '0',
-    UsedAmount: '0',
+    Description: '',
+    Brand: '0',
+    Size: '0',
+    Qty: '',
+    Cost: '',
+    Reason: '',
     Source: '',
     Year: ''
   });
 
-  const ReloadOrders = () => {
+  const [editingOrderItem, setEditingOrderItem] = useState({
+    OrderNo: '',
+    ToolsId: '',
+    PR_date: '',
+    PR_no: '',
+    PO_date: '',
+    PO_no: '',
+    Supplier: '',
+    Est_date: '',
+    Note: '',
+    Act_date: '',
+    IsClose: '0',
+    StatusPO: '',
+  })
+
+  const ReloadBudget = (year: string) => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
+      Year: year
+    });
+    fetch(API.CAPEX() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: OrderBudget[]) => { setBudget(json); console.log(json); })
+      .catch((error) => console.error("Error:", error));
+  };
+
+  const ReloadOrderHeader = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+      act: "HEADER",
     });
     fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
       method: "GET"
     })
       .then((response) => response.json())
       .then((json: OrderBudget[]) => { setOrders(json); console.log(json); })
+      .catch((error) => console.error("Error:", error));
+  };
+
+  const ReloadOrders = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+
+    });
+    fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: OrderItem[]) => { setOrderItems(json); console.log('Order items: ', json); })
       .catch((error) => console.error("Error:", error));
   };
 
@@ -136,18 +241,172 @@ export default function FormOrderBudget() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: CapexItem[]) => { setCapexList(json); console.log(json); })
+      .then((json: CapexItem[]) => {
+        setCapexList(json);
+        // console.log(json);
+        const items: CapexItem[] = json.map((item: any) => ({
+          IdKey: item.IdKey || '',
+          ToolsJobsite: item.ToolsJobsite || '',
+          ToolsId: item.ToolsId || '',
+          ToolsDescription: item.ToolsDescription || '',
+          ToolsBrand: item.ToolsBrand || '',
+          ToolsSize: item.ToolsSize || '',
+          ToolsQty: String(item.ToolsQty ?? '0'),
+          Category: item.Category || '',
+          ToolsCost: String(item.toolsCost ?? item.ToolsCost ?? '0'),
+          StatusCapex: item.StatusCapex || '',
+        }));
+        // setOrderItems(items);
+        setNewItem(items);
+      })
       .catch((error) => console.error("Error:", error));
+
+    // setFormData({ ...formData, Allocated: allocated });
   };
 
+  const handleUpdateItem = (toolsId: string, field: 'Qty' | 'Reason', val: string) => {
+    setCapexList(prev => prev.map(item => {
+      if (item.ToolsId === toolsId) {
+        return { ...item, [field === 'Qty' ? 'ToolsQty' : 'Reason']: val };
+      }
+      return item;
+    }));
+    setNewItem(prev => prev.map(item => {
+      if (item.ToolsId === toolsId) {
+        return { ...item, [field === 'Qty' ? 'ToolsQty' : 'Reason']: val };
+      }
+      return item;
+    }));
+  };
+
+  // const openDetail = (order: OrderItem) => {
+  //   setSelectedOrder(order);
+  //   const params = new URLSearchParams({
+  //     jobsite: currentUser.Jobsite,
+  //     nrp: currentUser.Nrp,
+  //     act: "DETAIL",
+  //     orderno: order.orderno
+  //   });
+  //   fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
+  //     method: "GET"
+  //   })
+  //     .then((response) => response.json())
+  //     .then((json: any[]) => {
+  //       setOrderDetailList(json);
+  //     })
+  //     .catch((error) => console.error("Error:", error));
+
+  //   setIsDetailDialogOpen(true);
+  // };
+
+  const ReloadStatusPO = () => {
+    const params = new URLSearchParams({
+      ShowData: "STATUSPO"
+    });
+    fetch(API.FILTERS() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: GlobalModel[]) => { setStatusPO(json); })
+      .catch((error) => console.error("Error:", error));
+  }
+
+  const openEditItem = (item: OrderItem) => {
+    setSelectedOrder(item);
+
+    setEditingOrderItem({
+      OrderNo: item.orderno || '-',
+      ToolsId: item.ToolsId || (item as any).toolsId || '',
+      PR_date: item.PR_date || '',
+      PR_no: item.PR_no || '',
+      PO_date: item.PO_date || '',
+      PO_no: item.PO_no || '',
+      Supplier: item.Supplier || '',
+      Est_date: item.Est_date || '',
+      Note: item.Note || '',
+      Act_date: item.Act_date || '',
+      IsClose: item.IsClose || '0',
+      StatusPO: item.StOrder || item.StOrder || '',
+    });
+
+    console.log(item);
+
+    setIsEditItemDialogOpen(true);
+  };
+
+  const handleSaveItem = async () => {
+    if (!editingOrderItem) return;
+
+    const updatedDetails = orderDetailList.map(item => {
+      const itemOrderNo = item.orderno || item.OrderNo || '';
+      const itemToolsId = item.ToolsId || item.toolsId || '';
+      const targetOrderNo = editingOrderItem.OrderNo || '';
+      const targetToolsId = editingOrderItem.ToolsId || '';
+
+      if (itemOrderNo === targetOrderNo && itemToolsId === targetToolsId) {
+        return { ...item, ...editingOrderItem };
+      }
+      return item;
+    });
+
+    setOrderDetailList(updatedDetails);
+
+    try {
+      const response = await fetch(API.ORDERTOOLS(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "UPDATEDETAIL",
+          jobsite: currentUser?.Jobsite,
+          nrpUser: currentUser?.Nrp,
+          OrderNo: selectedOrder?.orderno || editingOrderItem.OrderNo || '',
+          ToolId: editingOrderItem.ToolsId || '',
+          Status: editingOrderItem.StatusPO,
+          PR_date: editingOrderItem.PR_date,
+          PR_no: editingOrderItem.PR_no,
+          PO_date: editingOrderItem.PO_date,
+          PO_no: editingOrderItem.PO_no,
+          Est_date: editingOrderItem.Est_date,
+          Act_date: editingOrderItem.Act_date,
+          Isclose: editingOrderItem.IsClose,
+          // Tools: editingOrderItem
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+        return;
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadOrders();
+          setIsEditItemDialogOpen(false);
+          toast.success(resData?.Message ?? 'Item updated successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed to save");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + (ex as any).message);
+    }
+  };
+
+  const rawAllocated = capexList.map(p => p.Allocated || (p as any).allocated || '0')[0];
+  const totalAllocated = String(rawAllocated).replace(/,/g, '');
   // Calculate totals
-  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsQty), 0);
-  const totalExisting = capexList.reduce((sum, item) => sum + Number(item.ToolsExisting), 0);
-  const totalDeviasi = capexList.reduce((sum, item) => sum + (Number(item.ToolsDeviasi)), 0);
-  const totalCost = capexList.reduce((sum, item) => sum + Number(item.ToolsCost), 0);
+  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsQty || (item as any).toolsQty || 0), 0);
+  const totalExisting = capexList.reduce((sum, item) => sum + Number(item.ToolsExisting || (item as any).toolsExisting || 0), 0);
+  const totalDeviasi = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsDeviasi || 0), 0);
+  const totalCost = capexList.reduce((sum, item) => sum + (Number(item.ToolsCost || (item as any).toolsCost || 0) * Number(item.ToolsQty || 0)), 0);
 
 
-  const filteredOrders = orders.filter((order) => {
+  const filteredOrders = orderItems.filter((order) => {
     const matchesSearch =
       order.orderno.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -161,14 +420,12 @@ export default function FormOrderBudget() {
     switch (status) {
       case 'Pending':
         return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'Approved':
+      case 'PR':
         return 'bg-blue-100 text-blue-700 border-blue-300';
-      case 'Processing':
+      case 'PO':
         return 'bg-purple-100 text-purple-700 border-purple-300';
-      case 'Completed':
+      case 'Delivered':
         return 'bg-green-100 text-green-700 border-green-300';
-      case 'Rejected':
-        return 'bg-red-100 text-red-700 border-red-300';
       default:
         return 'bg-gray-100 text-gray-700 border-gray-300';
     }
@@ -178,13 +435,11 @@ export default function FormOrderBudget() {
     switch (status) {
       case 'Pending':
         return <Clock className="h-4 w-4" />;
-      case 'Approved':
-      case 'Processing':
+      case 'PR':
+      case 'PO':
         return <CheckCircle className="h-4 w-4" />;
-      case 'Completed':
+      case 'Delivered':
         return <CheckCircle className="h-4 w-4" />;
-      case 'Rejected':
-        return <XCircle className="h-4 w-4" />;
       default:
         return null;
     }
@@ -250,12 +505,12 @@ export default function FormOrderBudget() {
   };
 
   const stats = {
-    totalOrders: orders.length,
-    totalBudgetAllocated: orders.reduce((sum, o) => sum + Number(o.Allocated), 0),
-    totalBudgetUsed: orders.reduce((sum, o) => sum + Number(o.UsedAmount), 0),
-    pending: orders.filter((o) => o.StOrder === 'Pending').length,
-    processing: orders.filter((o) => o.StOrder === 'Processing').length,
-    completed: orders.filter((o) => o.StOrder === 'Completed').length,
+    totalOrders: orderItems.length,
+    totalBudgetAllocated: Budget.reduce((sum, o) => sum + (Number(o.ToolsCost || 0) * Number(o.ToolsQty)), 0),
+    totalBudgetUsed: orderItems.reduce((sum, o) => sum + (Number(o.ToolsCost || 0)), 0),
+    pending: orderItems.filter((o) => o.StOrder === null).length,
+    processing: orders.filter((o) => o.StOrder === 'PR' || o.StOrder === 'PO').length,
+    delivered: orders.filter((o) => o.StOrder === 'DL').length,
   };
 
   const budgetRemaining = stats.totalBudgetAllocated - stats.totalBudgetUsed;
@@ -268,7 +523,7 @@ export default function FormOrderBudget() {
     //   toast.error('Please fill in all required fields');
     //   return;
     // }
-    setFormData({ ...formData, Allocated: "10000", UsedAmount: "5000" });
+
     try {
       const response = await fetch(API.ORDERTOOLS(), {
         method: "POST",
@@ -279,10 +534,19 @@ export default function FormOrderBudget() {
           action: (editingItem ? "UPDATE" : "INSERT"),
           jobsite: currentUser?.Jobsite,
           nrpUser: currentUser?.Nrp,
-          orderNo: formData.OrderNo,
           location: currentUser?.Workgroup,
-          Allocated: formData.Allocated,
-          UsedAmount: formData.UsedAmount
+          Allocated: totalAllocated,
+          UsedAmount: String(totalCost),
+          ForYear: formData.Year,
+          Remark: currentUser?.Jobsite + ' ' + newItem.map(item => item.StatusCapex)[0] + ' Budget plan ' + formData.Year,
+          Tools: newItem.map(item => ({
+            ToolsId: item.ToolsId,
+            Brand: item.ToolsBrand || '',
+            Qty: Number(item.ToolsQty || 0),
+            StatusCapex: item.StatusCapex || '',
+            Reason: item.Reason || formData.Reason || '',
+            Spesifikasi: item.ToolsSize || ''
+          }))
         })
       });
 
@@ -294,6 +558,7 @@ export default function FormOrderBudget() {
         const resData = data[0];
         if (resData?.Status == 1) {
           ReloadOrders();
+          ReloadOrderHeader();
           setEditingItem(null);
           setIsAddDialogOpen(false);
           toast.success(resData?.Message ?? 'successfully');
@@ -304,13 +569,17 @@ export default function FormOrderBudget() {
         toast.error("Failed, No Response");
       }
     } catch (ex) {
-      toast.error("Failed. Message: " + ex.Message);
+      toast.error("Failed. Message: " + (ex as any).message);
     }
   };
 
   useEffect(() => {
+    ReloadStatusPO();
+    ReloadBudget(formData.Year);
+    // ReloadOrderHeader();
     ReloadOrders();
   }, []);
+
 
   const formatIDR = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -351,13 +620,18 @@ export default function FormOrderBudget() {
             onClick={() => {
               setIsAddDialogOpen(true);
               setCapexList([]);
+              // setOrderItems([]);
 
               setFormData({
                 OrderNo: 'Auto Generated',
                 Jobsite: '',
-                Location: '',
-                Allocated: '0',
-                UsedAmount: '0',
+                ToolsId: '',
+                Description: '',
+                Brand: '',
+                Size: '',
+                Qty: '',
+                Cost: '',
+                Reason: '',
                 Source: '',
                 Year: ''
               })
@@ -393,7 +667,7 @@ export default function FormOrderBudget() {
           <CardContent>
             <div className="flex flex-col">
               <div className="text-lg text-gray-900">
-                {formatCurrency(stats.totalBudgetAllocated).replace('Rp', '').trim()}
+                {orderItems.length > 0 ? formatCurrency(stats.totalBudgetAllocated).replace('Rp', '').trim() : 0}
                 <span className="text-xs text-gray-500 mt-1 ml-2">IDR</span>
               </div>
             </div>
@@ -402,7 +676,7 @@ export default function FormOrderBudget() {
 
         <Card className="border-purple-200">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Budget Used</CardTitle>
+            <CardTitle className="text-sm text-gray-600">Est. Budget Used</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col">
@@ -421,7 +695,7 @@ export default function FormOrderBudget() {
           <CardContent>
             <div className="flex flex-col">
               <div className="text-lg text-green-600">
-                {formatCurrency(budgetRemaining).replace('Rp', '').trim()}
+                {orderItems.length > 0 ? formatCurrency(budgetRemaining).replace('Rp', '').trim() : 0}
                 <span className="text-xs text-gray-500 mt-1 ml-2">IDR</span>
               </div>
             </div>
@@ -461,13 +735,13 @@ export default function FormOrderBudget() {
 
         <Card className="border-green-200 p-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Completed Orders</CardTitle>
+            <CardTitle className="text-sm text-gray-600">Orders Delivered</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl text-green-600">{stats.completed}</div>
+              <div className="text-2xl text-green-600">{stats.delivered}</div>
               <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+                <Truck className="h-5 w-5 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -522,12 +796,16 @@ export default function FormOrderBudget() {
               <TableHeader>
                 <TableRow className="bg-gray-50">
                   <TableHead>Order Number</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Order Date</TableHead>
                   <TableHead>Requested By</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Budget Allocated</TableHead>
-                  <TableHead>Budget Used</TableHead>
-                  <TableHead>Remaining</TableHead>
+                  <TableHead>Jobsite</TableHead>
+                  <TableHead>Tools ID</TableHead>
+                  <TableHead>Tools Desc</TableHead>
+                  <TableHead>Specification</TableHead>
+                  <TableHead>Tools Category</TableHead>
+                  <TableHead>Cost</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Reason</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
@@ -542,56 +820,71 @@ export default function FormOrderBudget() {
                 ) : (
                   filteredOrders.map((order) => {
                     const remaining = calculateBudgetRemaining(
-                      Number(order.Allocated),
-                      Number(order.UsedAmount)
+                      Number(order.ToolsCost),
+                      Number(order.ToolsCost)
                     );
                     const percentUsed = calculatePercentageUsed(
-                      Number(order.Allocated),
-                      Number(order.UsedAmount)
+                      Number(order.ToolsCost),
+                      Number(order.ToolsCost)
                     );
 
                     return (
-                      <TableRow key={order.orderno} className="text-xs hover:bg-gray-50">
+                      <TableRow key={order.ToolsId} className="text-xs hover:bg-gray-50">
                         <TableCell>
                           <span className="text-[#009999]">{order.orderno}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-gray-700">
                           <div className="flex items-center gap-2">
-                            {formatDate(order.orderdate)}
+                            {formatDate(order.OrderDate)}
                           </div>
                         </TableCell>
 
-                        <TableCell>
+                        <TableCell className="text-gray-700">
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-gray-400" />
                             {order.PicTool}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <div className="max-w-xs truncate" title="Description">
-                            {order.remark}
+                        <TableCell className="text-gray-700">
+                          <div className="max-w-xs truncate" title="Jobsite">
+                            {order.jobsite}
                           </div>
                         </TableCell>
-
-                        <TableCell>
-                          <span className="text-sm">
-                            {formatCurrency(Number(order.Allocated))}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="text-sm">
-                              {formatCurrency(Number(order.UsedAmount))}
-                            </span>
-                            <span className="text-xs text-gray-500">{percentUsed}%</span>
+                        <TableCell className="text-gray-700">
+                          <div className="max-w-xs truncate" title="Tools ID">
+                            {order.ToolsId}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <span className={`text-sm ${remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            {formatCurrency(remaining)}
-                          </span>
+                        <TableCell className="text-gray-700">
+                          <div className="max-w-xs truncate" title="Tools Desc">
+                            {order.ToolsDescription}
+                          </div>
                         </TableCell>
-
+                        <TableCell className="text-gray-700">
+                          <div className="max-w-xs truncate" title="Specification">
+                            {order.Spesifikasi}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-700">
+                          <div className="max-w-xs truncate" title="Tools Category">
+                            {order.Category}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-700">
+                          <div className="max-w-xs truncate" title="Cost">
+                            {formatCurrency(Number(order.ToolsCost))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-700">
+                          <div className="max-w-xs truncate" title="Quantity">
+                            {order.Qty}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-700">
+                          <div className="max-w-xs truncate" title="Reason">
+                            {order.Reason}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge
                             className={`flex items-center gap-1 w-fit ${getStatusColor(
@@ -607,16 +900,9 @@ export default function FormOrderBudget() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
-                              title="View Details"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
                               className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
                               title="Edit"
+                              onClick={() => openEditItem(order)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -651,6 +937,7 @@ export default function FormOrderBudget() {
         setIsAddDialogOpen(open);
         if (!open) {
           setCapexList([]);
+          setOrderItems([]);
         }
       }}>
         <DialogContent className="sm:max-w-[750px]">
@@ -676,9 +963,13 @@ export default function FormOrderBudget() {
                   onValueChange={(value) => {
                     setFormData(formData => ({ ...formData, Source: value }));
                     if (value === "CAPEX") {
+                      if (formData.Year == "") {
+                        return;
+                      }
                       ReloadCapex(formData.Year);
                     } else {
                       setCapexList([]);
+                      setOrderItems([]);
                     }
                   }}
                 >
@@ -697,12 +988,14 @@ export default function FormOrderBudget() {
                 <Select
                   value={formData.Year}
                   onValueChange={(value) => {
-                    setFormData(prev => ({ ...prev, Year: value }));
+                    setFormData(formData => ({ ...formData, Year: value }));
 
                     if (formData.Source === "CAPEX") {
                       ReloadCapex(value);
+                      // setFormData(formData => ({ ...formData, Allocated: allocated }));
                     } else {
                       setCapexList([]);
+                      setOrderItems([]);
                     }
                   }}
                 >
@@ -721,8 +1014,13 @@ export default function FormOrderBudget() {
             {/* Column 2 */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <p className="text-xs text-gray-500 uppercase font-semibold">Total Allocated</p>
-                <p className="text-lg font-large font-bold text-[#009999]">{formatIDR(Number(capexList.map(p => p.Allocated.replace(/,/g, ''))[0]) || 0)}</p>
+                <p className="text-xs text-gray-500 uppercase font-semibold">Budget Remaining</p>
+                <p className="text-lg font-large font-bold text-[#009999]">{
+                  capexList.length === 0 ?
+                    0 : newItem.length === 0 ? formatIDR(Number(totalAllocated)) : formatIDR(budgetRemaining)
+
+                }
+                </p>
               </div>
 
               {/* <div className="space-y-2">
@@ -756,18 +1054,43 @@ export default function FormOrderBudget() {
                   </TableHeader>
                   <TableBody>
                     {capexList.length > 0 ? (
-                      capexList.map((item, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>{item.ToolsDescription}</TableCell>
-                          <TableCell className="text-center">{item.ToolsPN}</TableCell>
-                          <TableCell className="text-center">{item.ToolsBrand}</TableCell>
-                          <TableCell className="text-center">{item.ToolsSize}</TableCell>
-                          <TableCell className="text-right">{formatIDR(Number(item.ToolsCost))}</TableCell>
-                          <TableCell className="text-center">{item.ToolsQty}</TableCell>
-                          <TableCell className="text-center">{/* Reason */}</TableCell>
-                          <TableCell>{item.Remarks}</TableCell>
-                        </TableRow>
-                      ))
+                      capexList.map((item, idx) => {
+                        const targetId = item.ToolsId || (item as any).toolsId;
+                        const capex = capexList.find(c => (c.ToolsId || (c as any).toolsId) === targetId) || capexList[idx];
+                        const orderItem = capexList.find(o => o.ToolsId === targetId);
+                        return (
+                          <TableRow key={targetId || idx}>
+                            <TableCell>{item?.ToolsDescription || (capex as any)?.toolsDescription}</TableCell>
+                            <TableCell className="text-center">{item?.ToolsPN || (capex as any)?.toolsPN}</TableCell>
+                            <TableCell className="text-center">{item?.ToolsBrand || (capex as any)?.toolsBrand}</TableCell>
+                            <TableCell className="text-center">{item?.ToolsSize || (capex as any)?.toolsSize}</TableCell>
+                            <TableCell className="text-right">{formatIDR(Number(item?.ToolsCost || (capex as any)?.toolsCost || 0))}</TableCell>
+                            <TableCell className="text-center">
+                              {/* <Input
+                                type="number"
+                                value={item.ToolsQty || '0'}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  handleUpdateItem(targetId, 'Qty', val);
+                                }}
+                                className="w-16 text-center h-8 inline-block bg-white border border-slate-300"
+                              /> */}
+                              <span className="text-center">{item.ToolsQty}</span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Input
+                                value={item.Reason || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  handleUpdateItem(targetId, 'Reason', val);
+                                }}
+                                className="h-8 min-w-[100px] bg-white border border-slate-300"
+                              />
+                            </TableCell>
+                            <TableCell>{item.Remarks || (capex as any)?.remarks}</TableCell>
+                          </TableRow>
+                        );
+                      })
                     ) : (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center py-4 text-gray-500">
@@ -802,6 +1125,327 @@ export default function FormOrderBudget() {
               variant="outline"
               className="bg-[#009999] hover:bg-[#007777] text-white" onClick={handleSave}>
               Submit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail Dialog Popup */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="sm:max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Order Budget Details</DialogTitle>
+            <DialogDescription>
+              <span className="font-semibold text-[#009999]">
+                {selectedOrder?.orderno} </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100 text-xs">
+            <div>
+              <p className="text-gray-500 uppercase font-semibold">Order Date</p>
+              <p className="font-medium text-gray-900">{formatDate(selectedOrder?.orderdate || '')}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 uppercase font-semibold">Requested By</p>
+              <p className="font-medium text-gray-900">{selectedOrder?.PicTool}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 uppercase font-semibold">Allocated</p>
+              <p className="font-medium text-gray-900">{formatIDR(Number(selectedOrder?.Allocated) || 0)}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 uppercase font-semibold">Used Amount</p>
+              <p className="font-medium text-gray-900">{formatIDR(Number(selectedOrder?.UsedAmount) || 0)}</p>
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto max-h-[350px] overflow-y-auto">
+                <Table className="text-xs">
+                  <TableHeader className="sticky top-0 bg-gray-50 z-10 shadow-sm">
+                    <TableRow>
+                      <TableHead className="bg-gray-50">Tools ID</TableHead>
+                      <TableHead className="bg-gray-50">Description</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Part No</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Brand</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Specification</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Cost</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Qty</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Reason</TableHead>
+                      <TableHead className="bg-gray-50 text-center">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orderDetailList.length > 0 ? (
+                      orderDetailList.map((item, idx) => (
+                        <TableRow key={idx} className="hover:bg-gray-50">
+                          <TableCell className="font-mono text-xs">{item.ToolsId || item.toolsId || '-'}</TableCell>
+                          <TableCell>{item.ToolsDesc || '-'}</TableCell>
+                          <TableCell className="text-center">{item.ToolsPN || item.toolsPN || item.PartNo || item.partNo || '-'}</TableCell>
+                          <TableCell className="text-center">{item.Brand || item.brand || '-'}</TableCell>
+                          <TableCell className="text-center">{item.Spesifikasi || item.spesifikasi || item.ToolsSize || item.toolsSize || '-'}</TableCell>
+                          <TableCell className="text-right">
+                            {formatIDR(Number(item.ToolsCost || 0))}
+                          </TableCell>
+                          <TableCell className="text-center font-semibold">{item.Qty || item.qty || item.ToolsQty || item.toolsQty || 0}</TableCell>
+                          <TableCell className="text-center">{item.Reason || item.reason || '-'}</TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
+                              title="Edit PR/PO"
+                              onClick={() => openEditItem(item)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-6 text-gray-500">
+                          No items found for this order
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit PR/PO Item Dialog */}
+      <Dialog open={isEditItemDialogOpen} onOpenChange={setIsEditItemDialogOpen}>
+        <DialogContent className="sm:max-w-[850px] bg-white text-xs">
+          <DialogHeader>
+            <DialogTitle className="text-[#003366] font-semibold text-lg">FORM PR & PO BUDGET</DialogTitle>
+            <DialogDescription className="text-gray-500">
+              Update tracking details
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            {/* Left Container */}
+            <div className="space-y-4 md:pr-6">
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">Tool ID</Label>
+                  <Input
+                    value={editingOrderItem.ToolsId || ''}
+                    disabled
+                    className="bg-gray-50 border border-gray-300 h-9 cursor-not-allowed"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">Specification</Label>
+                  <Input
+                    value={selectedOrder?.Spesifikasi || ''}
+                    disabled
+                    className="bg-gray-50 border border-gray-300 h-9 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">Item Description</Label>
+                <Input
+                  value={selectedOrder?.ToolsDescription || selectedOrder?.ToolsDesc || '-'}
+                  disabled
+                  className="bg-gray-50 border border-gray-300 h-9 cursor-not-allowed"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">ORDER STATUS</Label>
+                <Select
+                  value={editingOrderItem.StatusPO}
+                  onValueChange={(val) => setEditingOrderItem((prev: any) => ({ ...prev, StatusPO: val }))}
+                >
+                  <SelectTrigger className="bg-white border border-gray-300 h-9">
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    {statusPO.map((pos) => (
+                      <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
+                        {pos.Keterangan}
+                      </SelectItem>
+                    ))}
+
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">Date Create PR</Label>
+                <DatePicker
+                  selected={parseDate(editingOrderItem.PR_date)}
+                  onChange={(date: Date | null) => {
+                    setEditingOrderItem((prev: any) => ({
+                      ...prev,
+                      PR_date: formatDateToYMD(date)
+                    }));
+                  }}
+                  dateFormat="dd-MM-yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
+                  customInput={
+                    <CustomDateInput
+                      className="w-full pl-10 h-9 bg-white border border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                    />
+                  }
+                  wrapperClassName="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">No PR</Label>
+                <Input
+                  value={editingOrderItem.PR_no}
+                  onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, PR_no: e.target.value }))}
+                  className="bg-white border border-gray-300 h-9"
+                  placeholder="Enter PR Number"
+                />
+              </div>
+            </div>
+
+            {/* Right Container */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">Date Create PO</Label>
+                <DatePicker
+                  selected={parseDate(editingOrderItem.PO_date)}
+                  onChange={(date: Date | null) => {
+                    setEditingOrderItem((prev: any) => ({
+                      ...prev,
+                      PO_date: formatDateToYMD(date)
+                    }));
+                  }}
+                  dateFormat="dd-MM-yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
+                  customInput={
+                    <CustomDateInput
+                      className="w-full pl-10 h-9 bg-white border border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                    />
+                  }
+                  wrapperClassName="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">No PO</Label>
+                <Input
+                  value={editingOrderItem.PO_no}
+                  onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, PO_no: e.target.value }))}
+                  className="bg-white border border-gray-300 h-9"
+                  placeholder="Enter PO Number"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">SUPPLIER</Label>
+                <Input
+                  value={editingOrderItem.Supplier}
+                  onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, Supplier: e.target.value }))}
+                  className="bg-white border border-gray-300 h-9"
+                  placeholder="Enter Supplier Name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">ESTIMATED DELIVERY DATE</Label>
+                <DatePicker
+                  selected={parseDate(editingOrderItem.Est_date)}
+                  onChange={(date: Date | null) => {
+                    setEditingOrderItem((prev: any) => ({
+                      ...prev,
+                      Est_date: formatDateToYMD(date)
+                    }));
+                  }}
+                  dateFormat="dd-MM-yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
+                  customInput={
+                    <CustomDateInput
+                      className="w-full pl-10 h-9 bg-white border border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                    />
+                  }
+                  wrapperClassName="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">NOTE (PLANT/PROCUREMENT/PURCHASING)</Label>
+                <Input
+                  value={editingOrderItem.Note}
+                  onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, Note: e.target.value }))}
+                  className="bg-white border border-gray-300 h-9"
+                  placeholder="Enter Note"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-gray-700 font-medium">STATUS</Label>
+                  <Select
+                    value={editingOrderItem.IsClose}
+                    onValueChange={(val) => setEditingOrderItem((prev: any) => ({ ...prev, IsClose: val }))}
+                  >
+                    <SelectTrigger className="bg-white border border-gray-300 h-9">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">OPEN</SelectItem>
+                      <SelectItem value="1">CLOSED</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-gray-700 font-medium">ACTUAL SUPPLY DATE</Label>
+                  <DatePicker
+                    selected={parseDate(editingOrderItem.Act_date)}
+                    onChange={(date: Date | null) => {
+                      setEditingOrderItem((prev: any) => ({
+                        ...prev,
+                        Act_date: formatDateToYMD(date)
+                      }));
+                    }}
+                    dateFormat="dd-MM-yyyy"
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    customInput={
+                      <CustomDateInput
+                        className="w-full pl-10 h-9 bg-white border border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                      />
+                    }
+                    wrapperClassName="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setIsEditItemDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveItem}
+              className="bg-[#009999] hover:bg-[#008080] text-white"
+            >
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>

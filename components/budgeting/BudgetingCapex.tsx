@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { Plus, Edit, Trash2, Download, Send } from 'lucide-react';
+import { Plus, Edit, Trash2, Download, Send, Search } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { BudgetCapexItem, initialBudgetCapexData } from '../../data/budgetCapexData';
 import { GlobalModel } from "../../model/Models";
@@ -81,6 +81,7 @@ export default function BudgetingCapex() {
   const [editingItem, setEditingItem] = useState<CapexData | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [formData, setFormData] = useState({
     id: '',
@@ -272,6 +273,11 @@ export default function BudgetingCapex() {
       return;
     }
 
+    if (!formData.cost) {
+      toast.error('Please enter Cost');
+      return;
+    }
+
     try {
       const response = await fetch(API.CAPEX(), {
         method: "POST",
@@ -399,7 +405,7 @@ export default function BudgetingCapex() {
   const totalRequirement = filteredItems.reduce((sum, item) => sum + Number(item.ToolsQty), 0);
   const totalExisting = filteredItems.reduce((sum, item) => sum + Number(item.ToolsExisting), 0);
   const totalDeviasi = filteredItems.reduce((sum, item) => sum + (Number(item.ToolsDeviasi)), 0);
-  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.ToolsCost), 0);
+  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.ToolsCost) * Number(item.ToolsQty), 0);
 
   const handleToolSearch = async (toolId: string) => {
     if (!toolId) return;
@@ -433,6 +439,7 @@ export default function BudgetingCapex() {
             toolsCategory: tool.KategoriId || tool.Kategori || '',
             statusCapex: tool.Status || '',
             requirement: tool.Qty || '0',
+            existing: tool.existing || '0',
           }));
           // toast.success("Tool data found and populated");
         } else {
@@ -590,6 +597,15 @@ export default function BudgetingCapex() {
       <Card className="border-0 shadow-lg">
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by Tools description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white border-gray-300 focus:border-primary focus:ring-0"
+              />
+            </div>
             <Label htmlFor="yearFilter" className="whitespace-nowrap">Filter Year:</Label>
             <Select value={yearFilter} onValueChange={setYearFilter}>
               <SelectTrigger className="w-[180px]">
@@ -672,7 +688,7 @@ export default function BudgetingCapex() {
                     <TableCell className="max-w-xs truncate" title={item.Remarks}>
                       {item.Remarks}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <span
                         className={`px-2 py-1 rounded text-xs ${item.IsFinal === 'Yes'
                           ? 'bg-green-100 text-green-700'
@@ -682,7 +698,7 @@ export default function BudgetingCapex() {
                         {item.IsFinal}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <span
                         className={`px-2 py-1 rounded text-xs ${item.StOrder === 'Submitted'
                           ? 'bg-green-100 text-green-700'
@@ -693,26 +709,28 @@ export default function BudgetingCapex() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(item)}
-                          className="hover:bg-blue-50 hover:text-blue-600"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setItemToDelete(item.IdKey);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                          className="hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div className="flex items-center justify-center">
+                        {item.StOrder != "Submitted" && (
+                          <><Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(item)}
+                            className="hover:bg-blue-50 hover:text-blue-600"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button><Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setItemToDelete(item.IdKey);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            className="hover:bg-red-50 hover:text-red-600"
+                          >
+                              <Trash2 className="h-4 w-4" />
+                            </Button></>
+                        )}
+
                       </div>
                     </TableCell>
                   </TableRow>
