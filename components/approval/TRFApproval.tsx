@@ -266,6 +266,13 @@ export default function TRFApproval() {
     setIsDetailDialogOpen(true);
   };
 
+  const handlePrint = (order: OrderHeader) => {
+    setSelectedOrder(order);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   const handleReject = async (order: any) => {
     try {
       const response = await fetch(API.ORDERTOOLS(), {
@@ -436,15 +443,6 @@ export default function TRFApproval() {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="border-[#009999] text-[#009999] hover:bg-[#009999]/10"
-              onClick={() => window.print()}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Print to PDF
-            </Button>
-
             <Button
               variant="outline"
               className="border-[#009999] text-[#009999] hover:bg-[#009999]/10"
@@ -638,6 +636,15 @@ export default function TRFApproval() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
+                              title="Print to PDF"
+                              onClick={() => handlePrint(order)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
                             {order.StApprove === 'Pending' && (
                               <>
                                 <Button
@@ -810,21 +817,21 @@ export default function TRFApproval() {
           <tbody>
             <tr className="border-b border-black">
               <td className="p-1 px-2 font-semibold w-[10%] border-r border-black">NUMBER</td>
-              <td className="p-1 px-2 w-[20%] border-r border-black">{filteredRequests?.[0]?.orderno || ''}</td>
+              <td className="p-1 px-2 w-[20%] border-r border-black">{selectedOrder?.orderno || ''}</td>
               <td rowSpan={3} className="p-4 text-center align-middle font-bold text-sm border-r border-black w-[40%]">
                 TOOLS & FACILITY REQUISITION FORM
               </td>
               <td className="p-1 px-2 font-semibold w-[15%] border-r border-black">CREATION DATE</td>
-              <td className="p-1 px-2 w-[15%]">{filteredRequests?.[0]?.orderdate ? formatDate(filteredRequests?.[0]?.orderdate) : ''}</td>
+              <td className="p-1 px-2 w-[15%]">{selectedOrder?.orderdate ? formatDate(selectedOrder.orderdate) : ''}</td>
             </tr>
             <tr className="border-b border-black">
               <td className="p-1 px-2 font-semibold border-r border-black">JOB SITE</td>
-              <td className="p-1 px-2 border-r border-black">{filteredRequests?.[0]?.jobsite || ''}</td>
+              <td className="p-1 px-2 border-r border-black">{selectedOrder?.jobsite || ''}</td>
 
             </tr>
             <tr>
               <td className="p-1 px-2 font-semibold border-r border-black">SECTION</td>
-              <td className="p-1 px-2 border-r border-black">{filteredRequests?.[0]?.location || 'PLANT TIRE'}</td>
+              <td className="p-1 px-2 border-r border-black">{selectedOrder?.location || 'PLANT TIRE'}</td>
 
             </tr>
           </tbody>
@@ -843,15 +850,15 @@ export default function TRFApproval() {
             </tr>
           </thead>
           <tbody>
-            {filteredRequests.length === 0 ? (
+            {selectedOrderDetails.length === 0 ? (
               <tr>
-                <td colSpan={10} className="p-4 text-center text-gray-500 border border-gray-400">
+                <td colSpan={6} className="p-4 text-center text-gray-500 border border-gray-400">
                   No order budgets found
                 </td>
               </tr>
             ) : (
-              orderDetailList.map((order) => (
-                <tr key={order.orderno} className="border-b border-gray-400">
+              selectedOrderDetails.map((order) => (
+                <tr key={order.ToolsId} className="border-b border-gray-400">
                   <td className="p-2 border border-gray-400">{order.ToolsId}</td>
                   <td className="p-2 border border-gray-400">{order.ToolsDescription}</td>
                   <td className="p-2 border border-gray-400">{order.Spesifikasi}</td>
@@ -870,7 +877,7 @@ export default function TRFApproval() {
             <p className="mb-16">Approved by PIC</p>
             <div className="w-48 border-b border-black">
               <div className="p-1 h-20 w-20">
-                {filteredRequests?.[0]?.ApproveByPic && (
+                {selectedOrder?.ApproveByPic && (
                   <img src="../src/assets/approved_mark.png" alt="Pic sign" />
                 )}
               </div>
@@ -881,7 +888,7 @@ export default function TRFApproval() {
             <p className="mb-16">Approved by Section Head</p>
             <div className="w-48 border-b border-black">
               <div className="p-1 h-20 w-20">
-                {filteredRequests?.[0]?.ApproveBySH && (
+                {selectedOrder?.ApproveBySH && (
                   <img src="../src/assets/approved_mark.png" alt="Pic sign" />
                 )}
               </div>

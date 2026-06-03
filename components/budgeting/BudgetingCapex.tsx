@@ -939,12 +939,16 @@ export default function BudgetingCapex() {
               <Label htmlFor="cost">Cost (IDR) {userRole !== 'Super User' && '(Read Only)'}</Label>
               <Input
                 id="cost"
-                type="number"
-                value={formData.cost}
-                onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
+                type="text"
+                value={formData.cost ? new Intl.NumberFormat('id-ID').format(formData.cost) : ''}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\D/g, '');
+                  const numValue = rawValue ? parseInt(rawValue, 10) : 0;
+                  handleInputChange('cost', numValue);
+                }}
                 placeholder="0"
                 disabled={userRole !== 'Super User'}
-                className={userRole !== 'Super User' ? 'bg-white border-gray-300' : 'bg-white border-gray-300'}
+                className="bg-white border-gray-300"
               />
             </div>
 

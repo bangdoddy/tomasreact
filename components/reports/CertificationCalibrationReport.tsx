@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../ui/button'; 
+import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import {
@@ -25,19 +25,20 @@ interface Certification {
   ToolsId: string;
   ToolsName: string;
   CertType: string;
+  ToolsType: string;
   CertNumber: string;
   CertBy: string;
   CertStartDate: string;
   CertExpiredDate: string;
   CertDate: string;
   CertStatus: string;
-  nextDueDate: string;
+  RemindDate: string;
 }
 
 export default function CertificationCalibrationReport() {
-  const { currentUser } = useAuth(); 
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [certifications, setCertifications] = useState<Certification[]>([]); 
+  const [certifications, setCertifications] = useState<Certification[]>([]);
 
   /*Pagination Items */
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,7 +56,7 @@ export default function CertificationCalibrationReport() {
       cert.ToolsName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cert.ToolsId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cert.CertNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-       
+
     return matchesSearch;
   });
 
@@ -83,8 +84,11 @@ export default function CertificationCalibrationReport() {
       data.map((tool) => ({
         'Tool ID': tool.ToolsId,
         'Tool Name': tool.ToolsName,
-        'Type': tool.CertType,
+        'Type': tool.ToolsType,
+        'Cert Date': tool.CertDate,
         'Expiry Date': tool.CertExpiredDate,
+        'Next Due Date': tool.RemindDate,
+        'Status': tool.CertStatus,
       }))
     );
 
@@ -109,9 +113,9 @@ export default function CertificationCalibrationReport() {
         setCertifications(json);
       })
       .catch((error) => console.error("Error:", error));
-  }; 
+  };
   useEffect(() => {
-    ReloadMaster(); 
+    ReloadMaster();
   }, []);
 
   return (
@@ -125,14 +129,19 @@ export default function CertificationCalibrationReport() {
           <p className="text-sm text-gray-600 mt-1">Tool certification and calibration status</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast.success('Report exported!')}>
+          <Button
+            variant="outline"
+            className="hidden border-[#009999] text-[#009999] hover:bg-[#009999]/10"
+            onClick={() => toast.success('Report exported!')}>
             <Download className="h-4 w-4 mr-2" />
-            Export PDF
+            Export to PDF
           </Button>
-          <Button className="bg-[#009999] hover:bg-[#008080] text-white"
+          <Button
+            variant="outline"
+            className="border-[#009999] text-[#009999] hover:bg-[#009999]/10"
             onClick={() => saveToExcel(certifications)}>
             <Download className="h-4 w-4 mr-2" />
-            Export Excel
+            Export to Excel
           </Button>
         </div>
       </div>
@@ -164,17 +173,13 @@ export default function CertificationCalibrationReport() {
         </Card>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search certifications..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input placeholder="Search certifications..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 bg-white border-gray-300" />
+      </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-2">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -182,7 +187,9 @@ export default function CertificationCalibrationReport() {
                   <TableHead>Tool ID</TableHead>
                   <TableHead>Tool Name</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>Cert. Date</TableHead>
                   <TableHead>Expiry Date</TableHead>
+                  <TableHead>Remind Date</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -195,13 +202,15 @@ export default function CertificationCalibrationReport() {
                   </TableRow>
                 ) : (
                   currentItems.map((cert) => (
-                    <TableRow key={cert.Kode} className="hover:bg-gray-50">
-                      <TableCell className="text-[#009999]">{cert.ToolsId }</TableCell>
-                      <TableCell>{cert.ToolsName }</TableCell>
-                      <TableCell>{cert.CertType }</TableCell>
-                      <TableCell>{ cert.CertExpiredDate}</TableCell>
+                    <TableRow key={cert.Kode} className="hover:bg-gray-50 text-gray-700 text-xs">
+                      <TableCell className="text-[#009999]">{cert.ToolsId}</TableCell>
+                      <TableCell>{cert.ToolsName}</TableCell>
+                      <TableCell>{cert.ToolsType}</TableCell>
+                      <TableCell>{cert.CertDate}</TableCell>
+                      <TableCell>{cert.CertExpiredDate}</TableCell>
+                      <TableCell>{cert.RemindDate}</TableCell>
                       <TableCell>
-                        <Badge className={`${getStatusColor(cert.CertStatus)}`} > 
+                        <Badge className={`${getStatusColor(cert.CertStatus)}`} >
                           {cert.CertStatus}
                         </Badge>
                       </TableCell>
