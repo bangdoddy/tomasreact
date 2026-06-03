@@ -52,6 +52,7 @@ import { toast } from 'sonner@2.0.3';
 import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel, OrderBudget } from "../../model/Models";
 import { API } from '../../config';
+import * as XLSX from 'xlsx';
 
 interface OrderHeader {
   orderno: string;
@@ -66,6 +67,7 @@ interface OrderHeader {
   remark: string;
   StUser: string;
   StApprove: string;
+  TotalCost: string;
 }
 
 interface OrderItem {
@@ -106,6 +108,8 @@ export default function TRFApproval() {
   const [requests, setRequests] = useState<OrderHeader[]>([]);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [orderToApprove, setOrderToApprove] = useState<OrderHeader | null>(null);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [orderToReject, setOrderToReject] = useState<OrderHeader | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderHeader | null>(null);
   const [orderDetailList, setOrderDetailList] = useState<OrderItem[]>([]);
@@ -249,16 +253,50 @@ export default function TRFApproval() {
     }
   };
 
+  const confirmReject = () => {
+    if (orderToReject) {
+      handleReject(orderToReject);
+      setIsRejectDialogOpen(false);
+      setOrderToReject(null);
+    }
+  };
+
   const openDetail = (order: OrderHeader) => {
     setSelectedOrder(order);
     setIsDetailDialogOpen(true);
   };
 
-  const handleReject = (orderno: string) => {
-    setRequests(
-      requests.map((r) => (r.orderno === orderno ? { ...r, StOrder: 'Rejected' } : r))
-    );
-    toast.error('TRF request rejected');
+  const handleReject = async (order: any) => {
+    try {
+      const response = await fetch(API.ORDERTOOLS(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "REJECT",
+          OrderNo: order.orderno
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadOrders();
+          toast.success(resData?.Message ?? 'successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex: any) {
+      toast.error("Failed. Message: " + ex.Message);
+    }
   };
 
   const stats = {
@@ -271,6 +309,70 @@ export default function TRFApproval() {
   const selectedOrderDetails = orderDetailList.filter(
     (item) => item.orderno === selectedOrder?.orderno
   );
+
+  const exportToExcel = async () => {
+    try {
+      const params = new URLSearchParams({
+        jobsite: currentUser?.Jobsite || '',
+        nrp: currentUser?.Nrp || '',
+        act: 'LISTAPPROVAL'
+      });
+      const url = `${API.ORDERTOOLS()}?${params.toString()}`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+        return;
+      }
+
+      let data;
+      const text = await response.text();
+      data = text ? JSON.parse(text) : null;
+      const itemDownload = (data as OrderHeader[])
+      if (Array.isArray(data) && data.length > 0) {
+        saveToExcel(data);
+      } else if (data && typeof data === "object" && Array.isArray(data.data)) {
+        if (data.items.length > 0) {
+          saveToExcel(data.data);
+        } else {
+          toast.error("Failed, No Response");
+          return;
+        }
+      } else {
+        toast.error("Failed, No Response");
+        return;
+      }
+    } catch (ex) {
+      const message = ex?.message ?? String(ex);
+      toast.error("Failed. Message: " + message);
+      return;
+    }
+  };
+
+  const saveToExcel = (data: OrderHeader[]) => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      data.map((tool) => ({
+        'Order No.': tool.orderno,
+        'Tools Jobsite': tool.jobsite,
+        'Order Date': formatDate(tool.orderdate),
+        'Request By': tool.PicTool,
+        'Cost': tool.TotalCost,
+        'Remark': tool.remark,
+        'Status Approval': tool.StApprove,
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tools');
+
+    XLSX.writeFile(workbook, `TRF_Approval_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Data exported successfully');
+  }
 
   useEffect(() => {
     ReloadOrders();
@@ -346,7 +448,7 @@ export default function TRFApproval() {
             <Button
               variant="outline"
               className="border-[#009999] text-[#009999] hover:bg-[#009999]/10"
-              onClick={() => toast.success('Report exported successfully!')}
+              onClick={() => exportToExcel()}
             >
               <Download className="h-4 w-4 mr-2" />
               Export to Excel
@@ -355,7 +457,7 @@ export default function TRFApproval() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="border-[#009999]/20">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm text-gray-600">Total Requests</CardTitle>
@@ -398,7 +500,7 @@ export default function TRFApproval() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-md p-1">
+          <Card className="shadow-md p-1 hidden">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm text-gray-600">Rejected</CardTitle>
             </CardHeader>
@@ -469,6 +571,7 @@ export default function TRFApproval() {
                     <TableHead>Cost</TableHead>
                     <TableHead>Qty</TableHead>
                     <TableHead>Reason</TableHead> */}
+                    <TableHead>Total Cost</TableHead>
                     <TableHead>Remark</TableHead>
                     <TableHead>Approval</TableHead>
                     <TableHead className="text-center">Actions</TableHead>
@@ -502,6 +605,11 @@ export default function TRFApproval() {
                         <TableCell>
                           <div className="max-w-xs truncate" title="Jobsite">
                             {order.jobsite}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-xs truncate" title="TotalCost">
+                            {formatCurrency(Number(order.TotalCost))}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -544,15 +652,20 @@ export default function TRFApproval() {
                                 >
                                   <CheckCircle className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-                                  title="Reject"
-                                  onClick={() => handleReject(order.orderno)}
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
+                                {order.PicTool != currentUser?.Nama && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                                    title="Reject"
+                                    onClick={() => {
+                                      setOrderToReject(order);
+                                      setIsRejectDialogOpen(true);
+                                    }}
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </>
                             )}
                           </div>
@@ -592,6 +705,32 @@ export default function TRFApproval() {
                 className="bg-[#009999] hover:bg-[#008080] text-white"
               >
                 Approve
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Confirm Rejection Dialog */}
+        <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Rejection</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to reject this order request? This action will reject the request and update the status.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setIsRejectDialogOpen(false);
+                setOrderToReject(null);
+              }}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmReject}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Reject
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -478,7 +478,7 @@ export default function FormOrderBudget() {
         'Tools Jobsite': tool.jobsite,
         'Tools Id': tool.ToolsId,
         'Tools Desc': tool.ToolsDescription,
-        'Order Date': tool.OrderDate,
+        'Order Date': formatDate(tool.OrderDate),
         'Request By': tool.PicTool,
         'Tools Category': tool.Category,
         'Specification': tool.Spesifikasi,
