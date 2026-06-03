@@ -387,7 +387,7 @@ export default function BudgetingCapex() {
   };
 
   const handleSubmit = async () => {
-    const itemsToSubmit = capexData.filter(item => item.IsFinal === 'Yes');
+    const itemsToSubmit = capexData.filter(item => item.IsFinal === 'Yes' && item.StOrder !== 'New');
 
     if (itemsToSubmit.length === 0) {
       toast.error('No items with Final Budget = "Yes" to submit');
