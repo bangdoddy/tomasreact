@@ -18,7 +18,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Truck
+  Truck,
+  Trash
 } from 'lucide-react';
 import {
   Table,
@@ -47,6 +48,7 @@ import {
 } from './ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { toast } from 'sonner@2.0.3';
+import * as XLSX from 'xlsx';
 import { useAuth, AuthUsers } from "../service/AuthContext";
 import { GlobalModel, OrderBudget } from "../model/Models";
 import { API } from '../config';
@@ -85,6 +87,8 @@ interface OrderItem {
   StApprove?: string;
   PO_date?: string;
   PO_no?: string;
+  StatusPR?: string;
+  StatusPO?: string;
   Supplier?: string;
   Est_date?: string;
   Note?: string;
@@ -114,6 +118,7 @@ interface CapexItem {
   StOrder: string;
   Allocated: string;
   Reason?: string;
+  NrpUser?: string;
 }
 
 const CustomDateInput = forwardRef(({ value, onClick, className }: any, ref: any) => (
@@ -161,7 +166,7 @@ export default function FormOrderBudget() {
   const [orderDetailList, setOrderDetailList] = useState<any[]>([]);
   const [isEditItemDialogOpen, setIsEditItemDialogOpen] = useState(false);
   // const [editingOrderItem, setEditingOrderItem] = useState<any | null>(null);
-  const [statusPO, setStatusPO] = useState<GlobalModel[]>([]);
+  const [statusOrder, setStatusOrder] = useState<GlobalModel[]>([]);
   const [newItem, setNewItem] = useState<CapexItem[]>([]);
   const [formData, setFormData] = useState({
     OrderNo: '',
@@ -189,6 +194,8 @@ export default function FormOrderBudget() {
     Note: '',
     Act_date: '',
     IsClose: '0',
+    Status: '',
+    StatusPR: '',
     StatusPO: '',
   })
 
@@ -220,8 +227,8 @@ export default function FormOrderBudget() {
 
   const ReloadOrders = () => {
     const params = new URLSearchParams({
-      jobsite: currentUser.Jobsite,
-
+      jobsite: currentUser?.Jobsite || '',
+      nrpUser: currentUser?.Nrp || '',
     });
     fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
       method: "GET"
@@ -255,6 +262,7 @@ export default function FormOrderBudget() {
           Category: item.Category || '',
           ToolsCost: String(item.toolsCost ?? item.ToolsCost ?? '0'),
           StatusCapex: item.StatusCapex || '',
+          NrpUser: currentUser?.Nrp || '',
         }));
         // setOrderItems(items);
         setNewItem(items);
@@ -307,7 +315,7 @@ export default function FormOrderBudget() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: GlobalModel[]) => { setStatusPO(json); })
+      .then((json: GlobalModel[]) => { setStatusOrder(json); })
       .catch((error) => console.error("Error:", error));
   }
 
@@ -326,7 +334,9 @@ export default function FormOrderBudget() {
       Note: item.Note || '',
       Act_date: item.Act_date || '',
       IsClose: item.IsClose || '0',
-      StatusPO: item.StOrder || item.StOrder || '',
+      Status: item.StOrder || '',
+      StatusPO: item.StatusPO || '',
+      StatusPR: item.StatusPR || '',
     });
 
     console.log(item);
@@ -363,7 +373,7 @@ export default function FormOrderBudget() {
           nrpUser: currentUser?.Nrp,
           OrderNo: selectedOrder?.orderno || editingOrderItem.OrderNo || '',
           ToolId: editingOrderItem.ToolsId || '',
-          Status: editingOrderItem.StatusPO,
+          Status: editingOrderItem.Status,
           PR_date: editingOrderItem.PR_date,
           PR_no: editingOrderItem.PR_no,
           PO_date: editingOrderItem.PO_date,
@@ -371,6 +381,9 @@ export default function FormOrderBudget() {
           Est_date: editingOrderItem.Est_date,
           Act_date: editingOrderItem.Act_date,
           Isclose: editingOrderItem.IsClose,
+          StatusPR: editingOrderItem.StatusPR,
+          StatusPO: editingOrderItem.StatusPO,
+          Supplier: editingOrderItem.Supplier,
           // Tools: editingOrderItem
         })
       });
@@ -415,6 +428,83 @@ export default function FormOrderBudget() {
 
     return matchesSearch && matchesStatus;// && matchesCategory;
   });
+
+  const exportToExcel = async () => {
+    try {
+      const params = new URLSearchParams({
+        jobsite: currentUser?.Jobsite || '',
+        nrp: currentUser?.Nrp || '',
+      });
+      const url = `${API.ORDERTOOLS()}?${params.toString()}`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+        return;
+      }
+
+      let data;
+      const text = await response.text();
+      data = text ? JSON.parse(text) : null;
+      const itemDownload = (data as OrderItem[])
+      if (Array.isArray(data) && data.length > 0) {
+        saveToExcel(data);
+      } else if (data && typeof data === "object" && Array.isArray(data.data)) {
+        if (data.items.length > 0) {
+          saveToExcel(data.data);
+        } else {
+          toast.error("Failed, No Response");
+          return;
+        }
+      } else {
+        toast.error("Failed, No Response");
+        return;
+      }
+    } catch (ex) {
+      const message = ex?.message ?? String(ex);
+      toast.error("Failed. Message: " + message);
+      return;
+    }
+  };
+
+  const saveToExcel = (data: OrderItem[]) => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      data.map((tool) => ({
+        'Tools Jobsite': tool.jobsite,
+        'Tools Id': tool.ToolsId,
+        'Tools Desc': tool.ToolsDescription,
+        'Order Date': tool.OrderDate,
+        'Request By': tool.PicTool,
+        'Tools Category': tool.Category,
+        'Specification': tool.Spesifikasi,
+        'Cost': tool.ToolsCost,
+        'Requirement': tool.Qty,
+        'Reason': tool.Reason,
+        'Status Order': tool.StOrder,
+        'Status Approval': tool.StApprove,
+        'PR Date': tool.PR_date,
+        'PR No': tool.PR_no,
+        'Status PR': tool.StatusPR,
+        'PO Date': tool.PO_date,
+        'PO No': tool.PO_no,
+        'Status PO': tool.StatusPO,
+        'Est Date': tool.Est_date,
+        'Act Date': tool.Act_date,
+        'Supplier': tool.Supplier,
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tools');
+
+    XLSX.writeFile(workbook, `SmartTomas_TRF_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Data exported successfully');
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -489,9 +579,41 @@ export default function FormOrderBudget() {
     return allocated > 0 ? ((used / allocated) * 100).toFixed(1) : '0.0';
   };
 
-  const handleDelete = (id: string) => {
-    setOrders(orders.filter((order) => order.id !== id));
-    toast.success('Order budget deleted successfully!');
+  const handleDelete = async (order: OrderItem) => {
+    try {
+      const response = await fetch(API.ORDERTOOLS(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "DELETE",
+          orderno: order?.orderno,
+          ToolId: order?.ToolsId
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadOrders();
+          ReloadOrderHeader();
+          setEditingItem(null);
+          setIsAddDialogOpen(false);
+          toast.success(resData?.Message ?? 'successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex) {
+      toast.error("Failed. Message: " + (ex as any).message);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -506,11 +628,11 @@ export default function FormOrderBudget() {
 
   const stats = {
     totalOrders: orderItems.length,
-    totalBudgetAllocated: Budget.reduce((sum, o) => sum + (Number(o.ToolsCost || 0) * Number(o.ToolsQty)), 0),
-    totalBudgetUsed: orderItems.reduce((sum, o) => sum + (Number(o.ToolsCost || 0)), 0),
-    pending: orderItems.filter((o) => o.StOrder === null).length,
-    processing: orders.filter((o) => o.StOrder === 'PR' || o.StOrder === 'PO').length,
-    delivered: orders.filter((o) => o.StOrder === 'DL').length,
+    totalBudgetAllocated: Budget.filter(b => b.IsFinal == 'Yes').reduce((sum, o) => sum + (Number(o.ToolsCost || 0) * Number(o.ToolsQty)), 0),
+    totalBudgetUsed: orderItems.filter(b => b.StOrder === 'Delivered').reduce((sum, o) => sum + (Number(o.ToolsCost || 0)) * Number(o.Qty), 0),
+    pending: orderItems.filter((o) => o.StOrder === 'Pending').length,
+    processing: orderItems.filter((o) => o.StOrder === 'PR' || o.StOrder === 'PO').length,
+    delivered: orderItems.filter((o) => o.StOrder === 'Delivered').length,
   };
 
   const budgetRemaining = stats.totalBudgetAllocated - stats.totalBudgetUsed;
@@ -543,9 +665,10 @@ export default function FormOrderBudget() {
             ToolsId: item.ToolsId,
             Brand: item.ToolsBrand || '',
             Qty: Number(item.ToolsQty || 0),
-            StatusCapex: item.StatusCapex || '',
+            statusCapex: item.StatusCapex || '',
             Reason: item.Reason || formData.Reason || '',
-            Spesifikasi: item.ToolsSize || ''
+            Spesifikasi: item.ToolsSize || '',
+            NrpUser: item.NrpUser || '',
           }))
         })
       });
@@ -610,7 +733,7 @@ export default function FormOrderBudget() {
           <Button
             variant="outline"
             className="gap-2 border-[#009999] text-[#003366] hover:bg-[#009999]/10"
-            onClick={() => toast.success('Report exported successfully!')}
+            onClick={() => exportToExcel()}
           >
             <Download className="h-4 w-4 mr-2" />
             Export to Excel
@@ -780,10 +903,9 @@ export default function FormOrderBudget() {
           <SelectContent>
             <SelectItem value="All">All Status</SelectItem>
             <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Approved">Approved</SelectItem>
-            <SelectItem value="Processing">Processing</SelectItem>
-            <SelectItem value="Completed">Completed</SelectItem>
-            <SelectItem value="Rejected">Rejected</SelectItem>
+            <SelectItem value="PR">PR</SelectItem>
+            <SelectItem value="PO">PO</SelectItem>
+            <SelectItem value="Delivered">Delivered</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -806,7 +928,7 @@ export default function FormOrderBudget() {
                   <TableHead>Cost</TableHead>
                   <TableHead>Qty</TableHead>
                   <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Status Order</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -897,24 +1019,27 @@ export default function FormOrderBudget() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
-                              title="Edit"
-                              onClick={() => openEditItem(order)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-                              title="Delete"
-                              onClick={() => handleDelete(order.orderno)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {order.StApprove !== 'Pending' &&
+                              (<Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
+                                title="Edit"
+                                onClick={() => openEditItem(order)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>)}
+
+                            {order.StApprove !== 'Approved' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                                title="Remove from list"
+                                onClick={() => handleDelete(order)}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>)}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1264,15 +1389,15 @@ export default function FormOrderBudget() {
               <div className="space-y-2">
                 <Label className="text-gray-700 font-medium">ORDER STATUS</Label>
                 <Select
-                  value={editingOrderItem.StatusPO}
-                  onValueChange={(val) => setEditingOrderItem((prev: any) => ({ ...prev, StatusPO: val }))}
+                  value={editingOrderItem.Status}
+                  onValueChange={(val) => setEditingOrderItem((prev: any) => ({ ...prev, Status: val }))}
                 >
                   <SelectTrigger className="bg-white border border-gray-300 h-9">
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Pending">Pending</SelectItem>
-                    {statusPO.map((pos) => (
+                    {statusOrder.map((pos) => (
                       <SelectItem key={pos.Keterangan} value={pos.Keterangan}>
                         {pos.Keterangan}
                       </SelectItem>
@@ -1304,15 +1429,31 @@ export default function FormOrderBudget() {
                   wrapperClassName="w-full"
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">No PR</Label>
-                <Input
-                  value={editingOrderItem.PR_no}
-                  onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, PR_no: e.target.value }))}
-                  className="bg-white border border-gray-300 h-9"
-                  placeholder="Enter PR Number"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">No PR</Label>
+                  <Input
+                    value={editingOrderItem.PR_no}
+                    onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, PR_no: e.target.value }))}
+                    className="bg-white border border-gray-300 h-9"
+                    placeholder="Enter PR Number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">PR STATUS</Label>
+                  <Select
+                    value={editingOrderItem.StatusPR}
+                    onValueChange={(val) => setEditingOrderItem((prev: any) => ({ ...prev, StatusPR: val }))}
+                  >
+                    <SelectTrigger className="bg-white border border-gray-300 h-9">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">PR Pending</SelectItem>
+                      <SelectItem value="Approve">PR Approved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -1341,14 +1482,31 @@ export default function FormOrderBudget() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">No PO</Label>
-                <Input
-                  value={editingOrderItem.PO_no}
-                  onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, PO_no: e.target.value }))}
-                  className="bg-white border border-gray-300 h-9"
-                  placeholder="Enter PO Number"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">No PO</Label>
+                  <Input
+                    value={editingOrderItem.PO_no}
+                    onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, PO_no: e.target.value }))}
+                    className="bg-white border border-gray-300 h-9"
+                    placeholder="Enter PO Number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">PO STATUS</Label>
+                  <Select
+                    value={editingOrderItem.StatusPO}
+                    onValueChange={(val) => setEditingOrderItem((prev: any) => ({ ...prev, StatusPO: val }))}
+                  >
+                    <SelectTrigger className="bg-white border border-gray-300 h-9">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">PO Pending</SelectItem>
+                      <SelectItem value="Approve">PO Approved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -1361,56 +1519,29 @@ export default function FormOrderBudget() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">ESTIMATED DELIVERY DATE</Label>
-                <DatePicker
-                  selected={parseDate(editingOrderItem.Est_date)}
-                  onChange={(date: Date | null) => {
-                    setEditingOrderItem((prev: any) => ({
-                      ...prev,
-                      Est_date: formatDateToYMD(date)
-                    }));
-                  }}
-                  dateFormat="dd-MM-yyyy"
-                  showMonthDropdown
-                  showYearDropdown
-                  dropdownMode="select"
-                  customInput={
-                    <CustomDateInput
-                      className="w-full pl-10 h-9 bg-white border border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
-                    />
-                  }
-                  wrapperClassName="w-full"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">NOTE (PLANT/PROCUREMENT/PURCHASING)</Label>
-                <Input
-                  value={editingOrderItem.Note}
-                  onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, Note: e.target.value }))}
-                  className="bg-white border border-gray-300 h-9"
-                  placeholder="Enter Note"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-gray-700 font-medium">STATUS</Label>
-                  <Select
-                    value={editingOrderItem.IsClose}
-                    onValueChange={(val) => setEditingOrderItem((prev: any) => ({ ...prev, IsClose: val }))}
-                  >
-                    <SelectTrigger className="bg-white border border-gray-300 h-9">
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">OPEN</SelectItem>
-                      <SelectItem value="1">CLOSED</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="grid grid-cols-2 gap-4 space-y-2">
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">ESTIMATED DELIVERY DATE</Label>
+                  <DatePicker
+                    selected={parseDate(editingOrderItem.Est_date)}
+                    onChange={(date: Date | null) => {
+                      setEditingOrderItem((prev: any) => ({
+                        ...prev,
+                        Est_date: formatDateToYMD(date)
+                      }));
+                    }}
+                    dateFormat="dd-MM-yyyy"
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    customInput={
+                      <CustomDateInput
+                        className="w-full pl-10 h-9 bg-white border border-gray-300 focus:border-[#009999] focus:ring-[#009999]"
+                      />
+                    }
+                    wrapperClassName="w-full"
+                  />
                 </div>
-
                 <div className="space-y-1">
                   <Label className="text-gray-700 font-medium">ACTUAL SUPPLY DATE</Label>
                   <DatePicker
@@ -1432,6 +1563,34 @@ export default function FormOrderBudget() {
                     }
                     wrapperClassName="w-full"
                   />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">NOTE (PLANT/PROCUREMENT/PURCHASING)</Label>
+                <Input
+                  value={editingOrderItem.Note}
+                  onChange={(e) => setEditingOrderItem((prev: any) => ({ ...prev, Note: e.target.value }))}
+                  className="bg-white border border-gray-300 h-9"
+                  placeholder="Enter Note"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 hidden">
+                <div className="space-y-1">
+                  <Label className="text-gray-700 font-medium">STATUS</Label>
+                  <Select
+                    value={editingOrderItem.IsClose}
+                    onValueChange={(val) => setEditingOrderItem((prev: any) => ({ ...prev, IsClose: val }))}
+                  >
+                    <SelectTrigger className="bg-white border border-gray-300 h-9">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">OPEN</SelectItem>
+                      <SelectItem value="1">CLOSED</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>

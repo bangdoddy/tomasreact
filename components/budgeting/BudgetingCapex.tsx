@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { Plus, Edit, Trash2, Download, Send, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Download, Send, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { BudgetCapexItem, initialBudgetCapexData } from '../../data/budgetCapexData';
 import { GlobalModel } from "../../model/Models";
@@ -55,6 +55,7 @@ interface CapexData {
   ToolsExisting: string;
   ToolsDeviasi: string;
   ToolsCost: string;
+  TotalCost: string;
   StatusCapex: string;
   Category: string;
   ToolsPN: string;
@@ -82,6 +83,10 @@ export default function BudgetingCapex() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  /*Pagination Items */
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [formData, setFormData] = useState({
     id: '',
@@ -132,11 +137,43 @@ export default function BudgetingCapex() {
       .catch((error) => console.error("Error:", error));
   };
 
-  // Filter items by year
+  // Filter items by year and search term
   const filteredItems = useMemo(() => {
-    if (yearFilter === 'All') return capexData;
-    return capexData.filter(item => item.ToolsYear === yearFilter);
-  }, [capexData, yearFilter]);
+    let result = capexData;
+
+    if (yearFilter !== 'All') {
+      result = result.filter(item => item.ToolsYear === yearFilter);
+    }
+
+    if (searchTerm.trim() !== '') {
+      const search = searchTerm.toLowerCase();
+      result = result.filter(item =>
+      (item.ToolsDescription?.toLowerCase().includes(search) ||
+        item.ToolsId?.toLowerCase().includes(search) ||
+        item.Category?.toLowerCase().includes(search) ||
+        item.ToolsBrand?.toLowerCase().includes(search) ||
+        item.ToolsKlasifikasi?.toLowerCase().includes(search))
+      );
+    }
+
+    return result;
+  }, [capexData, yearFilter, searchTerm]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredItems.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [yearFilter, searchTerm, itemsPerPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredItems, totalPages, currentPage]);
 
   // Get unique years from items
   const availableYears = useMemo(() => {
@@ -199,7 +236,7 @@ export default function BudgetingCapex() {
     // setCurrentItem({ id: item.Id } as any);
 
     setFormData({
-      id: item.IdKey.toString(),
+      id: '',
       toolsId: item.ToolsId,
       jobsite: currentUser?.Jobsite || '',
       toolsCategory: item.Category.charAt(0).toUpperCase(),
@@ -268,7 +305,7 @@ export default function BudgetingCapex() {
       return;
     }
 
-    if (!formData.year) {
+    if (!formData.year || formData.year === '-') {
       toast.error('Please enter Year');
       return;
     }
@@ -405,7 +442,7 @@ export default function BudgetingCapex() {
   const totalRequirement = filteredItems.reduce((sum, item) => sum + Number(item.ToolsQty), 0);
   const totalExisting = filteredItems.reduce((sum, item) => sum + Number(item.ToolsExisting), 0);
   const totalDeviasi = filteredItems.reduce((sum, item) => sum + (Number(item.ToolsDeviasi)), 0);
-  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.ToolsCost) * Number(item.ToolsQty), 0);
+  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.TotalCost) * Number(item.ToolsQty), 0);
 
   const handleToolSearch = async (toolId: string) => {
     if (!toolId) return;
@@ -624,7 +661,7 @@ export default function BudgetingCapex() {
       </Card>
 
       {/* Table */}
-      <Card className="border-0 shadow-lg">
+      <Card className="border-0 shadow-lg p-2">
         <CardHeader>
           <CardTitle>Budget Items</CardTitle>
         </CardHeader>
@@ -638,24 +675,22 @@ export default function BudgetingCapex() {
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Tools Description</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Year</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">StatusCapex</TableHead>
-                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Cost</TableHead>
-                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Brand</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Size</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">PN</TableHead>
-                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Klasifikasi Tool</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Klasifikasi</TableHead>
+                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Cost</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Requirement</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Existing</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Deviasi</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Total Cost</TableHead>
-                  <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Remarks</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Final Budget</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Status</TableHead>
                   <TableHead className="bg-gray-100 text-gray-700 font-bold text-[10px] py-3 text-center whitespace-nowrap px-4 border-b-2 border-gray-300">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredItems.map((item) => (
-                  <TableRow key={item.IdKey} className="hover:bg-gray-50 text-xs">
+                {currentItems.map((item) => (
+                  <TableRow key={item.ToolsId} className="hover:bg-gray-50 text-xs">
                     <TableCell className="font-medium">{item.ToolsId}</TableCell>
                     <TableCell>{item.Category}</TableCell>
                     <TableCell>{item.ToolsDescription}</TableCell>
@@ -665,11 +700,10 @@ export default function BudgetingCapex() {
                         {item.StatusCapex}
                       </span>
                     </TableCell>
-                    <TableCell>{formatIDR(Number(item.ToolsCost))}</TableCell>
-                    <TableCell>{item.ToolsBrand}</TableCell>
                     <TableCell>{item.ToolsSize}</TableCell>
                     <TableCell>{item.ToolsPN}</TableCell>
                     <TableCell>{item.ToolsKlasifikasi}</TableCell>
+                    <TableCell className="text-right">{formatIDR(Number(item.ToolsCost))}</TableCell>
                     <TableCell className="text-center">{item.ToolsQty}</TableCell>
                     <TableCell className="text-center">{item.ToolsExisting}</TableCell>
                     <TableCell className="text-center">
@@ -684,10 +718,8 @@ export default function BudgetingCapex() {
                         {Number(item.ToolsDeviasi)}
                       </span>
                     </TableCell>
-                    <TableCell className="font-medium">{formatIDR(Number(item.ToolsCost))}</TableCell>
-                    <TableCell className="max-w-xs truncate" title={item.Remarks}>
-                      {item.Remarks}
-                    </TableCell>
+                    <TableCell className="text-right font-medium">{formatIDR(Number(item.TotalCost))}</TableCell>
+
                     <TableCell className="text-center">
                       <span
                         className={`px-2 py-1 rounded text-xs ${item.IsFinal === 'Yes'
@@ -737,7 +769,7 @@ export default function BudgetingCapex() {
                 ))}
                 {/* Total Row */}
                 <TableRow className="bg-[#009999]/10 hover:bg-[#009999]/10">
-                  <TableCell colSpan={10} className="text-right">
+                  <TableCell colSpan={9} className="text-right">
                     <strong>TOTAL:</strong>
                   </TableCell>
                   <TableCell className="text-center">
@@ -758,6 +790,49 @@ export default function BudgetingCapex() {
                 </TableRow>
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center">
+              <Label htmlFor="itemsPerPage" className="mr-2">
+                Items per page:
+              </Label>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => setItemsPerPage(Number(value))}
+              >
+                <SelectTrigger id="itemsPerPage" className="w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="mx-2 text-sm">
+                Page {currentPage} of {totalPages || 1}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -829,7 +904,7 @@ export default function BudgetingCapex() {
               <Label htmlFor="year">Year</Label>
               <Select
                 value={formData.year}
-                disabled={isEditMode}
+                // disabled={isEditMode}
                 onValueChange={(value) => setFormData({ ...formData, year: value })}
               >
                 <SelectTrigger className="bg-white border-gray-300">
@@ -923,6 +998,7 @@ export default function BudgetingCapex() {
                 className="bg-white border-gray-300"
                 id="requirement"
                 type="number"
+                disabled={true}
                 min={0}
                 value={formData.requirement}
                 onChange={(e) => setFormData({ ...formData, requirement: Number(e.target.value) })}
@@ -936,6 +1012,7 @@ export default function BudgetingCapex() {
                 className="bg-white border-gray-300"
                 id="existing"
                 type="number"
+                disabled={true}
                 min={0}
                 value={formData.existing}
                 onChange={(e) => setFormData({ ...formData, existing: Number(e.target.value) })}
