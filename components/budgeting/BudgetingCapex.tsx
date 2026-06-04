@@ -46,6 +46,7 @@ import * as XLSX from 'xlsx';
 
 interface CapexData {
   IdKey: string;
+  OrderNo: string;
   ToolsJobsite: string;
   ToolsId: string;
   ToolsDescription: string;
@@ -90,6 +91,7 @@ export default function BudgetingCapex() {
 
   const [formData, setFormData] = useState({
     id: '',
+    orderNo: '',
     toolsId: '',
     jobsite: '',
     toolsCategory: '',
@@ -125,6 +127,7 @@ export default function BudgetingCapex() {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
       nrp: currentUser.Nrp,
+      statusCapex: "CAPEX"
     });
     fetch(API.CAPEX() + `?${params.toString()}`, {
       method: "GET"
@@ -142,7 +145,7 @@ export default function BudgetingCapex() {
     let result = capexData;
 
     if (yearFilter !== 'All') {
-      result = result.filter(item => item.ToolsYear === yearFilter);
+      result = result.filter(item => item.ToolsYear?.trim() === yearFilter.trim());
     }
 
     if (searchTerm.trim() !== '') {
@@ -177,7 +180,7 @@ export default function BudgetingCapex() {
 
   // Get unique years from items
   const availableYears = useMemo(() => {
-    const years = new Set(capexData.map(item => item.ToolsYear));
+    const years = new Set(capexData.map(item => item.ToolsYear?.trim()).filter(Boolean));
     return ['All', ...Array.from(years).sort()];
   }, [capexData]);
 
@@ -237,6 +240,7 @@ export default function BudgetingCapex() {
 
     setFormData({
       id: '',
+      orderNo: item.OrderNo,
       toolsId: item.ToolsId,
       jobsite: currentUser?.Jobsite || '',
       toolsCategory: item.Category.charAt(0).toUpperCase(),
@@ -404,6 +408,7 @@ export default function BudgetingCapex() {
           action: "SUBMITREQUEST",
           nrpUser: currentUser?.Nrp,
           jobsite: currentUser?.Jobsite,
+          statusCapex: formData.statusCapex
         })
       });
 
@@ -442,7 +447,7 @@ export default function BudgetingCapex() {
   const totalRequirement = filteredItems.reduce((sum, item) => sum + Number(item.ToolsQty), 0);
   const totalExisting = filteredItems.reduce((sum, item) => sum + Number(item.ToolsExisting), 0);
   const totalDeviasi = filteredItems.reduce((sum, item) => sum + (Number(item.ToolsDeviasi)), 0);
-  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.TotalCost) * Number(item.ToolsQty), 0);
+  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.TotalCost), 0);
 
   const handleToolSearch = async (toolId: string) => {
     if (!toolId) return;
@@ -689,8 +694,8 @@ export default function BudgetingCapex() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.map((item) => (
-                  <TableRow key={item.ToolsId} className="hover:bg-gray-50 text-xs">
+                {currentItems.map((item, index) => (
+                  <TableRow key={item.IdKey || `${item.ToolsId}-${index}`} className="hover:bg-gray-50 text-xs">
                     <TableCell className="font-medium">{item.ToolsId}</TableCell>
                     <TableCell>{item.Category}</TableCell>
                     <TableCell>{item.ToolsDescription}</TableCell>
@@ -712,7 +717,7 @@ export default function BudgetingCapex() {
                           ? 'bg-red-100 text-red-700'
                           : Number(item.ToolsDeviasi) === 0
                             ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-700'
+                            : 'bg-blue-100 text-blue-700'
                           }`}
                       >
                         {Number(item.ToolsDeviasi)}
@@ -742,26 +747,26 @@ export default function BudgetingCapex() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center">
-                        {item.StOrder != "Submitted" && (
-                          <><Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(item)}
-                            className="hover:bg-blue-50 hover:text-blue-600"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button><Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setItemToDelete(item.IdKey);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                            className="hover:bg-red-50 hover:text-red-600"
-                          >
-                              <Trash2 className="h-4 w-4" />
-                            </Button></>
-                        )}
+                        {/* {item.StOrder != "Submitted" && ( */}
+                        <><Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(item)}
+                          className="hover:bg-blue-50 hover:text-blue-600"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button><Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setItemToDelete(item.IdKey);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                          className="hidden hover:bg-red-50 hover:text-red-600"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                          </Button></>
+                        {/* )} */}
 
                       </div>
                     </TableCell>
@@ -905,7 +910,7 @@ export default function BudgetingCapex() {
               <Select
                 value={formData.year}
                 // disabled={isEditMode}
-                onValueChange={(value) => setFormData({ ...formData, year: value })}
+                onValueChange={(value) => setFormData({ ...formData, year: value, finalBudget: 'No' })}
               >
                 <SelectTrigger className="bg-white border-gray-300">
                   <SelectValue placeholder="Select year" />

@@ -202,7 +202,8 @@ export default function FormOrderBudget() {
   const ReloadBudget = (year: string) => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
-      Year: year
+      Year: year,
+      statusCapex: ""
     });
     fetch(API.CAPEX() + `?${params.toString()}`, {
       method: "GET"
@@ -243,6 +244,7 @@ export default function FormOrderBudget() {
       jobsite: currentUser.Jobsite,
       act: "GETCAPEX",
       year: yearVal || formData.Year,
+      statusCapex: formData.Source
     });
     fetch(API.CAPEX() + `?${params.toString()}`, {
       method: "GET"
@@ -1019,7 +1021,7 @@ export default function FormOrderBudget() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
-                            {order.StApprove !== 'Pending' &&
+                            {(order.StApprove !== 'Pending' && order.StOrder !== 'Delivered') &&
                               (<Button
                                 variant="ghost"
                                 size="icon"
@@ -1087,7 +1089,8 @@ export default function FormOrderBudget() {
                   value={formData.Source}
                   onValueChange={(value) => {
                     setFormData(formData => ({ ...formData, Source: value }));
-                    if (value === "CAPEX") {
+
+                    if (value) {
                       if (formData.Year == "") {
                         return;
                       }
@@ -1115,7 +1118,7 @@ export default function FormOrderBudget() {
                   onValueChange={(value) => {
                     setFormData(formData => ({ ...formData, Year: value }));
 
-                    if (formData.Source === "CAPEX") {
+                    if (formData.Source) {
                       ReloadCapex(value);
                       // setFormData(formData => ({ ...formData, Allocated: allocated }));
                     } else {

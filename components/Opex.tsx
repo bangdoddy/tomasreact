@@ -1,24 +1,68 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { DollarSign, TrendingDown, Package, Users, FileText } from 'lucide-react';
+import { DollarSign, TrendingUp, Package, Calendar, FileText } from 'lucide-react';
 import { Button } from './ui/button';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import BudgetingOpex from './budgeting/BudgetingOpex';
-import { initialBudgetOpexData, getBudgetCategories } from '../data/budgetOpexData';
+// (removed unused import)
+import { API } from '../config';
+import { useAuth } from '../service/AuthContext';
+import * as XLSX from 'xlsx';
+
+interface OpexData {
+  Id: string;
+  ToolsJobsite: string;
+  ToolsId: string;
+  ToolsDescription: string;
+  ToolsBrand: string;
+  ToolsSize: string;
+  ToolsQty: string;
+  ToolsExisting: string;
+  ToolsCost: string;
+  TotalCost: string;
+  StatusCapex: string;
+  Category: string;
+  ToolsPN: string;
+  ToolsKlasifikasi: string;
+  ToolsYear: string;
+  Remarks: string;
+  IsFinal: string;
+}
 
 export default function Opex() {
+  const { currentUser } = useAuth();
   const [showBudgeting, setShowBudgeting] = useState(false);
+  const [opexData, setOpexData] = useState<OpexData[]>([]);
 
-  // Calculate dynamic data from budgeting items (only COMMON TOOL)
-  const budgetCategories = useMemo(() => getBudgetCategories(initialBudgetOpexData), []);
+  // Calculate budget categories dynamically from fetched Capex data
+  const budgetCategories = useMemo(() => {
+    const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
+    const categoryMap: { [key: string]: { allocated: number; total: number; color: string } } = {};
+    opexData.forEach((item, index) => {
+      const cat = item.Category || 'Uncategorized';
+      if (!categoryMap[cat]) {
+        categoryMap[cat] = { allocated: 0, total: 0, color: colors[Object.keys(categoryMap).length % colors.length] };
+      }
+      const cost = Number(item.ToolsCost) * Number(item.ToolsQty);
+      categoryMap[cat].allocated += cost;
+      // Assuming total budget for category is sum of costs (could be adjusted later)
+      categoryMap[cat].total += cost;
+    });
+    return Object.entries(categoryMap).map(([category, data]) => ({
+      category,
+      allocated: data.allocated,
+      total: data.total,
+      color: data.color,
+    }));
+  }, [opexData]);
 
   const totalBudget = useMemo(() =>
-    initialBudgetOpexData.reduce((sum, item) => sum + (item.cost * item.requirement), 0),
-    []
+    opexData.reduce((sum, item) => sum + (Number(item.TotalCost)), 0),
+    [opexData]
   );
 
   const allocated = useMemo(() =>
-    initialBudgetOpexData.reduce((sum, item) => sum + item.totalCost, 0),
-    []
+    opexData.reduce((sum, item) => sum + (Number(item.TotalCost)), 0),
+    [opexData]
   );
 
   const remaining = totalBudget - allocated;
@@ -36,6 +80,27 @@ export default function Opex() {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  const ReloadOpexData = () => {
+    const params = new URLSearchParams({
+      jobsite: currentUser.Jobsite,
+      nrp: currentUser.Nrp,
+      statusCapex: "OPEX"
+    });
+    fetch(API.CAPEX() + `?${params.toString()}`, {
+      method: "GET"
+    })
+      .then((response) => response.json())
+      .then((json: OpexData[]) => {
+        setOpexData(json);
+        console.table(json);
+      })
+      .catch((error) => console.error("Error:", error));
+  };
+
+  useEffect(() => {
+    ReloadOpexData();
+  }, [showBudgeting]);
 
   if (showBudgeting) {
     return (
@@ -62,8 +127,8 @@ export default function Opex() {
               <DollarSign className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl text-white mb-1">Operational Expenditure (Opex)</h2>
-              <p className="text-white/80">Day-to-day operational costs for common tools</p>
+              <h2 className="text-2xl text-white mb-1">Operational Expenditure (OPEX)</h2>
+              <p className="text-white/80">Long-term investment and asset acquisition budget</p>
             </div>
           </div>
           <Button
@@ -96,11 +161,11 @@ export default function Opex() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Spent</p>
-                <p className="text-2xl text-orange-600">{formatIDR(allocated)}</p>
+                <p className="text-sm text-gray-600 mb-1">Allocated</p>
+                <p className="text-2xl text-green-600">{formatIDR(allocated)}</p>
               </div>
-              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                <TrendingDown className="h-6 w-6 text-orange-600" />
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -125,10 +190,10 @@ export default function Opex() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Utilization</p>
-                <p className="text-2xl text-purple-600">{utilization}%</p>
+                <p className="text-2xl text-orange-600">{utilization}%</p>
               </div>
-              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                <Users className="h-6 w-6 text-purple-600" />
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
@@ -142,7 +207,7 @@ export default function Opex() {
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle>Budget Categories</CardTitle>
-              <CardDescription>Opex allocation by category (Common Tool)</CardDescription>
+              <CardDescription>Capex allocation by category</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -157,7 +222,7 @@ export default function Opex() {
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                       <div
                         className={`h-2.5 rounded-full ${item.color}`}
-                        style={{ width: `${(item.allocated / item.total) * 100}%` }}
+                        style={{ width: `${(item.allocated / totalBudget) * 100}%` }}
                       ></div>
                     </div>
                   </div>
