@@ -44,7 +44,7 @@ export default function DisposedToolReport() {
       .then((response) => response.json())
       .then((json: DisposedTool[]) => {
         console.log(json);
-        setDisposedTools(json.filter(req => req.ToolsStatus === 'R2' || req.ToolsStatus === 'TA'));
+        setDisposedTools(json.filter(req => req.ToolsStatus === 'R2' || req.ToolsStatus === 'Lost'));
       }).catch((error) => console.error("Error:", error));
   };
 

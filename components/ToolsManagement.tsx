@@ -83,6 +83,7 @@ export default function ToolsManagement() {
 
   const [isDownloadRun, setIsDownloadRun] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RegisterTools | null>(null);
@@ -343,7 +344,7 @@ export default function ToolsManagement() {
         jobsite: String(currentUser?.Jobsite ?? ""),
         current: "1",
         perpage: "0",
-        filter: String(searchTerm ?? "")
+        filter: String(debouncedSearch ?? "")
       });
       const url = `${API.REGISTERTOOLS()}?${params.toString()}`;
       const response = await fetch(url, {
@@ -425,6 +426,7 @@ export default function ToolsManagement() {
         const importedTools = jsonData.map((row) => ({
           ToolsJobsite: row['Tools Jobsite'] || row['ToolsJobsite'] || '',
           ToolsId: row['Tools Id'] || row['ToolsId'] || '',
+          ToolsIdEll: row['Tools Id Ell'] || row['ToolsIdEll'] || '',
           ToolsDesc: row['Tools Desc'] || row['ToolsDesc'] || '',
           ToolsLocation: row['Tools Location'] || row['ToolsLocation'] || '',
           ToolsSerialNo: row['Tools Serial No'] || row['ToolsSerialNo'] || '',
@@ -434,8 +436,11 @@ export default function ToolsManagement() {
           ToolsGroupType: row['Tools Type'] || row['ToolsType'] || '',
           ToolsSize: row['Tools Size'] || row['ToolsSize'] || '',
           StTools: row['Tools Condition'] || row['ToolsCondition'] || '',
-          ToolsCostDefault: row['Cost'] || 0,
+          ToolsCostDefault: row['Cost'] || row['ToolsCostDefault'] || 0,
           ToolsPicPerson: row['ToolsPicPerson'] || row['ToolsPicPerson'] || '',
+          ToolsPicTools: row['ToolsPicTools'] || row['ToolsPicTools'] || '',
+          ToolsIDToolBox: row['ToolsIDToolBox'] || row['ToolsIDToolBox'] || '',
+
         }));
 
         if (importedTools.length === 0) {
@@ -529,7 +534,7 @@ export default function ToolsManagement() {
       jobsite: currentUser.Jobsite,
       current: `${currentPage}`,
       perpage: `${itemsPerPage}`,
-      filter: searchTerm,
+      filter: debouncedSearch,
     });
     fetch(API.REGISTERTOOLS() + `?${params.toString()}`, {
       method: "GET"
@@ -731,6 +736,16 @@ export default function ToolsManagement() {
   }, [itemsPerPage]);
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
     if (currentPage == 1) {
       if (itemList.length > 0) {
         console.log("searchTerm Load");
@@ -739,7 +754,7 @@ export default function ToolsManagement() {
     } else {
       setCurrentPage(1);
     }
-  }, [searchTerm]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (itemList.length == 0) {

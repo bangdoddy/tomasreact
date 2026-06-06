@@ -73,7 +73,7 @@ export default function ActivationReport() {
       case 'Rejected':
         return 'bg-red-100 text-red-700 border-red-300';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
+        return 'bg-blue-100 text-blue-700 border-blue-300';
     }
   };
 
@@ -195,7 +195,7 @@ export default function ActivationReport() {
                     </TableCell>
                   </TableRow>
                 ) : (filteredData.map((tool) => (
-                  <TableRow className="hover:bg-gray-50">
+                  <TableRow className="hover:bg-gray-50 text-xs">
                     <TableCell className="text-[#009999]">{tool.NoBAST}</TableCell>
                     <TableCell>{tool.ToolsId}</TableCell>
                     <TableCell>{tool.ToolsDesc}</TableCell>

@@ -99,6 +99,15 @@ export default function CertificationCalibrationReport() {
     toast.success('Data exported successfully');
   }
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
 
   /*Load Server */
   const ReloadMaster = () => {
@@ -206,9 +215,9 @@ export default function CertificationCalibrationReport() {
                       <TableCell className="text-[#009999]">{cert.ToolsId}</TableCell>
                       <TableCell>{cert.ToolsName}</TableCell>
                       <TableCell>{cert.ToolsType}</TableCell>
-                      <TableCell>{cert.CertDate}</TableCell>
-                      <TableCell>{cert.CertExpiredDate}</TableCell>
-                      <TableCell>{cert.RemindDate}</TableCell>
+                      <TableCell>{formatDate(cert.CertDate)}</TableCell>
+                      <TableCell>{formatDate(cert.CertExpiredDate)}</TableCell>
+                      <TableCell>{formatDate(cert.RemindDate)}</TableCell>
                       <TableCell>
                         <Badge className={`${getStatusColor(cert.CertStatus)}`} >
                           {cert.CertStatus}

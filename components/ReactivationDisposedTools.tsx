@@ -738,7 +738,7 @@ export default function ReactivationDisposedTools() {
                   </TableRow>
                 ) : (
                   currentItems.map((tool) => (
-                    <TableRow key={tool.id} className="hover:bg-gray-50">
+                    <TableRow key={tool.id} className="hover:bg-gray-50 text-xs">
                       <TableCell>
                         <span className="text-[#009999]">{tool.toolId}</span>
                       </TableCell>
