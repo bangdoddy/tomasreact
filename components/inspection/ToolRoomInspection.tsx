@@ -206,10 +206,10 @@ export default function ToolRoomInspection() {
     // Validation: Check if all tools in the list have a selected condition
     const incompleteTools = toolsList.filter(tool => !toolConditions[tool.Kode] || toolConditions[tool.Kode] === "");
 
-    if (incompleteTools.length > 0) {
-      toast.error(`Inspection Incomplete: Please select a condition for all ${incompleteTools.length} tool(s) remaining.`);
-      return;
-    }
+    // if (incompleteTools.length > 0) {
+    //   toast.error(`Inspection Incomplete: Please select a condition for all ${incompleteTools.length} tool(s) remaining.`);
+    //   return;
+    // }
 
     const checkedToolIds = Object.keys(toolConditions).filter(id => toolConditions[id] !== "");
     const now = new Date();
