@@ -71,6 +71,7 @@ interface Employee {
 
 interface CompletedTransaction {
   NO: string;
+  RentNo: string;
   TransIdTools: string;
   ToolsDesc: string;
   ToolsType: string;
@@ -166,6 +167,7 @@ export default function RentTools() {
   const handleReturnClick = (transaction: CompletedTransaction) => {
     setReturnToolData(transaction);
     setIsReturnDialogOpen(true);
+    console.log(returnToolData);
   };
 
   const handleUpdateTransaction = async () => {
@@ -499,7 +501,7 @@ export default function RentTools() {
     setRentedTools(prev => prev.filter(tool => tool.toolsId !== id));
   }
 
-  const handleReturnTransaction = async (id: string, nrp: string) => {
+  const handleReturnTransaction = async (id: string, toolsid: string) => {
     try {
       const response = await fetch(API.RENTTOOLS(), {
         method: "POST",
@@ -509,12 +511,11 @@ export default function RentTools() {
         body: JSON.stringify({
           action: "RETURN",
           Jobsite: currentUser?.Jobsite,
-          Nrp: nrp,
-          Tools: [{ toolsId: id, condition: returnCondition }] // Fixed structure
+          RentNo: id,
+          Tools: [{ toolsId: toolsid, condition: returnCondition }] // Fixed structure
         })
       });
 
-      console.log(nrp);
       if (!response.ok) {
         toast.error(`HTTP error! status: ${response.status}`);
       } else {
@@ -1480,7 +1481,7 @@ export default function RentTools() {
             <Button
               className="bg-gradient-to-r from-green-600 to-green-500"
               onClick={() => {
-                handleReturnTransaction(returnToolData?.TransIdTools || '', returnToolData?.NRP || '');
+                handleReturnTransaction(returnToolData?.RentNo || '', returnToolData?.TransIdTools || '');
                 setIsReturnDialogOpen(false);
                 toast.success("Returned successfully");
               }}

@@ -72,6 +72,7 @@ interface OrderItem {
   OrderDate: string;
   jobsite: string;
   ToolsId: string;
+  NrpUser: string;
   PicTool: string;
   ToolsDescription: string;
   Brand: string;
@@ -94,7 +95,6 @@ interface OrderItem {
   Note?: string;
   Act_date?: string;
   IsClose?: string;
-
 }
 
 interface CapexItem {
@@ -670,8 +670,16 @@ export default function FormOrderBudget() {
             statusCapex: item.StatusCapex || '',
             Reason: item.Reason || formData.Reason || '',
             Spesifikasi: item.ToolsSize || '',
-            NrpUser: item.NrpUser || '',
           }))
+          // Tools: newItem.map(item => ({
+          //   ToolsId: item.ToolsId,
+          //   Brand: item.Brand || '',
+          //   Qty: Number(item.Qty || 0),
+          //   statusCapex: item.statusCapex || '',
+          //   Reason: item.Reason || formData.Reason || '',
+          //   Spesifikasi: item.Spesifikasi || '',
+          //   NrpUser: item.NrpUser || '',
+          // }))
         })
       });
 

@@ -860,14 +860,18 @@ export default function ToolsManagement() {
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center max-w-[50px]">Description</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center">Condition</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center">Location</TableHead>
-                    {/* <TableHead className="border-r border-gray-400 text-gray-900 text-center">Serial No</TableHead> */}
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">SAP No</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center">Qty</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center">Category</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Serial No</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center">Date In</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center">Brand</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center">Type</TableHead>
                     <TableHead className="border-r border-gray-400 text-gray-900 text-center">Size</TableHead>
-                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Cost</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Weight</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Tool Life (Hour)</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Tool Life (Year)</TableHead>
+                    <TableHead className="border-r border-gray-400 text-gray-900 text-center">Price</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -916,13 +920,17 @@ export default function ToolsManagement() {
                           </span>
                         </TableCell>
                         <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsLocation}</TableCell>
-                        {/* <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSerialNo}</TableCell> */}
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsIdEll}</TableCell>
                         <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsQty}</TableCell>
                         <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsType}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSerialNo}</TableCell>
                         <TableCell className="border-r border-gray-200 text-gray-600">{formatDate(tool.ToolsDateIn)}</TableCell>
                         <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsBrand}</TableCell>
                         <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsGroupType}</TableCell>
                         <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsSize}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.ToolsWeight}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.HourMeter}</TableCell>
+                        <TableCell className="border-r border-gray-200 text-gray-600">{tool.YearMeter}</TableCell>
                         <TableCell className="border-r border-gray-200 text-right">{tool.ToolsCostDefault}</TableCell>
                       </TableRow>
                     ))
@@ -1182,12 +1190,19 @@ export default function ToolsManagement() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="add-cost">Cost</Label>
+                <Label htmlFor="add-cost">Price</Label>
                 <Input
                   id="add-cost"
-                  type="number"
-                  value={formData.ToolsCostDefault}
-                  onChange={(e) => setFormData({ ...formData, ToolsCostDefault: e.target.value })}
+                  type="text"
+                  value={
+                    formData.ToolsCostDefault && !isNaN(Number(formData.ToolsCostDefault))
+                      ? new Intl.NumberFormat('id-ID').format(Math.floor(Number(formData.ToolsCostDefault)))
+                      : ''
+                  }
+                  onChange={(e) => {
+                    const rawValue = e.target.value.replace(/\D/g, '');
+                    setFormData({ ...formData, ToolsCostDefault: rawValue });
+                  }}
                   placeholder="Enter cost"
                 />
               </div>

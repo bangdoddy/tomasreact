@@ -455,7 +455,7 @@ export default function TRFApproval() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card className="border-[#009999]/20">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm text-gray-600">Total Requests</CardTitle>
@@ -498,7 +498,7 @@ export default function TRFApproval() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-md p-1 hidden">
+          <Card className="shadow-md p-1">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm text-gray-600">Rejected</CardTitle>
             </CardHeader>

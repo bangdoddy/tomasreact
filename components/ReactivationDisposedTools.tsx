@@ -451,7 +451,6 @@ export default function ReactivationDisposedTools() {
         'Disposal Date': tool.disposalDate,
         'Disposal Reason': tool.disposalReason,
         'Proposed By': tool.proposedBy,
-        'Department': tool.department,
         'Condition': tool.condition,
         'Estimated Value': tool.estimatedValue,
         'Status': tool.status,
@@ -724,7 +723,6 @@ export default function ReactivationDisposedTools() {
                   <TableHead>Follow-Up Date</TableHead>
                   <TableHead>Reason</TableHead>
                   <TableHead>Proposed By</TableHead>
-                  <TableHead>Department</TableHead>
                   <TableHead>Condition</TableHead>
                   <TableHead>Estimated Value</TableHead>
                   <TableHead>Status</TableHead>
@@ -769,7 +767,7 @@ export default function ReactivationDisposedTools() {
                           {tool.proposedBy}
                         </div>
                       </TableCell>
-                      <TableCell>{tool.department}</TableCell>
+
                       <TableCell>
                         <Badge className={`w-fit ${getConditionColor(tool.condition)}`}>
                           {tool.condition}
@@ -798,8 +796,8 @@ export default function ReactivationDisposedTools() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button> */}
-                          {tool.status != 'Reactivated' && (
-                            <Button
+                          {tool.status == 'Repairing' && (
+                            <><Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
@@ -807,17 +805,16 @@ export default function ReactivationDisposedTools() {
                               onClick={() => handleEdit(tool)}
                             >
                               <Edit className="h-4 w-4" />
-                            </Button>
+                            </Button><Button
+                              variant="ghost"
+                              size="icon"
+                              className="hidden h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                              title="Delete"
+                              onClick={() => openDeleteDialog(tool)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                              </Button></>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-                            title="Delete"
-                            onClick={() => openDeleteDialog(tool)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

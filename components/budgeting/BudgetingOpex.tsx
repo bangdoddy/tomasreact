@@ -1009,7 +1009,7 @@ export default function BudgetingCapex() {
                 className="bg-white border-gray-300"
                 id="requirement"
                 type="number"
-                disabled={true}
+                disabled={formData.toolsCategory !== 'A'}
                 min={0}
                 value={formData.requirement}
                 onChange={(e) => setFormData({ ...formData, requirement: Number(e.target.value) })}
