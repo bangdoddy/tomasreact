@@ -369,7 +369,8 @@ export default function FollowUp() {
                       >
                         <Plus className="h-4 w-4 mr-2" />
                       </Button>
-                    ) : (<div className='bg-red-500 text-white text-xs px-2 py-1 rounded-md'>Need Approval</div>)}
+                    ) : (<div className='bg-red-500 text-white text-xs px-2 py-1 rounded-md'>
+                      Need Approval</div>)}
                   </TableCell>
                 </TableRow>
               ))
