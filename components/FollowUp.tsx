@@ -359,15 +359,17 @@ export default function FollowUp() {
                     >
                       <Eye className="h-4 w-4 mr-2" />
                     </Button> */}
-                    <Button
-                      size="sm"
-                      title="Add Follow Up"
-                      variant="outline"
-                      onClick={() => handleAddRequest(item)}
-                      className="border-amber-500 text-amber-600"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                    </Button>
+                    {item.status == "Completed" ? (
+                      <Button
+                        size="sm"
+                        title="Add Follow Up"
+                        variant="outline"
+                        onClick={() => handleAddRequest(item)}
+                        className="border-amber-500 text-amber-600"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                      </Button>
+                    ) : (<div className='bg-red-500 text-white text-xs px-2 py-1 rounded-md'>Need Approval</div>)}
                   </TableCell>
                 </TableRow>
               ))
