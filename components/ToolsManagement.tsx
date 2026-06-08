@@ -478,7 +478,7 @@ export default function ToolsManagement() {
                 ToolsNoPO: "",
                 ToolsSerialNo: tool.ToolsSerialNo,
                 ToolsNrpMekanik: "",
-                ToolsPicPerson: "",
+                ToolsPicPerson: tool.ToolsPicPerson,
                 StatusCapex: tool.ToolsSatusCapex,
                 ToolsGroupType: tool.ToolsGroupType || "TOOL",
                 ToolsWeight: tool.ToolsWeight,
@@ -545,7 +545,7 @@ export default function ToolsManagement() {
       .then((data) => {
         setTotalPages(data.total ?? -1);
         setItemList(data.data ?? data);
-        console.table(data.data ?? data);
+        console.log(data.data ?? data);
       })
       .catch((error) => console.error("Error:", error));
   };
