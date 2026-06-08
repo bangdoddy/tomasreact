@@ -395,7 +395,7 @@ export default function ToolBoxInspection() {
                   </span>
 
                   <span className="text-gray-600 font-medium">
-                    {toolsList.length > 0 ? toolsList[0].Nama : 'No Toolbox Selected'}
+                    {toolsList.length > 0 ? '- TOOL BOX METRIC' : 'No Toolbox Selected'}
                   </span>
                 </div>
               </div>

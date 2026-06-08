@@ -438,7 +438,7 @@ export default function ToolsManagement() {
           StTools: row['Tools Condition'] || row['ToolsCondition'] || '',
           ToolsCostDefault: row['Cost'] || row['ToolsCostDefault'] || 0,
           ToolsPicPerson: row['ToolsPicPerson'] || row['ToolsPicPerson'] || '',
-          ToolsPicTools: row['ToolsPicTools'] || row['ToolsPicTools'] || '',
+          ToolsPicTools: row['ToolsPICToolBox'] || row['ToolsPicToolBox'] || '',
           ToolsIDToolBox: row['ToolsIDToolBox'] || row['ToolsIDToolBox'] || '',
 
         }));
@@ -481,7 +481,7 @@ export default function ToolsManagement() {
                 ToolsGroupType: tool.ToolsGroupType || "TOOL",
                 ToolsWeight: "0",
                 ToolsPartNo: "",
-                ToolsPICToolBox: "",
+                ToolsPICToolBox: tool.ToolsPicTools,
                 ToolsIDToolBox: "",
                 ToolsExpKalibrasi: "",
                 ToolsImage: null,
