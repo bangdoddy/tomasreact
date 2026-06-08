@@ -448,7 +448,7 @@ export default function BudgetingCapex() {
   const totalRequirement = filteredItems.reduce((sum, item) => sum + Number(item.ToolsQty), 0);
   const totalExisting = filteredItems.reduce((sum, item) => sum + Number(item.ToolsExisting), 0);
   const totalDeviasi = filteredItems.reduce((sum, item) => sum + (Number(item.ToolsDeviasi)), 0);
-  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.TotalCost), 0);
+  const totalCost = filteredItems.reduce((sum, item) => sum + Number(item.TotalCost) * Number(item.ToolsQty), 0);
 
   const handleToolSearch = async (toolId: string) => {
     if (!toolId) return;
