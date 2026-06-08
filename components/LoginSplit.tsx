@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Eye, EyeOff, User, Lock, Wrench } from "lucide-react";
 import { Checkbox } from "./ui/checkbox";
-import { Toaster, toast } from "sonner";  
+import { Toaster, toast } from "sonner";
 import alamTriGeoLogo from "../assets/0bfe9d43d56ef6906c84e49273c2571d01152438.png";
 import hologramTech from "../assets/13d68dac9a712845228f3564d2578a29b44d6be3.png";
 import backgroundImage from "../assets/9f480a3ee033d67a91e035e629964638717b1427.png";
@@ -21,20 +21,20 @@ export default function LoginSplit({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); 
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-      console.log("CLick Login");
+
+    console.log("CLick Login");
     // Validation
     if (!username.trim() || !password.trim()) {
       console.log("Please enter both username and password");
       toast.error("Please enter both username and password");
       setIsLoading(false);
       return;
-    } 
+    }
 
     //const url = new URL(API.DETAILUSER()+username);
     // url.searchParams.set("page", String(page));
@@ -43,7 +43,7 @@ export default function LoginSplit({
     //   .then((res) => res.json())
     //   .then((data) => setItems(data.Data ?? data))
     //   .catch(console.error);
- 
+
     try {
       const response = await fetch(API.LOGINUSER(), {
         method: "POST",
@@ -55,36 +55,36 @@ export default function LoginSplit({
           password: password
         })
       });
- 
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
-      } 
+      }
 
       const data = await response.json();
-      console.log("Response:", data); 
-      if(data.Keterangan == "Success") {
+      console.log("Response:", data);
+      if (data.Keterangan == "Success") {
         const user = data.Data;
-        toast.success("Login Success"); 
-        onLogin({   
-          Nrp:user.Nrp, 
-          Nama:user.Nama,  
-          Email:user.Email, 
-          NrpSuperior:user.NrpSuperior,
-          Workgroup:user.Workgroup,
-          Jobsite:user.Jobsite,
-          JobsiteId:user.JobsiteId,
-          Jabatan:user.Jabatan,
-          JabatanId:user.JabatanId,
-          JabatanStructural:user.JabatanStructural,
-          JabatanStructuralId:user.JabatanStructuralId, 
+        toast.success("Login Success");
+        onLogin({
+          Nrp: user.Nrp,
+          Nama: user.Nama,
+          Email: user.Email,
+          NrpSuperior: user.NrpSuperior,
+          Workgroup: user.Workgroup,
+          Jobsite: user.Jobsite,
+          JobsiteId: user.JobsiteId,
+          Jabatan: user.Jabatan,
+          JabatanId: user.JabatanId,
+          JabatanStructural: user.JabatanStructural,
+          JabatanStructuralId: user.JabatanStructuralId,
         });
-      } else { 
-        toast.error(data.Message??"Failed Login");
+      } else {
+        toast.error(data.Message ?? "Failed Login");
       }
     } catch (error) {
       console.error("Fetch error:", error);
     }
-    setIsLoading(false); 
+    setIsLoading(false);
   };
 
   return (
@@ -125,7 +125,7 @@ export default function LoginSplit({
                 className="text-white text-6xl mb-6"
                 style={{ fontFamily: "Orbitron, sans-serif" }}
               >
-                Smart Tomas
+                TMS
               </h2>
               <p className="text-white/90 text-lg">
                 Excellence Tool for World-Class Maintenance
@@ -136,7 +136,7 @@ export default function LoginSplit({
           {/* Footer */}
           <div className="relative z-10">
             <p className="text-white/70 text-sm">
-              © 2025 Smart Tomas. Plant Support Equipment
+              © 2025 TMS Development. Plant Support Equipment
               Department
             </p>
           </div>
@@ -265,10 +265,10 @@ export default function LoginSplit({
               >
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>
-            </form> 
-             
+            </form>
+
             <div style={{ height: "70px", width: "100%", backgroundColor: "#FFFFFF" }}>
-               
+
             </div>
 
           </div>
