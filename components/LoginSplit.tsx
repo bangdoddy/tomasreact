@@ -89,6 +89,7 @@ export default function LoginSplit({
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+      <Toaster position="top-right" richColors closeButton />
       {/* Centered Container with 75% width */}
       <div className="w-full max-w-[75%] flex rounded-3xl overflow-hidden shadow-2xl">
         {/* Left Side - Welcome Section */}

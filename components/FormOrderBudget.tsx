@@ -19,7 +19,8 @@ import {
   Clock,
   XCircle,
   Truck,
-  Trash
+  Trash,
+  Upload
 } from 'lucide-react';
 import {
   Table,
@@ -95,6 +96,8 @@ interface OrderItem {
   Note?: string;
   Act_date?: string;
   IsClose?: string;
+  Document?: string;
+  FileNameDocument?: string;
 }
 
 interface CapexItem {
@@ -155,6 +158,7 @@ export default function FormOrderBudget() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterCategory, setFilterCategory] = useState('All');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [IsPicTool, setIsPicTool] = useState(false);
 
   const [orders, setOrders] = useState<OrderBudget[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -197,6 +201,8 @@ export default function FormOrderBudget() {
     Status: '',
     StatusPR: '',
     StatusPO: '',
+    Document: '',
+    FileNameDocument: '',
   })
 
   const ReloadBudget = (year: string) => {
@@ -209,7 +215,7 @@ export default function FormOrderBudget() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: OrderBudget[]) => { setBudget(json); console.log(json); })
+      .then((json: OrderBudget[]) => { setBudget(json); })
       .catch((error) => console.error("Error:", error));
   };
 
@@ -235,7 +241,16 @@ export default function FormOrderBudget() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: OrderItem[]) => { setOrderItems(json); console.log('Order items: ', json); })
+      .then((json: OrderItem[]) => {
+        if (currentUser?.Jabatan === 'PIC Tools') {
+          json = json.filter(c => c.statusCapex == 'OPEX');
+          setIsPicTool(true);
+        } else {
+          json = json.filter(c => c.statusCapex == 'CAPEX' || c.statusCapex == 'OPEX');
+        }
+
+        setOrderItems(json); console.log('Order items: ', json);
+      })
       .catch((error) => console.error("Error:", error));
   };
 
@@ -339,6 +354,8 @@ export default function FormOrderBudget() {
       Status: item.StOrder || '',
       StatusPO: item.StatusPO || '',
       StatusPR: item.StatusPR || '',
+      Document: item.Document || '',
+      FileNameDocument: item.FileNameDocument || '',
     });
 
     console.log(item);
@@ -348,6 +365,11 @@ export default function FormOrderBudget() {
 
   const handleSaveItem = async () => {
     if (!editingOrderItem) return;
+
+    if (!editingOrderItem.Status) {
+      toast.error("Please select status");
+      return;
+    }
 
     const updatedDetails = orderDetailList.map(item => {
       const itemOrderNo = item.orderno || item.OrderNo || '';
@@ -386,6 +408,8 @@ export default function FormOrderBudget() {
           StatusPR: editingOrderItem.StatusPR,
           StatusPO: editingOrderItem.StatusPO,
           Supplier: editingOrderItem.Supplier,
+          Document: editingOrderItem.Document || null,
+          FileNameDocument: editingOrderItem.FileNameDocument || null,
           // Tools: editingOrderItem
         })
       });
@@ -931,6 +955,7 @@ export default function FormOrderBudget() {
                   <TableHead>Order Date</TableHead>
                   <TableHead>Requested By</TableHead>
                   <TableHead>Jobsite</TableHead>
+                  <TableHead>Source</TableHead>
                   <TableHead>Tools ID</TableHead>
                   <TableHead>Tools Desc</TableHead>
                   <TableHead>Specification</TableHead>
@@ -982,6 +1007,18 @@ export default function FormOrderBudget() {
                             {order.jobsite}
                           </div>
                         </TableCell>
+
+                        <TableCell className="text-gray-700">
+                          <span
+                            className={`px-2 py-1 rounded text-xs ${order.statusCapex === 'CAPEX'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-blue-100 text-blue-700'
+                              }`}
+                          >
+                            {order.statusCapex}
+                          </span>
+                        </TableCell>
+
                         <TableCell className="text-gray-700">
                           <div className="max-w-xs truncate" title="Tools ID">
                             {order.ToolsId}
@@ -1029,7 +1066,7 @@ export default function FormOrderBudget() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
-                            {(order.StApprove !== 'Pending' && order.StOrder !== 'Delivered') &&
+                            {(order.StApprove !== 'Pending' && order.StOrder !== 'Delivered' && (order.statusCapex != 'OPEX' || IsPicTool)) &&
                               (<Button
                                 variant="ghost"
                                 size="icon"
@@ -1577,7 +1614,7 @@ export default function FormOrderBudget() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="hidden space-y-2">
                 <Label className="text-gray-700 font-medium">NOTE (PLANT/PROCUREMENT/PURCHASING)</Label>
                 <Input
                   value={editingOrderItem.Note}
@@ -1585,6 +1622,83 @@ export default function FormOrderBudget() {
                   className="bg-white border border-gray-300 h-9"
                   placeholder="Enter Note"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-medium">ATTACH REQUEST DOCUMENT</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.type !== "application/pdf") {
+                        toast.error("Only PDF files are allowed.");
+                        e.target.value = "";
+                        return;
+                      }
+                      if (file.size > 10 * 1024 * 1024) {
+                        toast.error("File size cannot exceed 10MB.");
+                        e.target.value = "";
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setEditingOrderItem((prev: any) => ({
+                          ...prev,
+                          Document: reader.result as string,
+                          FileNameDocument: file.name
+                        }));
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                    className="bg-white border border-gray-300 h-10 px-3 py-1.5 w-full text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#009999]/10 file:text-[#009999] hover:file:bg-[#009999]/20 cursor-pointer"
+                  />
+                  {editingOrderItem.Document && (
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          const newTab = window.open();
+                          if (newTab) {
+                            newTab.document.write(
+                              `<iframe src="${editingOrderItem.Document}" width="100%" height="100%" style="border:none;"></iframe>`
+                            );
+                          }
+                        }}
+                        className="h-9 w-9 border-gray-300 text-gray-600 hover:bg-gray-50"
+                        title="View PDF"
+                        type="button"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setEditingOrderItem((prev: any) => ({
+                            ...prev,
+                            Document: '',
+                            FileNameDocument: ''
+                          }));
+                        }}
+                        className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title="Remove document"
+                        type="button"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {editingOrderItem.FileNameDocument && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                    <FileText className="h-4 w-4 text-[#009999]" />
+                    <span className="truncate max-w-[250px] font-medium text-gray-700">{editingOrderItem.FileNameDocument}</span>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4 hidden">

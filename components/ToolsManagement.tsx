@@ -80,6 +80,7 @@ export default function ToolsManagement() {
   const [picTools, setPicTools] = useState<GlobalModel[]>([]);
   const [picToolBoxs, setPicToolBoxs] = useState<GlobalModel[]>([]);
   const [toolBoxList, setToolBoxList] = useState<GlobalModel[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isDownloadRun, setIsDownloadRun] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -531,6 +532,7 @@ export default function ToolsManagement() {
   };
   /*Load Server */
   const ReloadMaster = () => {
+    setIsLoading(true);
     const params = new URLSearchParams({
       action: "WITHTOTAL",
       jobsite: currentUser.Jobsite,
@@ -547,7 +549,8 @@ export default function ToolsManagement() {
         setItemList(data.data ?? data);
         console.log(data.data ?? data);
       })
-      .catch((error) => console.error("Error:", error));
+      .catch((error) => console.error("Error:", error))
+      .finally(() => setIsLoading(false));
   };
 
   const ReloadJobsites = () => {
@@ -892,9 +895,39 @@ export default function ToolsManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {itemList.length === 0 ? (
+                  {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={`skeleton-${i}`} className="animate-pulse bg-gray-50/50">
+                        <TableCell className="py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
+                            <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-20 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-36"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200">
+                          <div className="h-5 bg-gray-200 rounded-full w-12 mx-auto"></div>
+                        </TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-20 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-20 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-24 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-20 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-12 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-12 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-12 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200"><div className="h-4 bg-gray-200 rounded w-12 mx-auto"></div></TableCell>
+                        <TableCell className="py-4 border-r border-gray-200 text-right"><div className="h-4 bg-gray-200 rounded w-16 ml-auto"></div></TableCell>
+                      </TableRow>
+                    ))
+                  ) : itemList.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={15} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={18} className="text-center py-8 text-gray-500">
                         No tools found
                       </TableCell>
                     </TableRow>

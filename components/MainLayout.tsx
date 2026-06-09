@@ -153,7 +153,7 @@ export default function MainLayout({ currentUser, onLogout }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Toaster position="top-right" richColors />
+      <Toaster position="top-right" richColors closeButton />
 
       <Header currentUser={currentUser} onLogout={onLogout} />
 

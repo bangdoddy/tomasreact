@@ -69,7 +69,7 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <Toaster position="top-right" richColors />
+      <Toaster position="top-right" richColors closeButton />
       {!isAuthenticated ? (
         <LoginSplit onLogin={login} />
       ) : printMode === 'BAKTReview' && baNo ? (

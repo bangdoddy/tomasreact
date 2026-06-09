@@ -900,7 +900,7 @@ export default function TRFApproval() {
             <div className="w-48 border-b border-black">
               <div className="p-1 h-15 w-15"></div>
             </div>
-            <p className="mt-2 text-xs text-gray-600">(Agus Harsanto)</p>
+            <p className="mt-2 text-xs text-gray-600"></p>
           </div>
         </div>
       </div>
