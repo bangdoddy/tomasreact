@@ -691,7 +691,7 @@ export default function FormOrderBudget() {
           Tools: newItem.map(item => ({
             ToolsId: item.ToolsId,
             Brand: item.ToolsBrand || '',
-            Qty: Number(item.ToolsQty || 0),
+            Qty: Number(item.ToolsDeviasi || 0),
             statusCapex: item.StatusCapex || '',
             Reason: item.Reason || formData.Reason || '',
             Spesifikasi: item.ToolsSize || '',
