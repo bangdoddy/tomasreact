@@ -267,7 +267,7 @@ export default function FormOrderBudget() {
       .then((response) => response.json())
       .then((json: CapexItem[]) => {
         setCapexList(json);
-        // console.log(json);
+        console.log(json);
         const items: CapexItem[] = json.map((item: any) => ({
           IdKey: item.IdKey || '',
           ToolsJobsite: item.ToolsJobsite || '',
@@ -275,7 +275,7 @@ export default function FormOrderBudget() {
           ToolsDescription: item.ToolsDescription || '',
           ToolsBrand: item.ToolsBrand || '',
           ToolsSize: item.ToolsSize || '',
-          ToolsQty: String(item.ToolsQty ?? '0'),
+          ToolsDeviasi: String(item.ToolsDeviasi ?? '0'),
           Category: item.Category || '',
           ToolsCost: String(item.toolsCost ?? item.ToolsCost ?? '0'),
           StatusCapex: item.StatusCapex || '',
@@ -443,7 +443,7 @@ export default function FormOrderBudget() {
   const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsQty || 0), 0);
   const totalExisting = capexList.reduce((sum, item) => sum + Number(item.ToolsExisting || (item as any).toolsExisting || 0), 0);
   const totalDeviasi = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsDeviasi || 0), 0);
-  const totalCost = capexList.reduce((sum, item) => sum + (Number(item.ToolsCost || (item as any).toolsCost || 0) * Number(item.ToolsQty || 0)), 0);
+  const totalCost = capexList.reduce((sum, item) => sum + (Number(item.ToolsCost || (item as any).toolsCost || 0)), 0);
 
 
   const filteredOrders = orderItems.filter((order) => {
@@ -691,7 +691,7 @@ export default function FormOrderBudget() {
           Tools: newItem.map(item => ({
             ToolsId: item.ToolsId,
             Brand: item.ToolsBrand || '',
-            Qty: Number(item.ToolsDeviasi || 0),
+            Qty: Number(item.ToolsDeviasi),
             statusCapex: item.StatusCapex || '',
             Reason: item.Reason || formData.Reason || '',
             Spesifikasi: item.ToolsSize || '',
