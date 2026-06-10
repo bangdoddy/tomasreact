@@ -337,6 +337,7 @@ export default function FormOrderBudget() {
   }
 
   const openEditItem = (item: OrderItem) => {
+
     setSelectedOrder(item);
 
     setEditingOrderItem({
@@ -439,7 +440,7 @@ export default function FormOrderBudget() {
   const rawAllocated = capexList.map(p => p.Allocated || (p as any).allocated || '0')[0];
   const totalAllocated = String(rawAllocated).replace(/,/g, '');
   // Calculate totals
-  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsQty || (item as any).toolsQty || 0), 0);
+  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsQty || 0), 0);
   const totalExisting = capexList.reduce((sum, item) => sum + Number(item.ToolsExisting || (item as any).toolsExisting || 0), 0);
   const totalDeviasi = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsDeviasi || 0), 0);
   const totalCost = capexList.reduce((sum, item) => sum + (Number(item.ToolsCost || (item as any).toolsCost || 0) * Number(item.ToolsQty || 0)), 0);
@@ -1248,7 +1249,7 @@ export default function FormOrderBudget() {
                                 }}
                                 className="w-16 text-center h-8 inline-block bg-white border border-slate-300"
                               /> */}
-                              <span className="text-center">{item.ToolsQty}</span>
+                              <span className="text-center">{item.ToolsDeviasi}</span>
                             </TableCell>
                             <TableCell className="text-center">
                               <Input
@@ -1624,7 +1625,7 @@ export default function FormOrderBudget() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="hidden space-y-2">
                 <Label className="text-gray-700 font-medium">ATTACH REQUEST DOCUMENT</Label>
                 <div className="flex items-center gap-3">
                   <Input

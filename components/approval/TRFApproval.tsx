@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 import {
   Search,
   CheckCircle,
@@ -11,7 +12,7 @@ import {
   Calendar,
   User,
   FileText,
-  Wrench,
+  Upload,
   ArrowRightLeft,
 } from 'lucide-react';
 import {
@@ -64,6 +65,8 @@ interface OrderHeader {
   ApproveBySH: string;
   ApprovedDateByPic: string;
   ApprovedDateBySH: string;
+  REJECT_AT: string;
+  REJECT_REASON: string;
   remark: string;
   StUser: string;
   StApprove: string;
@@ -110,6 +113,7 @@ export default function TRFApproval() {
   const [orderToApprove, setOrderToApprove] = useState<OrderHeader | null>(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [orderToReject, setOrderToReject] = useState<OrderHeader | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderHeader | null>(null);
   const [orderDetailList, setOrderDetailList] = useState<OrderItem[]>([]);
@@ -124,19 +128,21 @@ export default function TRFApproval() {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: OrderHeader[]) => { setRequests(json); console.log('Order items: ', json); })
+      .then((json: OrderHeader[]) => { setRequests(json); console.log('Order Header: ', json); })
       .catch((error) => console.error("Error:", error));
   };
 
-  const ReloadOrderItems = () => {
+  const ReloadOrderItems = (orderNo: string) => {
     const params = new URLSearchParams({
       jobsite: currentUser.Jobsite,
+      act: 'DETAIL',
+      orderno: orderNo
     });
     fetch(API.ORDERTOOLS() + `?${params.toString()}`, {
       method: "GET"
     })
       .then((response) => response.json())
-      .then((json: OrderItem[]) => { setOrderDetailList(json); })
+      .then((json: OrderItem[]) => { setOrderDetailList(json); console.log('Order items: ', json); })
       .catch((error) => console.error("Error:", error));
   };
 
@@ -254,16 +260,18 @@ export default function TRFApproval() {
   };
 
   const confirmReject = () => {
-    if (orderToReject) {
-      handleReject(orderToReject);
+    if (orderToReject && rejectReason.trim()) {
+      handleReject(orderToReject, rejectReason.trim());
       setIsRejectDialogOpen(false);
       setOrderToReject(null);
+      setRejectReason('');
     }
   };
 
   const openDetail = (order: OrderHeader) => {
     setSelectedOrder(order);
     setIsDetailDialogOpen(true);
+    ReloadOrderItems(order.orderno);
   };
 
   const handlePrint = (order: OrderHeader) => {
@@ -273,7 +281,7 @@ export default function TRFApproval() {
     }, 150);
   };
 
-  const handleReject = async (order: any) => {
+  const handleReject = async (order: any, reason: string) => {
     try {
       const response = await fetch(API.ORDERTOOLS(), {
         method: "POST",
@@ -282,7 +290,10 @@ export default function TRFApproval() {
         },
         body: JSON.stringify({
           action: "REJECT",
-          OrderNo: order.orderno
+          OrderNo: order.orderno,
+          Reject_reason: reason,
+          NrpUser: currentUser?.Nrp,
+          Jobsite: currentUser?.Jobsite,
         })
       });
 
@@ -371,6 +382,7 @@ export default function TRFApproval() {
         'Cost': tool.TotalCost,
         'Remark': tool.remark,
         'Status Approval': tool.StApprove,
+        'Reject Reason': tool.REJECT_REASON,
       }))
     );
 
@@ -383,7 +395,7 @@ export default function TRFApproval() {
 
   useEffect(() => {
     ReloadOrders();
-    ReloadOrderItems();
+    //ReloadOrderItems();
   }, []);
 
   const getStatusIcon = (status: string) => {
@@ -572,6 +584,7 @@ export default function TRFApproval() {
                     <TableHead>Total Cost</TableHead>
                     <TableHead>Remark</TableHead>
                     <TableHead>Approval</TableHead>
+                    <TableHead>Reject Reason</TableHead>
                     <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -626,6 +639,11 @@ export default function TRFApproval() {
                           </Badge>
                         </TableCell>
                         <TableCell>
+                          <div className="max-w-xs truncate" title="Reject Reason">
+                            {order.REJECT_REASON?.toUpperCase()}
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center justify-center gap-1">
                             <Button
                               variant="ghost"
@@ -636,15 +654,25 @@ export default function TRFApproval() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
-                              title="Print to PDF"
-                              onClick={() => handlePrint(order)}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
+                            {currentUser?.Jabatan !== "PIC Tools" && (
+                              <><Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
+                                title="Print to PDF"
+                                onClick={() => handlePrint(order)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button><Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
+                                title="Upload PDF"
+                                onClick={() => handlePrint(order)}
+                              >
+                                  <Upload className="h-4 w-4" />
+                                </Button></>
+                            )}
                             {order.StApprove === 'Pending' && (
                               <>
                                 <Button
@@ -667,6 +695,7 @@ export default function TRFApproval() {
                                     title="Reject"
                                     onClick={() => {
                                       setOrderToReject(order);
+                                      setRejectReason('');
                                       setIsRejectDialogOpen(true);
                                     }}
                                   >
@@ -718,24 +747,48 @@ export default function TRFApproval() {
         </AlertDialog>
 
         {/* Confirm Rejection Dialog */}
-        <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
-          <AlertDialogContent>
+        <AlertDialog open={isRejectDialogOpen} onOpenChange={(open) => {
+          setIsRejectDialogOpen(open);
+          if (!open) {
+            setOrderToReject(null);
+            setRejectReason('');
+          }
+        }}>
+          <AlertDialogContent className="sm:max-w-[425px]">
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirm Rejection</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to reject this order request? This action will reject the request and update the status.
+              <AlertDialogTitle className="text-red-600 flex items-center gap-2">
+                <XCircle className="h-5 w-5" />
+                Confirm Rejection
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-600">
+                Are you sure you want to reject this order request ? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <div className="my-4">
+              <label htmlFor="reject-reason" className="block text-xs font-semibold text-gray-700 uppercase mb-2">
+                Reason for Rejection <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                id="reject-reason"
+                placeholder="Please input the reason for rejection..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="w-full min-h-[100px] bg-white border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm"
+                required
+              />
+            </div>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => {
                 setIsRejectDialogOpen(false);
                 setOrderToReject(null);
+                setRejectReason('');
               }}>
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmReject}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={!rejectReason.trim()}
+                className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Reject
               </AlertDialogAction>
@@ -783,8 +836,8 @@ export default function TRFApproval() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {selectedOrderDetails.length > 0 ? (
-                        selectedOrderDetails.map((item, idx) => (
+                      {orderDetailList.length > 0 ? (
+                        orderDetailList.map((item, idx) => (
                           <TableRow key={item.ToolsId}>
                             <TableCell>{item.ToolsId}</TableCell>
                             <TableCell>{item.ToolsDescription}</TableCell>
