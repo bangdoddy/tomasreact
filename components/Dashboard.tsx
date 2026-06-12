@@ -406,23 +406,24 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Frequently Used Tool Types */}
+        {/* Tools By Category */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
-            <CardTitle>Frequently Used Tool Types</CardTitle>
-            <CardDescription>Most rented tool categories this month</CardDescription>
+            <CardTitle>Tools By Category</CardTitle>
+            <CardDescription>Inventory breakdown by tool category</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={rentedByType} layout="vertical">
+              <BarChart data={toolReport} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" tickFormatter={(value) => value.toLocaleString()} />
-                <YAxis dataKey="TypeName" type="category" width={130} />
+                <YAxis dataKey="Keterangan" type="category" width={150} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(value: number) => value.toLocaleString()} />
                 <Bar dataKey="Total" fill="#009999">
-                  {rentedByType.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
+                  {toolReport.map((entry, index) => {
+                    const colors = ['#4f46e5', '#2cdb29ff', '#ea580c', '#db2777', '#2563eb', '#16a34a', '#edde3bff', '#ca8a04'];
+                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                  })}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

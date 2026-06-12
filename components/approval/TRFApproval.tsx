@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
+import { createPortal } from 'react-dom';
 import {
   Search,
   CheckCircle,
@@ -14,6 +15,7 @@ import {
   FileText,
   Upload,
   ArrowRightLeft,
+  File,
 } from 'lucide-react';
 import {
   Table,
@@ -45,6 +47,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
@@ -67,6 +70,7 @@ interface OrderHeader {
   ApprovedDateBySH: string;
   REJECT_AT: string;
   REJECT_REASON: string;
+  Dokumen: string;
   remark: string;
   StUser: string;
   StApprove: string;
@@ -114,6 +118,12 @@ export default function TRFApproval() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [orderToReject, setOrderToReject] = useState<OrderHeader | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [orderToUpload, setOrderToUpload] = useState<OrderHeader | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string>('');
+  const [fileName, setFileName] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderHeader | null>(null);
   const [orderDetailList, setOrderDetailList] = useState<OrderItem[]>([]);
@@ -276,6 +286,7 @@ export default function TRFApproval() {
 
   const handlePrint = (order: OrderHeader) => {
     setSelectedOrder(order);
+    ReloadOrderItems(order.orderno);
     setTimeout(() => {
       window.print();
     }, 150);
@@ -314,6 +325,128 @@ export default function TRFApproval() {
       }
     } catch (ex: any) {
       toast.error("Failed. Message: " + ex.Message);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      toast.error("Please select a PDF file.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size cannot exceed 10MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setPdfFile(file);
+    setFileName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setPdfBase64(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadPDF = async () => {
+    if (!orderToUpload || !pdfBase64) {
+      toast.error("Please select a PDF file first.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const response = await fetch(API.ORDERTOOLS(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "UPDATE",
+          OrderNo: orderToUpload.orderno,
+          Dokumen: pdfBase64
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP error! status: ${response.status}`);
+        setIsUploading(false);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.length > 0) {
+        const resData = data[0];
+        if (resData?.Status == 1) {
+          ReloadOrders();
+          setIsUploadDialogOpen(false);
+          setOrderToUpload(null);
+          setPdfFile(null);
+          setPdfBase64('');
+          setFileName('');
+          toast.success(resData?.Message ?? 'PDF uploaded successfully');
+        } else {
+          toast.error(resData?.Message ?? "Failed to upload");
+        }
+      } else {
+        toast.error("Failed, No Response");
+      }
+    } catch (ex: any) {
+      toast.error("Failed. Message: " + ex.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+
+  // Note the 'async' keyword here
+  const openBase64PDF = async (base64Str: string) => {
+    console.log(base64Str.length);
+    try {
+      if (!base64Str || base64Str.trim() === '') {
+        toast.error("No document available.");
+        return;
+      }
+
+      let dataUrl = base64Str.trim();
+      if (!dataUrl.startsWith("data:") && !dataUrl.startsWith("http://") && !dataUrl.startsWith("https://")) {
+        // Prepend proper PDF base64 scheme and strip any whitespace/newlines
+        dataUrl = `data:application/pdf;base64,${dataUrl.replace(/\s/g, '')}`;
+      }
+
+      // 1. Let the browser natively handle the Base64 decoding into a Blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+
+      // 2. Create a temporary URL representing the PDF blob
+      const fileURL = URL.createObjectURL(blob);
+
+      // 3. Attempt to open it in a new tab
+      const newTab = window.open(fileURL, "_blank");
+
+      // 4. Fallback if the browser's popup blocker stopped the tab
+      if (!newTab) {
+        toast.error("Popup blocked! Downloading file instead.");
+
+        const link = document.createElement('a');
+        link.href = fileURL;
+        link.download = "Signed_Document.pdf";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the memory object after the download starts
+        setTimeout(() => URL.revokeObjectURL(fileURL), 100);
+      }
+    } catch (error: any) {
+      console.error("Error processing PDF string:", error);
+      toast.error("Failed to load PDF document. The file data might be incomplete or corrupted.");
     }
   };
 
@@ -419,21 +552,17 @@ export default function TRFApproval() {
           display: none;
         }
         @media print {
-          /* Hide EVERYTHING in the DOM */
-          body * {
-            visibility: hidden !important;
+          /* Hide all direct children of body except the print container */
+          body > :not(.print-only) {
+            display: none !important;
           }
-          /* Show ONLY the print container and its contents */
-          .print-only, .print-only * {
-            visibility: visible !important;
-          }
-          /* Position the print container at the top left of the page */
+          /* Show only the print container */
           .print-only {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
             display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            position: relative !important;
           }
           @page {
             size: landscape;
@@ -654,24 +783,55 @@ export default function TRFApproval() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {currentUser?.Jabatan !== "PIC Tools" && (
-                              <><Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
-                                title="Print to PDF"
-                                onClick={() => handlePrint(order)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button><Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
-                                title="Upload PDF"
-                                onClick={() => handlePrint(order)}
-                              >
+                            {(currentUser?.Jabatan === "PIC Tools" && order.remark.includes('CAPEX')) && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
+                                  title="Print to PDF"
+                                  onClick={() => handlePrint(order)}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
+                                  title="Upload PDF"
+                                  onClick={() => {
+                                    setOrderToUpload(order);
+                                    setPdfFile(null);
+                                    setPdfBase64('');
+                                    setFileName('');
+                                    setIsUploadDialogOpen(true);
+                                  }}
+                                >
                                   <Upload className="h-4 w-4" />
-                                </Button></>
+                                </Button>
+                                {/* {order.Dokumen && order.Dokumen.trim() !== '' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
+                                    title="Signed PDF"
+                                    onClick={() => openBase64PDF(order.Dokumen)}
+                                  >
+                                    <File className="h-4 w-4 text-[#009999]" />
+                                  </Button>
+                                )} */}
+                              </>
+                            )}
+                            {order.Dokumen && order.Dokumen.trim() !== '' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-[#009999]/10 hover:text-[#009999]"
+                                title="Signed PDF"
+                                onClick={() => openBase64PDF(order.Dokumen)}
+                              >
+                                <File className="h-4 w-4 text-[#009999]" />
+                              </Button>
                             )}
                             {order.StApprove === 'Pending' && (
                               <>
@@ -796,6 +956,91 @@ export default function TRFApproval() {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Upload PDF Dialog Modal */}
+        <Dialog open={isUploadDialogOpen} onOpenChange={(open) => {
+          setIsUploadDialogOpen(open);
+          if (!open) {
+            setOrderToUpload(null);
+            setPdfFile(null);
+            setPdfBase64('');
+            setFileName('');
+          }
+        }}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-[#009999]">
+                <Upload className="h-5 w-5" />
+                Upload PDF Document
+              </DialogTitle>
+              <DialogDescription>
+                Upload the signed PDF document for order request <span className="font-bold text-gray-900">{orderToUpload?.orderno}</span>.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="pdf-file" className="text-xs font-semibold text-gray-700 uppercase">
+                  Select PDF File <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  id="pdf-file"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                  className="bg-white border border-gray-300 h-10 px-3 py-1.5 w-full text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#009999]/10 file:text-[#009999] hover:file:bg-[#009999]/20 cursor-pointer"
+                />
+                <p className="text-[10px] text-gray-500">
+                  Only PDF files up to 10MB are allowed.
+                </p>
+              </div>
+
+              {fileName && (
+                <div className="p-3 bg-gray-50 rounded-md border border-gray-200 flex items-center justify-between text-xs text-gray-700">
+                  <span className="truncate font-medium max-w-[280px]">{fileName}</span>
+                  {pdfFile && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        const fileURL = URL.createObjectURL(pdfFile);
+                        window.open(fileURL, "_blank");
+                      }}
+                      className="h-7 w-7 border-gray-300 text-gray-600 hover:bg-gray-50"
+                      title="View Selected PDF"
+                      type="button"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsUploadDialogOpen(false);
+                  setOrderToUpload(null);
+                  setPdfFile(null);
+                  setPdfBase64('');
+                  setFileName('');
+                }}
+                disabled={isUploading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUploadPDF}
+                disabled={!fileName || isUploading}
+                className="bg-[#009999] hover:bg-[#008080] text-white disabled:opacity-50"
+              >
+                {isUploading ? "Uploading..." : "Upload"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* View Details Dialog Modal */}
         <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
           <DialogContent className="sm:max-w-[750px]">
@@ -864,99 +1109,113 @@ export default function TRFApproval() {
       </div>
 
       {/* Print-only Layout */}
-      <div className="print-only p-8 space-y-8 bg-white text-black">
-        {/* Print Header Table */}
-        <table className="w-full border border-black border-collapse text-[10px] uppercase mb-6">
-          <tbody>
-            <tr className="border-b border-black">
-              <td className="p-1 px-2 font-semibold w-[10%] border-r border-black">NUMBER</td>
-              <td className="p-1 px-2 w-[20%] border-r border-black">{selectedOrder?.orderno || ''}</td>
-              <td rowSpan={3} className="p-4 text-center align-middle font-bold text-sm border-r border-black w-[40%]">
-                TOOLS & FACILITY REQUISITION FORM
-              </td>
-              <td className="p-1 px-2 font-semibold w-[15%] border-r border-black">CREATION DATE</td>
-              <td className="p-1 px-2 w-[15%]">{selectedOrder?.orderdate ? formatDate(selectedOrder.orderdate) : ''}</td>
-            </tr>
-            <tr className="border-b border-black">
-              <td className="p-1 px-2 font-semibold border-r border-black">JOB SITE</td>
-              <td className="p-1 px-2 border-r border-black">{selectedOrder?.jobsite || ''}</td>
-
-            </tr>
-            <tr>
-              <td className="p-1 px-2 font-semibold border-r border-black">SECTION</td>
-              <td className="p-1 px-2 border-r border-black">{selectedOrder?.location || 'PLANT TIRE'}</td>
-
-            </tr>
-          </tbody>
-        </table>
-
-        {/* Print Table */}
-        <table className="w-full border-collapse border border-gray-400 text-xs text-left">
-          <thead>
-            <tr className="bg-gray-100 border-b border-gray-400">
-              <th className="p-2 border border-gray-400 font-bold text-center">Tools ID</th>
-              <th className="p-2 border border-gray-400 font-bold text-center">Tools Desc</th>
-              <th className="p-2 border border-gray-400 font-bold text-center">Specification</th>
-              <th className="p-2 border border-gray-400 font-bold text-center">Cost</th>
-              <th className="p-2 border border-gray-400 font-bold text-center">Qty</th>
-              <th className="p-2 border border-gray-400 font-bold text-center">Reason</th>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedOrderDetails.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="p-4 text-center text-gray-500 border border-gray-400">
-                  No order budgets found
+      {typeof document !== 'undefined' && createPortal(
+        <div className="print-only p-8 bg-white text-black w-full">
+          {/* Print Header page */}
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-4">
+              <div className="h-20 w-20">
+                <img src="src/assets/alamtri.png" alt="logo" />
+              </div>
+              <span className="text-sm font-bold">PT. SAPTAINDRA SEJATI<br></br>
+                Graha Saptaindra Jl. TB. Simatupang Kav.18</span>
+            </div>
+            <div className="text-xs">Form No. PSE/14/F-001</div>
+          </div>
+          {/* Print Header Table */}
+          <table className="w-full border border-black border-collapse text-[10px] uppercase mb-6">
+            <tbody>
+              <tr className="border-b border-black">
+                <td className="p-1 px-2 font-semibold w-[10%] border-r border-black">NUMBER</td>
+                <td className="p-1 px-2 w-[20%] border-r border-black">{selectedOrder?.orderno || ''}</td>
+                <td rowSpan={3} className="p-4 text-center align-middle font-bold text-sm border-r border-black w-[40%]">
+                  TOOLS & FACILITY REQUISITION FORM
                 </td>
+                <td className="p-1 px-2 font-semibold w-[15%] border-r border-black">CREATION DATE</td>
+                <td className="p-1 px-2 w-[15%]">{selectedOrder?.orderdate ? formatDate(selectedOrder.orderdate) : ''}</td>
               </tr>
-            ) : (
-              selectedOrderDetails.map((order) => (
-                <tr key={order.ToolsId} className="border-b border-gray-400">
-                  <td className="p-2 border border-gray-400">{order.ToolsId}</td>
-                  <td className="p-2 border border-gray-400">{order.ToolsDescription}</td>
-                  <td className="p-2 border border-gray-400">{order.Spesifikasi}</td>
-                  <td className="p-2 border border-gray-400 text-right">{formatCurrency(Number(order.ToolsCost))}</td>
-                  <td className="p-2 border border-gray-400 text-center">{order.Qty}</td>
-                  <td className="p-2 border border-gray-400">{order.Reason}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              <tr className="border-b border-black">
+                <td className="p-1 px-2 font-semibold border-r border-black">JOB SITE</td>
+                <td className="p-1 px-2 border-r border-black">{selectedOrder?.jobsite || ''}</td>
 
-        {/* Signature Boxes in Footer */}
-        <div className="pt-12 grid grid-cols-3 gap-4 text-sm font-semibold">
-          <div className="flex flex-col">
-            <p className="mb-16">Approved by PIC</p>
-            <div className="w-48 border-b border-black">
-              <div className="p-1 h-20 w-20">
-                {selectedOrder?.ApproveByPic && (
-                  <img src="../src/assets/approved_mark.png" alt="Pic sign" />
-                )}
+              </tr>
+              <tr>
+                <td className="p-1 px-2 font-semibold border-r border-black">SECTION</td>
+                <td className="p-1 px-2 border-r border-black">{selectedOrder?.location || 'PLANT TIRE'}</td>
+
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Print Table */}
+          <table className="w-full border-collapse border border-gray-400 text-xs text-left">
+            <thead>
+              <tr className="bg-gray-100 border-b border-gray-400">
+                <th className="p-2 border border-gray-400 font-bold text-center">Tools ID</th>
+                <th className="p-2 border border-gray-400 font-bold text-center">Tools Desc</th>
+                <th className="p-2 border border-gray-400 font-bold text-center">Specification</th>
+                <th className="p-2 border border-gray-400 font-bold text-center">Cost</th>
+                <th className="p-2 border border-gray-400 font-bold text-center">Qty</th>
+                <th className="p-2 border border-gray-400 font-bold text-center">Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderDetailList.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-4 text-center text-gray-500 border border-gray-400">
+                    No order budgets found
+                  </td>
+                </tr>
+              ) : (
+                orderDetailList.map((order) => (
+                  <tr key={order.ToolsId} className="border-b border-gray-400">
+                    <td className="p-2 border border-gray-400">{order.ToolsId}</td>
+                    <td className="p-2 border border-gray-400">{order.ToolsDescription}</td>
+                    <td className="p-2 border border-gray-400">{order.Spesifikasi}</td>
+                    <td className="p-2 border border-gray-400 text-right">{formatCurrency(Number(order.ToolsCost))}</td>
+                    <td className="p-2 border border-gray-400 text-center">{order.Qty}</td>
+                    <td className="p-2 border border-gray-400">{order.Reason}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+
+          {/* Signature Boxes in Footer */}
+          <div className="pt-12 grid grid-cols-3 gap-4 text-sm font-semibold mt-4">
+            <div className="flex flex-col">
+              <p className="mb-16">Approved by PIC</p>
+              <div className="w-48 border-b border-black">
+                <div className="p-1 h-20 w-20">
+                  {selectedOrder?.ApproveByPic && (
+                    <img src="../src/assets/approved_mark.png" alt="Pic sign" />
+                  )}
+                </div>
               </div>
+              <p className="mt-2 text-xs text-gray-600">(PIC Tools)</p>
             </div>
-            <p className="mt-2 text-xs text-gray-600">(PIC Tools)</p>
-          </div>
-          <div className="flex flex-col">
-            <p className="mb-16">Approved by Section Head</p>
-            <div className="w-48 border-b border-black">
-              <div className="p-1 h-20 w-20">
-                {selectedOrder?.ApproveBySH && (
-                  <img src="../src/assets/approved_mark.png" alt="Pic sign" />
-                )}
+            <div className="flex flex-col">
+              <p className="mb-16">Approved by Section Head</p>
+              <div className="w-48 border-b border-black">
+                <div className="p-1 h-20 w-20">
+                  {selectedOrder?.ApproveBySH && (
+                    <img src="../src/assets/approved_mark.png" alt="Pic sign" />
+                  )}
+                </div>
               </div>
+              <p className="mt-2 text-xs text-gray-600">(Section Head)</p>
             </div>
-            <p className="mt-2 text-xs text-gray-600">(Section Head)</p>
-          </div>
-          <div className="flex flex-col">
-            <p className="mb-16">Approved by Chief Operation</p>
-            <div className="w-48 border-b border-black">
-              <div className="p-1 h-15 w-15"></div>
+            <div className="flex flex-col">
+              <p className="mb-16">Approved by Chief Operation</p>
+              <div className="w-48 border-b border-black">
+                <div className="p-1 h-15 w-15"></div>
+              </div>
+              <p className="mt-2 text-xs text-gray-600"></p>
             </div>
-            <p className="mt-2 text-xs text-gray-600"></p>
           </div>
-        </div>
-      </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

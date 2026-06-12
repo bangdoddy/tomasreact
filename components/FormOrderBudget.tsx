@@ -96,8 +96,7 @@ interface OrderItem {
   Note?: string;
   Act_date?: string;
   IsClose?: string;
-  Document?: string;
-  FileNameDocument?: string;
+  Dokumen?: string;
 }
 
 interface CapexItem {
@@ -243,10 +242,10 @@ export default function FormOrderBudget() {
       .then((response) => response.json())
       .then((json: OrderItem[]) => {
         if (currentUser?.Jabatan === 'PIC Tools') {
-          json = json.filter(c => c.statusCapex == 'OPEX');
+          // json = json.filter(c => c.statusCapex == 'OPEX');
           setIsPicTool(true);
         } else {
-          json = json.filter(c => c.statusCapex == 'CAPEX' || c.statusCapex == 'OPEX');
+          // json = json.filter(c => c.statusCapex == 'CAPEX' || c.statusCapex == 'OPEX');
         }
 
         setOrderItems(json); console.log('Order items: ', json);
@@ -541,6 +540,8 @@ export default function FormOrderBudget() {
         return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'PO':
         return 'bg-purple-100 text-purple-700 border-purple-300';
+      case 'Approved By Chief Officer':
+        return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'Delivered':
         return 'bg-green-100 text-green-700 border-green-300';
       default:
@@ -1067,7 +1068,20 @@ export default function FormOrderBudget() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
-                            {(order.StApprove !== 'Pending' && order.StOrder !== 'Delivered' && (order.statusCapex != 'OPEX' || IsPicTool)) &&
+                            {(order.Dokumen && order.StOrder !== 'Delivered') &&
+                              (!IsPicTool &&
+                                (<Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
+                                  title="Edit"
+                                  onClick={() => openEditItem(order)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>)
+                              )}
+
+                            {(!order.Dokumen && order.StOrder !== 'Delivered' && IsPicTool) &&
                               (<Button
                                 variant="ghost"
                                 size="icon"
@@ -1076,7 +1090,8 @@ export default function FormOrderBudget() {
                                 onClick={() => openEditItem(order)}
                               >
                                 <Edit className="h-4 w-4" />
-                              </Button>)}
+                              </Button>
+                              )}
 
                             {order.StApprove !== 'Approved' && (
                               <Button
@@ -1626,80 +1641,7 @@ export default function FormOrderBudget() {
               </div>
 
               <div className="hidden space-y-2">
-                <Label className="text-gray-700 font-medium">ATTACH REQUEST DOCUMENT</Label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      if (file.type !== "application/pdf") {
-                        toast.error("Only PDF files are allowed.");
-                        e.target.value = "";
-                        return;
-                      }
-                      if (file.size > 10 * 1024 * 1024) {
-                        toast.error("File size cannot exceed 10MB.");
-                        e.target.value = "";
-                        return;
-                      }
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        setEditingOrderItem((prev: any) => ({
-                          ...prev,
-                          Document: reader.result as string,
-                          FileNameDocument: file.name
-                        }));
-                      };
-                      reader.readAsDataURL(file);
-                    }}
-                    className="bg-white border border-gray-300 h-10 px-3 py-1.5 w-full text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#009999]/10 file:text-[#009999] hover:file:bg-[#009999]/20 cursor-pointer"
-                  />
-                  {editingOrderItem.Document && (
-                    <div className="flex gap-1 shrink-0">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          const newTab = window.open();
-                          if (newTab) {
-                            newTab.document.write(
-                              `<iframe src="${editingOrderItem.Document}" width="100%" height="100%" style="border:none;"></iframe>`
-                            );
-                          }
-                        }}
-                        className="h-9 w-9 border-gray-300 text-gray-600 hover:bg-gray-50"
-                        title="View PDF"
-                        type="button"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setEditingOrderItem((prev: any) => ({
-                            ...prev,
-                            Document: '',
-                            FileNameDocument: ''
-                          }));
-                        }}
-                        className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        title="Remove document"
-                        type="button"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                {editingOrderItem.FileNameDocument && (
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                    <FileText className="h-4 w-4 text-[#009999]" />
-                    <span className="truncate max-w-[250px] font-medium text-gray-700">{editingOrderItem.FileNameDocument}</span>
-                  </div>
-                )}
+
               </div>
 
               <div className="grid grid-cols-2 gap-4 hidden">
