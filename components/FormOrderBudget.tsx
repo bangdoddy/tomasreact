@@ -439,7 +439,7 @@ export default function FormOrderBudget() {
   const rawAllocated = capexList.map(p => p.Allocated || (p as any).allocated || '0')[0];
   const totalAllocated = String(rawAllocated).replace(/,/g, '');
   // Calculate totals
-  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsQty || (item as any).toolsQty || 0), 0);
+  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsQty || 0), 0);
   const totalExisting = capexList.reduce((sum, item) => sum + Number(item.ToolsExisting || (item as any).toolsExisting || 0), 0);
   const totalDeviasi = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsDeviasi || 0), 0);
   const totalCost = capexList.reduce((sum, item) => sum + (Number(item.ToolsCost || (item as any).toolsCost || 0)), 0);
