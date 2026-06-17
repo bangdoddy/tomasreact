@@ -439,7 +439,7 @@ export default function FormOrderBudget() {
   const rawAllocated = capexList.map(p => p.Allocated || (p as any).allocated || '0')[0];
   const totalAllocated = String(rawAllocated).replace(/,/g, '');
   // Calculate totals
-  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsQty || 0), 0);
+  const totalRequirement = capexList.reduce((sum, item) => sum + Number(item.ToolsQty || (item as any).toolsQty || 0), 0);
   const totalExisting = capexList.reduce((sum, item) => sum + Number(item.ToolsExisting || (item as any).toolsExisting || 0), 0);
   const totalDeviasi = capexList.reduce((sum, item) => sum + Number(item.ToolsDeviasi || (item as any).toolsDeviasi || 0), 0);
   const totalCost = capexList.reduce((sum, item) => sum + (Number(item.ToolsCost || (item as any).toolsCost || 0)), 0);
@@ -656,7 +656,7 @@ export default function FormOrderBudget() {
 
   const stats = {
     totalOrders: orderItems.length,
-    totalBudgetAllocated: Budget.filter(b => b.IsFinal == 'Yes').reduce((sum, o) => sum + (Number(o.ToolsCost || 0) * Number(o.ToolsQty)), 0),
+    totalBudgetAllocated: Budget.filter(b => b.IsFinal == 'Yes').reduce((sum, o) => sum + (Number(o.ToolsCost || 0) * Number(o.ToolsDeviasi)), 0),
     totalBudgetUsed: orderItems.filter(b => b.StOrder === 'Delivered').reduce((sum, o) => sum + (Number(o.ToolsCost || 0)) * Number(o.Qty), 0),
     pending: orderItems.filter((o) => o.StOrder === 'Pending').length,
     processing: orderItems.filter((o) => o.StOrder === 'PR' || o.StOrder === 'PO').length,
@@ -1068,7 +1068,8 @@ export default function FormOrderBudget() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
-                            {(order.Dokumen && order.StOrder !== 'Delivered') &&
+                            {order.statusCapex == 'CAPEX' &&
+                              (order.Dokumen && order.StOrder !== 'Delivered') &&
                               (!IsPicTool &&
                                 (<Button
                                   variant="ghost"
@@ -1081,19 +1082,21 @@ export default function FormOrderBudget() {
                                 </Button>)
                               )}
 
-                            {(!order.Dokumen && order.StOrder !== 'Delivered' && IsPicTool) &&
-                              (<Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
-                                title="Edit"
-                                onClick={() => openEditItem(order)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                            {order.statusCapex == 'OPEX' &&
+                              (order.StOrder !== 'Delivered') &&
+                              (IsPicTool &&
+                                (<Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-yellow-50 hover:text-yellow-600"
+                                  title="Edits"
+                                  onClick={() => openEditItem(order)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>)
                               )}
 
-                            {order.StApprove !== 'Approved' && (
+                            {(order.StApprove !== 'Approved' && !IsPicTool) && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1206,7 +1209,7 @@ export default function FormOrderBudget() {
                 <p className="text-xs text-gray-500 uppercase font-semibold">Budget Remaining</p>
                 <p className="text-lg font-large font-bold text-[#009999]">{
                   capexList.length === 0 ?
-                    0 : newItem.length === 0 ? formatIDR(Number(totalAllocated)) : formatIDR(budgetRemaining)
+                    0 : formatIDR(budgetRemaining)
 
                 }
                 </p>
