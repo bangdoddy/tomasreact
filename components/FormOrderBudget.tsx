@@ -1083,7 +1083,7 @@ export default function FormOrderBudget() {
                               )}
 
                             {order.statusCapex == 'OPEX' &&
-                              (order.StOrder !== 'Delivered') &&
+                              (order.StOrder !== 'Delivered' && order.StApprove === 'Approved') &&
                               (IsPicTool &&
                                 (<Button
                                   variant="ghost"
