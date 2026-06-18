@@ -783,7 +783,7 @@ export default function TRFApproval() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {(currentUser?.Jabatan === "PIC Tools" && order.remark.includes('CAPEX')) && (
+                            {(currentUser?.Jabatan === "PIC Tools" && order.remark.includes('CAPEX') && order.StApprove === 'Approved') && (
                               <>
                                 <Button
                                   variant="ghost"
@@ -833,7 +833,7 @@ export default function TRFApproval() {
                                 <File className="h-4 w-4 text-[#009999]" />
                               </Button>
                             )}
-                            {order.StApprove === 'Pending' && (
+                            {(order.StApprove === 'Pending' && currentUser?.Jabatan !== "PIC Tools") && (
                               <>
                                 <Button
                                   variant="ghost"
