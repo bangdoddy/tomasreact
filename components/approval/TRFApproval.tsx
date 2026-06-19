@@ -63,6 +63,7 @@ interface OrderHeader {
   orderdate: string;
   jobsite: string;
   PicTool: string;
+  ChiefOps: string;
   location: string;
   ApproveByPic: string;
   ApproveBySH: string;
@@ -833,7 +834,7 @@ export default function TRFApproval() {
                                 <File className="h-4 w-4 text-[#009999]" />
                               </Button>
                             )}
-                            {(order.StApprove === 'Pending' && currentUser?.Jabatan !== "PIC Tools") && (
+                            {(order.StApprove === 'Pending') && (
                               <>
                                 <Button
                                   variant="ghost"
@@ -847,7 +848,7 @@ export default function TRFApproval() {
                                 >
                                   <CheckCircle className="h-4 w-4" />
                                 </Button>
-                                {order.PicTool != currentUser?.Nama && (
+                                {order.StUser === 'SectionHead' && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -1120,7 +1121,7 @@ export default function TRFApproval() {
               <span className="text-sm font-bold">PT. SAPTAINDRA SEJATI<br></br>
                 Graha Saptaindra Jl. TB. Simatupang Kav.18</span>
             </div>
-            <div className="text-xs">Form No. PSE/14/F-001</div>
+            <div className="text-xs">Form No. FORM/ALL/EMA/10.10/F-011</div>
           </div>
           {/* Print Header Table */}
           <table className="w-full border border-black border-collapse text-[10px] uppercase mb-6">
@@ -1192,7 +1193,7 @@ export default function TRFApproval() {
                   )}
                 </div>
               </div>
-              <p className="mt-2 text-xs text-gray-600">(PIC Tools)</p>
+              <p className="mt-2 text-xs text-gray-600">({selectedOrder?.PicTool})</p>
             </div>
             <div className="flex flex-col">
               <p className="mb-16">Approved by Section Head</p>
@@ -1210,7 +1211,7 @@ export default function TRFApproval() {
               <div className="w-48 border-b border-black">
                 <div className="p-1 h-15 w-15"></div>
               </div>
-              <p className="mt-2 text-xs text-gray-600"></p>
+              <p className="mt-2 text-xs text-gray-600">({selectedOrder?.ChiefOps})</p>
             </div>
           </div>
         </div>,

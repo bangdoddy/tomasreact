@@ -17,6 +17,7 @@ interface CapexData {
   ToolsSize: string;
   ToolsQty: string;
   ToolsExisting: string;
+  ToolsDeviasi: string;
   ToolsCost: string;
   TotalCost: string;
   StatusCapex: string;
@@ -56,12 +57,12 @@ export default function Capex() {
   }, [capexData]);
 
   const totalBudget = useMemo(() =>
-    capexData.reduce((sum, item) => sum + (Number(item.TotalCost)), 0),
+    capexData.reduce((sum, item) => sum + (Number(item.TotalCost) * Number(item.ToolsDeviasi)), 0),
     [capexData]
   );
 
   const allocated = useMemo(() =>
-    capexData.reduce((sum, item) => sum + (Number(item.TotalCost)), 0),
+    capexData.filter(a => a.IsFinal == 'Yes').reduce((sum, item) => sum + (Number(item.TotalCost) * Number(item.ToolsDeviasi)), 0),
     [capexData]
   );
 

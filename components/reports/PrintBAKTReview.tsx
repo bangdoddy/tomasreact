@@ -22,6 +22,8 @@ interface BaktResult {
     NamaSuperior: string;
     NRP_ToolKeeper: string;
     NamaToolKeeper: string;
+    NRP_PICTools: string;
+    Nama_PicTools: string;
     ToolsId: string;
     ToolsName: string;
     TotalPrice: number;
@@ -33,12 +35,15 @@ interface BaktResult {
     StReportBAKT: string;
     ApprovedByMechanic: string;
     ApprovedByToolsKeeper: string;
+    ApprovedByPicTools: string;
+    ApprovedBySpv: string;
     ApprovedBySectionHead: string;
     CreatedDate: string;
     ApprovalDate1: string;
     ApprovalDate2: string;
     ApprovalDate3: string;
-
+    ApprovalDate4: string;
+    ApprovalDate5: string;
 }
 
 interface PrintBAKTReviewProps {
@@ -92,6 +97,8 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                 } else {
                     toast.error('BAKT not found');
                 }
+
+                console.log(data);
             } catch (error) {
                 console.error('Error fetching BAKT details:', error);
                 toast.error('Failed to load BAKT details');
@@ -224,7 +231,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                 </div><br /><br />
 
                 {/* Signature Area */}
-                <div className="grid grid-cols-3 gap-8 mt-48 text-center">
+                <div className="grid grid-cols-5 gap-8 mt-48 text-center">
                     <div className="space-y-12">
                         <span className="block text-xs font-bold text-gray-500 uppercase border-b pb-1">Yang menyerahkan</span>
                         {baktDetails.ApprovedByMechanic ? (
@@ -259,6 +266,38 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                     </div>
                     <div className="space-y-12">
                         <span className="block text-xs font-bold text-gray-500 uppercase border-b pb-1">Yang mengetahui</span>
+                        {baktDetails.ApprovedByPicTools ? (
+                            <div className="p-4 h-30 w-30">
+                                <img src="../src/assets/approved_mark.png" alt="pic tools" />
+                            </div>
+                        ) : (
+                            <div className="p-4 h-30 w-30">
+                                <br /><br /><br /><br />
+                            </div>
+                        )}
+                        <div>
+                            <div className="text-sm font-bold text-gray-900 inline-block px-4">{baktDetails.Nama_PicTools}</div>
+                            <span className="block text-xs font-bold text-gray-500 uppercase">{formatDate(baktDetails.ApprovalDate3)}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-12">
+                        <span className="block text-xs font-bold text-gray-500 uppercase border-b pb-1">Yang mengetahui</span>
+                        {baktDetails.ApprovedBySpv ? (
+                            <div className="p-4 h-30 w-30">
+                                <img src="../src/assets/approved_mark.png" alt="superior" />
+                            </div>
+                        ) : (
+                            <div className="p-4 h-30 w-30">
+                                <br /><br /><br /><br />
+                            </div>
+                        )}
+                        <div>
+                            <div className="text-sm font-bold text-gray-900 inline-block px-4">{baktDetails.NamaSuperior}</div>
+                            <span className="block text-xs font-bold text-gray-500 uppercase">{formatDate(baktDetails.ApprovalDate4)}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-12">
+                        <span className="block text-xs font-bold text-gray-500 uppercase border-b pb-1">Yang menyetujui</span>
                         {baktDetails.ApprovedBySectionHead ? (
                             <div className="p-4 h-30 w-30">
                                 <img src="../src/assets/approved_mark.png" alt="section head" />
@@ -270,7 +309,7 @@ export default function PrintBAKTReview({ ba_no }: PrintBAKTReviewProps) {
                         )}
                         <div>
                             <div className="text-sm font-bold text-gray-900 inline-block px-4">Plant Section Head</div>
-                            <span className="block text-xs font-bold text-gray-500 uppercase">{formatDate(baktDetails.ApprovalDate3)}</span>
+                            <span className="block text-xs font-bold text-gray-500 uppercase">{formatDate(baktDetails.ApprovalDate5)}</span>
                         </div>
                     </div>
                 </div><br /><br /><br />

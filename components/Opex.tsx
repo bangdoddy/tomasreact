@@ -57,12 +57,12 @@ export default function Opex() {
   }, [opexData]);
 
   const totalBudget = useMemo(() =>
-    opexData.reduce((sum, item) => sum + (Number(item.TotalCost)), 0),
+    opexData.reduce((sum, item) => sum + (Number(item.ToolsCost) * Number(item.ToolsDeviasi)), 0),
     [opexData]
   );
 
   const allocated = useMemo(() =>
-    opexData.reduce((sum, item) => sum + (Number(item.TotalCost)), 0),
+    opexData.filter(a => a.IsFinal == 'Yes').reduce((sum, item) => sum + (Number(item.ToolsCost) * Number(item.ToolsDeviasi)), 0),
     [opexData]
   );
 

@@ -431,6 +431,7 @@ export default function ToolsManagement() {
           ToolsDesc: row['Tools Desc'] || row['ToolsDesc'] || '',
           ToolsLocation: row['Tools Location'] || row['ToolsLocation'] || '',
           ToolsSerialNo: row['Tools Serial No'] || row['ToolsSerialNo'] || '',
+          ToolsNoPo: row['ToolsNoPo'] || '',
           ToolsType: row['Tools Type'] || row['ToolsType'] || '',
           ToolsDateIn: row['Tools Date In'] || row['ToolsDateIn'] || '',
           ToolsBrand: row['Tools Brand'] || row['ToolsBrand'] || '',
@@ -448,6 +449,11 @@ export default function ToolsManagement() {
 
         if (importedTools.length === 0) {
           toast.error("No data found in Excel sheet");
+          return;
+        }
+
+        if (importedTools.some((tool) => !tool.ToolsId || !tool.ToolsDesc || !tool.ToolsLocation || !tool.StTools || !tool.ToolsType || !tool.ToolsBrand || !tool.ToolsCategory || !tool.ToolsGroupType || !tool.ToolsNoPo || !tool.ToolsPicPerson || !tool.ToolsSatusCapex)) {
+          toast.error("Please complete the data in Excel");
           return;
         }
 
