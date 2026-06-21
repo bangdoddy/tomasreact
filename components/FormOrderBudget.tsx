@@ -1238,7 +1238,7 @@ export default function FormOrderBudget() {
                       <TableHead className="bg-gray-50 text-center">Part No</TableHead>
                       <TableHead className="bg-gray-50 text-center">Brand</TableHead>
                       <TableHead className="bg-gray-50 text-center">Specification</TableHead>
-                      <TableHead className="bg-gray-50 text-center">Cost</TableHead>
+                      {/* <TableHead className="bg-gray-50 text-center">Cost</TableHead> */}
                       <TableHead className="bg-gray-50 text-center">Qty</TableHead>
                       <TableHead className="bg-gray-50 text-center">Reason</TableHead>
                       <TableHead className="bg-gray-50">Remark</TableHead>
@@ -1256,7 +1256,7 @@ export default function FormOrderBudget() {
                             <TableCell className="text-center">{item?.ToolsPN || (capex as any)?.toolsPN}</TableCell>
                             <TableCell className="text-center">{item?.ToolsBrand || (capex as any)?.toolsBrand}</TableCell>
                             <TableCell className="text-center">{item?.ToolsSize || (capex as any)?.toolsSize}</TableCell>
-                            <TableCell className="text-right">{formatIDR(Number(item?.ToolsCost || (capex as any)?.toolsCost || 0))}</TableCell>
+                            {/* <TableCell className="text-right">{formatIDR(Number(item?.ToolsCost || (capex as any)?.toolsCost || 0))}</TableCell> */}
                             <TableCell className="text-center">
                               {/* <Input
                                 type="number"
@@ -1294,9 +1294,9 @@ export default function FormOrderBudget() {
                       <TableCell colSpan={4} className="text-right">
                         <strong>TOTAL:</strong>
                       </TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         <strong>{formatIDR(totalCost)}</strong>
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell className="text-center">
                         <strong>{totalRequirement}</strong>
                       </TableCell>

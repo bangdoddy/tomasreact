@@ -84,6 +84,7 @@ interface OrderItem {
   jobsite: string;
   ToolsId: string;
   PicTool: string;
+  Nama_SectionHead: string;
   NrpUser: string;
   ToolsDescription: string;
   Brand: string;
@@ -1193,7 +1194,7 @@ export default function TRFApproval() {
                   )}
                 </div>
               </div>
-              <p className="mt-2 text-xs text-gray-600">({selectedOrder?.PicTool})</p>
+              <p className="mt-2 text-xs text-gray-600">(PIC Tool)</p>
             </div>
             <div className="flex flex-col">
               <p className="mb-16">Approved by Section Head</p>

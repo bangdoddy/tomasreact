@@ -57,12 +57,12 @@ export default function Capex() {
   }, [capexData]);
 
   const totalBudget = useMemo(() =>
-    capexData.reduce((sum, item) => sum + (Number(item.TotalCost) * Number(item.ToolsDeviasi)), 0),
+    capexData.reduce((sum, item) => sum + (Number(item.TotalCost)), 0),
     [capexData]
   );
 
   const allocated = useMemo(() =>
-    capexData.filter(a => a.IsFinal == 'Yes').reduce((sum, item) => sum + (Number(item.TotalCost) * Number(item.ToolsDeviasi)), 0),
+    capexData.filter(a => a.IsFinal == 'Yes').reduce((sum, item) => sum + (Number(item.TotalCost)), 0),
     [capexData]
   );
 
