@@ -43,7 +43,7 @@ export default function Capex() {
       if (!categoryMap[cat]) {
         categoryMap[cat] = { allocated: 0, total: 0, color: colors[Object.keys(categoryMap).length % colors.length] };
       }
-      const cost = Number(item.ToolsCost) * Number(item.ToolsQty);
+      const cost = Number(item.ToolsCost) * Number(item.ToolsDeviasi);
       categoryMap[cat].allocated += cost;
       // Assuming total budget for category is sum of costs (could be adjusted later)
       categoryMap[cat].total += cost;
