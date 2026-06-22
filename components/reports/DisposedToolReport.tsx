@@ -2,12 +2,20 @@ import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { useAuth, AuthUsers } from "../../service/AuthContext";
-import { Search, Download, XCircle } from 'lucide-react';
+import { Search, Download, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { toast } from 'sonner@2.0.3';
 import { API } from '../../config';
+import { Label } from '../ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 
 interface DisposedTool {
   ID: string;
@@ -30,8 +38,11 @@ interface DisposedTool {
 export default function DisposedToolReport() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  // const stats = { total: 45, thisMonth: 8, thisQuarter: 22, thisYear: 45 };
-  const [disposedTools, setDisposedTools] = useState<DisposedTool[]>([])
+  const [disposedTools, setDisposedTools] = useState<DisposedTool[]>([]);
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const ReloadDisposeTool = () => {
     const params = new URLSearchParams({
@@ -87,6 +98,12 @@ export default function DisposedToolReport() {
 
     return matchesSearch;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRequests = filteredRequests.slice(startIndex, endIndex);
 
   useEffect(() => {
     ReloadDisposeTool();
@@ -145,7 +162,10 @@ export default function DisposedToolReport() {
         <CardContent className="pt-4 p-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search disposed tools..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+            <Input placeholder="Search disposed tools..." value={searchTerm} onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }} className="pl-10" />
           </div>
         </CardContent>
       </Card>
@@ -172,7 +192,7 @@ export default function DisposedToolReport() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredRequests.map((request) => (
+                  currentRequests.map((request) => (
                     <TableRow key={request.ID} className="hover:bg-gray-50">
                       <TableCell className="text-[#009999]">{request.ItemKey}</TableCell>
                       <TableCell>{request.ToolsId}</TableCell>
@@ -186,6 +206,53 @@ export default function DisposedToolReport() {
                   )))}
               </TableBody>
             </Table>
+          </div>
+          {/* Pagination */}
+          <div className="flex items-center justify-between p-4 border-t border-gray-100">
+            <div className="flex items-center">
+              <Label htmlFor="itemsPerPage" className="mr-2 text-sm text-gray-600">
+                Items per page:
+              </Label>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger id="itemsPerPage" className="w-[70px] h-8 bg-white border-gray-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center text-sm">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 bg-white border-gray-300"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || totalPages === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="mx-3 text-gray-600">
+                Page {totalPages === 0 ? 0 : currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 bg-white border-gray-300"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

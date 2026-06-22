@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Search, Download, CheckCircle } from 'lucide-react';
+import { Search, Download, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -10,6 +10,14 @@ import { useAuth, AuthUsers } from "../../service/AuthContext";
 import { GlobalModel } from "../../model/Models";
 import { API } from '../../config';
 import * as XLSX from 'xlsx';
+import { Label } from '../ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 
 
 interface ActivationToolData {
@@ -37,7 +45,11 @@ export default function ActivationReport() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [activationTools, setActivationTools] = useState<ActivationToolData[]>([])
+  const [activationTools, setActivationTools] = useState<ActivationToolData[]>([]);
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const stats = {
     total: activationTools.length,
@@ -63,6 +75,12 @@ export default function ActivationReport() {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = filteredData.slice(startIndex, endIndex);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -169,7 +187,10 @@ export default function ActivationReport() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input placeholder="Search by Tool ID, Tool name..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 bg-white border-gray-400" />
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }} className="pl-10 bg-white border-gray-400" />
         </div>
       </div>
 
@@ -194,8 +215,8 @@ export default function ActivationReport() {
                       No activation requests found
                     </TableCell>
                   </TableRow>
-                ) : (filteredData.map((tool) => (
-                  <TableRow className="hover:bg-gray-50 text-xs">
+                ) : (currentData.map((tool) => (
+                  <TableRow className="hover:bg-gray-50 text-xs" key={tool.Idx}>
                     <TableCell className="text-[#009999]">{tool.NoBAST}</TableCell>
                     <TableCell>{tool.ToolsId}</TableCell>
                     <TableCell>{tool.ToolsDesc}</TableCell>
@@ -211,6 +232,53 @@ export default function ActivationReport() {
                 )}
               </TableBody>
             </Table>
+          </div>
+          {/* Pagination */}
+          <div className="flex items-center justify-between p-4 border-t border-gray-100">
+            <div className="flex items-center">
+              <Label htmlFor="itemsPerPage" className="mr-2 text-sm text-gray-600">
+                Items per page:
+              </Label>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger id="itemsPerPage" className="w-[70px] h-8 bg-white border-gray-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center text-sm">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 bg-white border-gray-300"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || totalPages === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="mx-3 text-gray-600">
+                Page {totalPages === 0 ? 0 : currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 bg-white border-gray-300"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

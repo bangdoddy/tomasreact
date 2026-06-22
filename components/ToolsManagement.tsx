@@ -62,6 +62,7 @@ export default function ToolsManagement() {
   const { currentUser } = useAuth();
   const [itemList, setItemList] = useState<RegisterTools[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMounted = useRef(false);
 
   /*Pagination Items */
   const [currentPage, setCurrentPage] = useState(1);
@@ -729,18 +730,20 @@ export default function ToolsManagement() {
   }
 
   useEffect(() => {
-    if (itemList.length > 0) {
-      console.log("currentPage Load");
-      ReloadMaster();
+    if (!isMounted.current) {
+      return;
     }
+    console.log("currentPage Load");
+    ReloadMaster();
   }, [currentPage]);
 
   useEffect(() => {
+    if (!isMounted.current) {
+      return;
+    }
     if (currentPage == 1) {
-      if (itemList.length > 0) {
-        console.log("itemsPerPage Load");
-        ReloadMaster();
-      }
+      console.log("itemsPerPage Load");
+      ReloadMaster();
     } else {
       setCurrentPage(1);
     }
@@ -757,11 +760,12 @@ export default function ToolsManagement() {
   }, [searchTerm]);
 
   useEffect(() => {
+    if (!isMounted.current) {
+      return;
+    }
     if (currentPage == 1) {
-      if (itemList.length > 0) {
-        console.log("searchTerm Load");
-        ReloadMaster();
-      }
+      console.log("searchTerm Load");
+      ReloadMaster();
     } else {
       setCurrentPage(1);
     }
@@ -816,6 +820,7 @@ export default function ToolsManagement() {
       ReloadListToolBox()
       console.log("Reload toolBoxList")
     }
+    isMounted.current = true;
   }, []);
 
   const filteredsubType = subcategories.filter(
