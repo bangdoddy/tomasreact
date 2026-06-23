@@ -63,6 +63,7 @@ interface OrderHeader {
   orderdate: string;
   jobsite: string;
   PicTool: string;
+  NamaSectionHead: string;
   ChiefOps: string;
   location: string;
   ApproveByPic: string;
@@ -1194,7 +1195,7 @@ export default function TRFApproval() {
                   )}
                 </div>
               </div>
-              <p className="mt-2 text-xs text-gray-600">(PIC Tool)</p>
+              <p className="mt-2 text-xs text-gray-600">({selectedOrder?.PicTool})</p>
             </div>
             <div className="flex flex-col">
               <p className="mb-16">Approved by Section Head</p>
@@ -1205,7 +1206,7 @@ export default function TRFApproval() {
                   )}
                 </div>
               </div>
-              <p className="mt-2 text-xs text-gray-600">(Section Head)</p>
+              <p className="mt-2 text-xs text-gray-600">({selectedOrder?.NamaSectionHead})</p>
             </div>
             <div className="flex flex-col">
               <p className="mb-16">Approved by Chief Operation</p>
