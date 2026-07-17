@@ -432,6 +432,7 @@ export default function ToolsManagement() {
           ToolsDesc: row['Tools Desc'] || row['ToolsDesc'] || '',
           ToolsLocation: row['Tools Location'] || row['ToolsLocation'] || '',
           ToolsSerialNo: row['Tools Serial No'] || row['ToolsSerialNo'] || '',
+          ToolsPartNo: row['Tools Part No'] || row['ToolsPartNo'] || '',
           ToolsNoPo: row['ToolsNoPo'] || '',
           ToolsType: row['Tools Type'] || row['ToolsType'] || '',
           ToolsDateIn: row['Tools Date In'] || row['ToolsDateIn'] || '',
@@ -483,14 +484,14 @@ export default function ToolsManagement() {
                 ToolsType: tool.ToolsType,
                 ToolsCategory: tool.ToolsCategory,
                 ToolsSize: tool.ToolsSize,
-                ToolsNoPO: "",
+                ToolsNoPO: tool.ToolsNoPo,
                 ToolsSerialNo: tool.ToolsSerialNo,
                 ToolsNrpMekanik: "",
                 ToolsPicPerson: tool.ToolsPicPerson,
                 StatusCapex: tool.ToolsSatusCapex,
                 ToolsGroupType: tool.ToolsGroupType || "TOOL",
                 ToolsWeight: tool.ToolsWeight,
-                ToolsPartNo: "",
+                ToolsPartNo: tool.ToolsPartNo,
                 ToolsPICToolBox: tool.ToolsPicTools,
                 ToolsIDToolBox: tool.ToolsIDToolBox,
                 ToolsExpKalibrasi: "",
@@ -1277,7 +1278,7 @@ export default function ToolsManagement() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="add-weight">Weight *</Label>
+                <Label htmlFor="add-weight">Weight ( in KG ) *</Label>
                 <Input
                   id="add-brand"
                   value={formData.ToolsWeight}
