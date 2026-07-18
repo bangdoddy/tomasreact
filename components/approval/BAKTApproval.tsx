@@ -514,7 +514,7 @@ export default function BAKTApproval() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {(request.StApprovedBAKT == 'Pending') && (
+                          {(request.StApprovedBAKT == 'Pending' || request.StApprovedBAKT.toLocaleLowerCase() == 'waiting for sh approval') && (
                             <>
                               <Button
                                 variant="ghost"
