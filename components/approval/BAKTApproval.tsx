@@ -218,7 +218,7 @@ export default function BAKTApproval() {
           toast.error(resData?.Message ?? "Failed");
         }
       } else {
-        toast.error("Failed, No Respont");
+        toast.error("Failed, No Response");
       }
     } catch (ex) {
       toast.error("Failed. Message: " + ex.Message);
